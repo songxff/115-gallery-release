@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.1.2
+// @version      0.1.3
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -4961,94 +4961,6 @@
 	var cloudflow_default = ":host{--bg:#f5f5f5;--card:#fff;--line:#e5e7eb;--line-2:#eee;--ink:#333;--ink-2:#666;--ink-3:#999;--blue:#1976d2;--blue-soft:#e3f2fd;--img:#1976d2;--img-soft:#e3f2fd;--vid:#f57c00;--vid-soft:#fff3e0;--gold:gold;--r:8px;--sh:0 2px 8px #0000001a;--sh-h:0 6px 16px #0000002e;--header-h:64px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}.g115-root,.g115-root *{box-sizing:border-box;margin:0;padding:0}.g115-root{background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif}a{color:inherit;text-decoration:none}.header{height:calc(var(--header-h) + var(--safe-t));padding-top:var(--safe-t);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);z-index:1200;background:#ffffffeb;position:fixed;top:0;left:0;right:0}.header-inner{height:100%;padding:0 max(24px,var(--safe-l)) 0 max(24px,var(--safe-r));justify-content:space-between;align-items:center;gap:16px;display:flex}.header-left{flex:1;align-items:center;gap:16px;min-width:0;display:flex}.brand{flex-shrink:0;align-items:center;gap:9px;display:flex}.brand .mark{background:var(--blue);color:#fff;border-radius:8px;place-items:center;width:30px;height:30px;font-size:16px;font-weight:700;display:grid}.brand b{font-size:17px;font-weight:700}.brand b span{color:var(--blue)}.breadcrumb{white-space:nowrap;align-items:center;gap:6px;min-width:0;font-size:14px;display:flex;overflow-x:auto}.breadcrumb .sep{color:var(--ink-3);font-size:12px}.breadcrumb a{color:var(--ink-2);border-radius:4px;padding:4px 8px;transition:all .15s}.breadcrumb a:hover{color:var(--blue);background:var(--blue-soft)}.breadcrumb .current{color:var(--ink);padding:4px 8px;font-weight:600}.header-right{flex-shrink:0;align-items:center;gap:8px;display:flex}.hbtn{border:1px solid var(--line);height:38px;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:8px;align-items:center;gap:6px;padding:0 12px;font-size:13px;transition:all .18s;display:flex}.hbtn:hover{color:var(--ink);border-color:#cfd4da}.hbtn.icon{justify-content:center;width:38px;padding:0;font-size:16px}.seg{border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);color:var(--ink-3);font:inherit;cursor:pointer;background:0 0;height:36px;padding:0 12px;font-size:13px;transition:all .18s}.seg button:last-child{border-right:0}.seg button.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.main{padding:calc(var(--header-h) + var(--safe-t) + 18px) 10px 40px;max-width:1840px;margin:0 auto}.sec-title{color:var(--ink-3);align-items:center;gap:8px;margin:0 2px 12px;font-size:13px;display:flex}.folder-section{margin-bottom:22px}.folder-more{margin:14px auto 0;display:block}.folders{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;display:grid}.folder{border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:#fff;transition:all .2s;overflow:hidden}.folder:hover{box-shadow:var(--sh);transform:translateY(-3px)}.fpreview{background:#e9eaec;grid-template-columns:repeat(4,1fr);gap:2px;display:grid;position:relative}.fpreview img{aspect-ratio:1;object-fit:cover;width:100%;display:block}.fpreview-empty{aspect-ratio:4;color:#b9bdc3;background:#f0f1f3;grid-column:1/-1;place-items:center;font-size:22px;display:grid}.thumb-box{aspect-ratio:1;background:#f0f0f0;width:100%;line-height:0;display:block;position:relative;overflow:hidden}.thumb-box img{object-fit:cover;opacity:0;width:100%;height:100%;transition:opacity .25s;position:absolute;inset:0}.thumb-box.ready img{opacity:1}.thumb-box .thumb-skel{width:100%;height:100%;position:absolute;inset:0}.thumb-skel{background:linear-gradient(90deg,#ececec 25%,#f5f5f5 37%,#ececec 63%) 0 0/400% 100%;animation:1.3s infinite skel}@keyframes skel{0%{background-position:100% 0}to{background-position:-100% 0}}.sprite-strip{background:#000;line-height:0;display:none;position:absolute;inset:0;overflow:hidden}.sprite-strip.on{display:block}.sprite-strip img{max-width:none;height:100%;position:absolute;top:0;left:0}.fpreview .more{color:#fff;background:#0009;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.finfo{justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;display:flex}.finfo .fn{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden}.finfo .fc{color:var(--ink-3);flex-shrink:0;font-size:11px}.gallery-columns{align-items:flex-start;gap:15px;display:flex}.gallery-column{flex-direction:column;flex:1;gap:15px;display:flex}.masonry{width:100%;position:relative}.masonry>.item{position:absolute;top:0;left:0}.spinner{border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;width:40px;height:40px;animation:.8s linear infinite spin;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}.item{border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;background:#fff;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}.item:hover{box-shadow:var(--sh-h);transform:translateY(-5px)}.item .thumb{line-height:0;display:block;position:relative}.item .info{padding:12px}.item .filename{color:var(--ink);word-break:break-all;font-size:13px;line-height:1.4}.item .type{border-radius:4px;margin-top:8px;padding:3px 8px;font-size:11px;font-weight:500;display:inline-block}.type.image{background:var(--img-soft);color:var(--img)}.type.video{background:var(--vid-soft);color:var(--vid)}.dur{color:#fff;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600;position:absolute;bottom:8px;right:8px}.video-overlay{background:#0009;border-radius:50%;justify-content:center;align-items:center;width:60px;height:60px;transition:all .25s;display:flex;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.video-overlay:after{content:\"▶\";color:#fff;margin-left:4px;font-size:24px}.item:hover .video-overlay{background:var(--blue)}.edge-toggle{color:#fff;cursor:pointer;z-index:201;writing-mode:vertical-rl;letter-spacing:2px;border:none;padding:15px 9px;font-size:14px;font-weight:600;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:calc(50% - 30px);box-shadow:0 2px 12px #0003}.edge-toggle.fav{background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:0 8px 8px 0;left:0}.edge-toggle.tree{background:linear-gradient(135deg,#4facfe,#00c6fb);border-radius:8px 0 0 8px;right:0}.drawer{z-index:200;background:#fff;width:340px;height:100vh;padding:20px;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:0;overflow:auto}.drawer.left{left:-360px;box-shadow:2px 0 16px #0000001f}.drawer.right{right:-360px;box-shadow:-2px 0 16px #0000001f}.fav-group.open .edge-toggle.fav{left:340px}.fav-group.open .drawer.left{left:0}.tree-group.open .edge-toggle.tree{right:340px}.tree-group.open .drawer.right{right:0}.drawer h3{margin-bottom:16px;font-size:16px}.fav-item{cursor:pointer;background:#f8f9fa;border-radius:8px;margin-bottom:10px;padding:11px;transition:all .18s}.fav-item:hover{background:#eef0f2}.fav-head{align-items:center;gap:10px;display:flex}.fav-head .fic{color:#e0a800;background:#fff7d6;border-radius:7px;flex-shrink:0;place-items:center;width:30px;height:30px;display:grid}.fav-head .fmeta{flex:1;overflow:hidden}.fav-head .fn{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.fav-head .fp{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.fav-head .rm{color:#fff;cursor:pointer;opacity:0;background:#f44336;border:0;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px;transition:all .18s}.fav-item:hover .rm{opacity:1}.fav-thumbs{grid-template-columns:repeat(4,1fr);gap:4px;margin-top:9px;display:grid}.fav-thumbs .ft{aspect-ratio:1;background:#e9eaec;border-radius:5px;position:relative;overflow:hidden}.fav-thumbs .ft .thumb-box{position:absolute;inset:0}.fav-thumbs .ft.vid:after{content:\"▶\";color:#fff;z-index:2;background:#0000004d;place-items:center;font-size:13px;display:grid;position:absolute;inset:0}.tnode{cursor:pointer;color:var(--ink-2);white-space:nowrap;text-overflow:ellipsis;border-radius:6px;padding:7px 9px;font-size:14px;overflow:hidden}.tnode:hover{color:var(--ink);background:#f0f2f5}.tnode.cur{color:var(--blue);font-weight:600}.l2{padding-left:20px}.l3{padding-left:38px}.modal{z-index:1700;background:#000000f2;display:none;position:fixed;inset:0}.modal.show{justify-content:center;align-items:center;display:flex}.modal .close{color:#f1f1f1;cursor:pointer;z-index:1301;font-size:38px;font-weight:700;line-height:1;position:fixed;top:18px;right:34px}.modal .close:hover{color:#ff5252}.player{width:94vw;max-width:1600px;max-height:90vh;position:relative}.ptitle-top{z-index:6;color:#fff;text-shadow:0 1px 4px #000000e6;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;font-size:14px;position:absolute;top:10px;left:14px;right:60px;overflow:hidden}.hud{z-index:6;color:#fff;pointer-events:none;background:#0000009e;border-radius:10px;padding:10px 18px;font-size:20px;font-weight:600;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.stage{aspect-ratio:16/9;background:#000;border-radius:10px;width:100%;max-height:90vh;position:relative;overflow:hidden}.stage img{object-fit:contain;opacity:.9;width:100%;height:100%}.stage .big{place-items:center;display:grid;position:absolute;inset:0}.stage .big span{color:#111;cursor:pointer;background:#ffffffeb;border-radius:50%;place-items:center;width:76px;height:76px;font-size:28px;display:grid}.pbar{color:#fff;background:linear-gradient(#0000,#000c);padding:14px 16px;position:absolute;bottom:0;left:0;right:0}.pscrub{background:#ffffff4d;border-radius:3px;height:4px;margin-bottom:10px;position:relative}.pscrub i{background:var(--blue);border-radius:3px;width:35%;position:absolute;top:0;bottom:0;left:0}.pctl{align-items:center;gap:14px;font-size:14px;display:flex}.pctl .r{gap:14px;margin-left:auto;display:flex}.pctl span{cursor:pointer;opacity:.92}.ptitle{color:#eee;text-align:center;margin-top:12px;font-size:14px}.modal .imgview{object-fit:contain;touch-action:none;border-radius:8px;max-width:94vw;max-height:90vh}.set-wrap{grid-template-columns:220px 1fr;align-items:start;gap:26px;max-width:1100px;margin:0 auto;display:grid}@media (width<=820px){.set-wrap{grid-template-columns:1fr}.set-nav{display:none}}.set-nav{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;position:sticky;top:84px}.set-nav a{color:var(--ink-2);cursor:pointer;border-radius:8px;padding:9px 12px;font-size:14px;transition:all .15s;display:block}.set-nav a:hover{color:var(--ink);background:#f5f7f9}.set-nav a.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.set-title{margin-bottom:4px;font-size:26px;font-weight:700}.set-sub{color:var(--ink-3);margin-bottom:22px;font-size:14px}.panel{border:1px solid var(--line);background:#fff;border-radius:12px;margin-bottom:18px;padding:22px}.panel h3{align-items:center;gap:9px;margin-bottom:4px;font-size:17px;font-weight:600;display:flex}.panel .desc{color:var(--ink-3);margin-bottom:18px;font-size:13px}.row{border-bottom:1px solid var(--line-2);justify-content:space-between;align-items:center;gap:16px;padding:13px 0;display:flex}.row:last-child{border:0}.row .lab b{font-size:14px;font-weight:500;display:block}.row .lab small{color:var(--ink-3);font-size:12px}.valctl{align-items:center;gap:14px;display:flex}.val{color:var(--blue);white-space:nowrap;font-size:14px;font-weight:600}.toggle{cursor:pointer;background:#d4d7dc;border-radius:999px;flex-shrink:0;width:46px;height:26px;transition:all .25s;position:relative}.toggle.on{background:var(--blue)}.toggle i{background:#fff;border-radius:50%;width:22px;height:22px;transition:all .25s;position:absolute;top:2px;left:2px;box-shadow:0 1px 3px #0000004d}.toggle.on i{left:22px}.slider{background:#e3e6ea;border-radius:4px;width:150px;height:6px;position:relative}.slider i{background:var(--blue);border-radius:4px;position:absolute;top:0;bottom:0;left:0}.slider i:after{content:\"\";border:1px solid var(--line);background:#fff;border-radius:50%;width:16px;height:16px;position:absolute;top:50%;right:-7px;transform:translateY(-50%);box-shadow:0 1px 4px #00000059}.inp{border:1px solid var(--line);font:inherit;width:240px;color:var(--ink);border-radius:8px;outline:none;padding:9px 12px;font-size:13px}.inp:focus{border-color:var(--blue)}.btn{border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;background:#fff;border-radius:8px;padding:9px 16px;font-size:13px;transition:all .18s}.btn:hover{border-color:#c4c9cf}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:#e53935;border-color:#f3c0bb}.actions{flex-wrap:wrap;gap:10px;margin-top:16px;display:flex}.progbar{background:#e3e6ea;border-radius:6px;height:10px;margin:6px 0 4px;overflow:hidden}.progbar i{background:linear-gradient(90deg,var(--blue),#42a5f5);background-size:200% 100%;border-radius:6px;width:64%;height:100%;animation:2.4s linear infinite flow;display:block}@keyframes flow{to{background-position:200% 0}}.progtext{color:var(--ink-3);margin:6px 0 2px;font-size:12px}.stat-grid{grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;display:grid}.stat{border:1px solid var(--line);background:#f8f9fa;border-radius:10px;padding:15px}.stat b{font-size:25px;font-weight:700;display:block}.stat.ok b{color:#2e9e5b}.stat.pend b{color:#f57c00}.stat.fail b{color:#e53935}.stat.skip b{color:var(--ink-3)}.stat small{color:var(--ink-3);font-size:12px}@media (width<=420px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat small{white-space:nowrap}}.usage{margin:8px 0 16px}.usage .ut{color:var(--ink-2);justify-content:space-between;margin-bottom:6px;font-size:13px;display:flex}.usage .ub{background:#e3e6ea;border-radius:5px;height:9px;overflow:hidden}.usage .ub i{border-radius:5px;height:100%;display:block}.back{color:var(--ink-2);cursor:pointer;align-items:center;gap:6px;margin-bottom:14px;font-size:14px;display:inline-flex}.loading-tip{text-align:center;color:var(--ink-3);padding:60px 20px;font-size:14px}.back:hover{color:var(--blue)}.cache-dot{z-index:3;pointer-events:none;background:#2ecc71;border-radius:50%;width:9px;height:9px;position:absolute;bottom:7px;left:7px;box-shadow:0 0 0 2px #ffffffd9,0 0 6px #2ecc7199}.fav-cur{border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;background:#fff;border-radius:16px;margin-left:10px;padding:5px 12px;font-size:12px;transition:all .2s}.fav-cur:hover{border-color:var(--gold);color:var(--gold)}.fav-cur.on{background:var(--gold,#f0a500);color:#fff;border-color:var(--gold,#f0a500)}.sprite-hover{z-index:500;pointer-events:none;background:#000;border:2px solid #fff;border-radius:8px;position:fixed;overflow:hidden;box-shadow:0 10px 36px #00000073}.sprite-hover img{width:auto;max-width:96vw;height:140px;display:block}.ctx-menu{z-index:600;border:1px solid var(--line);-webkit-user-select:none;user-select:none;background:#fff;border-radius:10px;min-width:176px;padding:6px;font-size:13px;position:fixed;box-shadow:0 12px 34px #00000038}.ctx-item{cursor:pointer;color:var(--ink);white-space:nowrap;border-radius:7px;padding:8px 12px}.ctx-item:hover{background:var(--blue-soft,#e3f2fd)}.ctx-item.danger{color:#e53935}.ctx-item.danger:hover{background:#fdecea}.ctx-sep{background:var(--line-2,#eee);height:1px;margin:5px 8px}.modal-overlay{z-index:550;background:#00000073;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.move-dialog{background:#fff;border-radius:14px;flex-direction:column;width:440px;max-width:92vw;max-height:80vh;padding:22px;display:flex;box-shadow:0 20px 60px #0000004d}.move-dialog h3{margin-bottom:12px;font-size:17px}.move-crumbs{color:var(--ink-2);flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px;display:flex}.move-crumbs a{color:var(--blue);cursor:pointer}.move-crumbs .sep{color:var(--ink-3);margin:0 6px}.move-list{border:1px solid var(--line);border-radius:9px;flex:1;min-height:140px;max-height:46vh;overflow:auto}.move-row{cursor:pointer;border-bottom:1px solid var(--line-2,#f0f0f0);padding:10px 14px}.move-row:hover{background:var(--blue-soft,#e3f2fd)}.move-empty{text-align:center;color:var(--ink-3);padding:24px;font-size:13px}.move-actions{justify-content:flex-end;gap:10px;margin-top:16px;display:flex}.dlg{background:#fff;border-radius:14px;width:380px;max-width:92vw;padding:22px;box-shadow:0 20px 60px #0000004d}.dlg h3{word-break:break-all;margin-bottom:12px;font-size:17px}.dlg-msg{color:var(--ink-2);white-space:pre-line;word-break:break-all;font-size:14px;line-height:1.6}.dlg-input{width:100%;margin-top:2px}.dlg-actions{justify-content:flex-end;gap:10px;margin-top:18px;display:flex}.toaster{left:50%;bottom:max(32px,calc(20px + var(--safe-b)));z-index:400;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;transform:translate(-50%)}.toast{pointer-events:auto;color:#fff;cursor:pointer;background:#212121ed;border-radius:9px;max-width:90vw;padding:11px 22px;font-size:14px;font-weight:500;animation:.22s toast-in;box-shadow:0 8px 24px #00000047}.toast.err{background:#c0392b}@keyframes toast-in{0%{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media (hover:none){.item:hover,.folder:hover{box-shadow:var(--sh);transform:none}.item:active{transform:scale(.98)}.fav-head .rm{opacity:1}.fav-item:active{background:#eef0f2}.hbtn:active,.btn:active,.seg button:active,.fav-cur:active,.ctx-item:active,.move-row:active,.tnode:active,.breadcrumb a:active,.set-nav a:active{filter:brightness(.94)}}@media (width<=768px){.header-inner{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r));gap:8px}.header-left{gap:8px}.brand b{display:none}.brand .mark{width:34px;height:34px;font-size:17px}.header-right{gap:6px}.header-right .seg{display:none}.hbtn.icon{width:44px;height:44px;font-size:19px}.fav-cur{border-radius:10px;flex-shrink:0;place-items:center;width:40px;height:40px;margin-left:2px;padding:0;font-size:19px;display:grid}.fav-cur .lbl{display:none}.breadcrumb{gap:4px;font-size:13px}.breadcrumb a,.breadcrumb .current{padding:6px}.main{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r))}.folders{grid-template-columns:repeat(2,1fr);gap:10px}.gallery-columns,.gallery-column{gap:10px}}.drawer-mask{z-index:199;opacity:0;visibility:hidden;background:#0000006b;transition:opacity .25s,visibility .25s;position:fixed;inset:0}@media (hover:none){.fav-group.open .drawer-mask,.tree-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.drawer{width:min(86vw,320px);padding:18px;padding-bottom:max(18px,var(--safe-b))}.fav-group.open .edge-toggle.fav{left:min(86vw,320px)}.tree-group.open .edge-toggle.tree{right:min(86vw,320px)}.edge-toggle{padding:18px 11px;font-size:15px}.modal .close{top:calc(8px + var(--safe-t));right:calc(10px + var(--safe-r));background:#00000073;border-radius:50%;place-items:center;width:44px;height:44px;font-size:30px;display:grid}.player{width:100vw;max-width:100vw}.ptitle-top{top:calc(10px + var(--safe-t));left:14px;right:64px}.hud{padding:9px 16px;font-size:18px}.ctx-menu{min-width:200px;padding:6px}.ctx-item{padding:12px 14px}.ctx-sep{margin:5px 10px}.move-dialog{width:94vw;padding:18px;padding-bottom:max(18px,var(--safe-b))}.move-row{padding:13px 14px}}.prog-block{margin-top:16px}.prog-head{align-items:center;gap:12px;display:flex}.prog-title{white-space:nowrap;font-weight:600}.prog-pct{text-align:right;color:#2e9e5b;min-width:44px}.progress-track{background:#eef0f2;border-radius:4px;flex:1;height:8px;overflow:hidden}.progress-fill{background:linear-gradient(90deg,#4caf7d,#2e9e5b);border-radius:4px;height:100%;transition:width .4s}.log-modal{color:#d7dae0;background:#1b1e24;border-radius:12px;flex-direction:column;width:min(860px,92vw);max-height:80vh;display:flex;overflow:hidden}.log-head{border-bottom:1px solid #2c313a;align-items:center;gap:12px;padding:12px 16px;display:flex}.log-head b{margin-right:auto;font-size:15px}.log-filter{color:#9aa3af;cursor:pointer;align-items:center;gap:5px;font-size:13px;display:flex}.log-body{padding:10px 14px;font:12px/1.7 ui-monospace,Consolas,monospace;overflow:auto}.log-line{white-space:pre-wrap;word-break:break-all;gap:10px;padding:1px 0;display:flex}.log-line.log-err{background:#e539351f}.log-ts{color:#6b7482;flex-shrink:0}.log-lv{color:#9aa3af;flex-shrink:0;width:60px}.log-lv.lv-error,.log-lv.lv-critical{color:#ff6b66;font-weight:700}.log-lv.lv-warning{color:#f5a623}.log-empty{color:#6b7482;text-align:center;padding:20px}button,input,select{font-family:inherit}button:disabled{cursor:not-allowed;opacity:.55}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.brand,.back,.text-button{color:inherit;font:inherit;text-align:left;background:0 0;border:0}.text-button{cursor:pointer}.toggle{border:0}.icon-button{border:1px solid var(--line);width:36px;height:36px;color:var(--ink);cursor:pointer;background:#fff;border-radius:6px;flex:0 0 36px;justify-content:center;align-items:center;padding:0;display:inline-flex}.icon-button.active{background:var(--blue-soft);color:var(--blue)}.icon-button.danger{color:#c62828}.media-toolbar{border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:12px;display:flex}.media-search{border:1px solid var(--line);background:#fff;border-radius:6px;flex:1;align-items:center;min-width:180px;max-width:380px;display:flex}.media-search input{background:0 0;border:0;width:100%;min-width:0;padding:9px 10px;font-size:13px}.media-search .icon-button{border:0}.media-toolbar select{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:0;max-width:100%;height:36px;padding:0 8px;font-size:13px}.selection-tools{flex-wrap:wrap;align-items:center;gap:12px;width:100%;padding-top:4px;font-size:13px;display:flex}.selection-tools label{cursor:pointer;align-items:center;gap:6px;display:flex}.selection-tools input{width:17px;height:17px}.operation-feedback,.sync-error{color:#8b3029;overflow-wrap:anywhere;border-bottom:1px solid #ebc6c2;margin:0 0 16px;padding:14px 0;font-size:13px}.operation-feedback ul{max-height:160px;margin:8px 0 0;padding-left:18px;overflow:auto}.operation-feedback li{margin-top:4px}.operation-feedback .actions{margin-top:10px}.item.selected{outline:2px solid var(--blue);outline-offset:1px}.card-open{z-index:1;cursor:pointer;background:0 0;border:0;width:100%;height:100%;position:absolute;inset:0}.card-open:focus-visible{outline-offset:-3px}.media-select{z-index:5;cursor:pointer;width:20px;height:20px;accent-color:var(--blue);position:absolute;top:10px;left:10px}.pinned-mark{z-index:2;color:#bf7200;pointer-events:none;background:#fff;border-radius:4px;padding:4px;position:absolute;top:8px;right:8px}.thumb-status{color:var(--ink-2);z-index:2;pointer-events:none;text-align:center;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.thumb-status.unavailable{background:#eceff1}.thumb-status .icon-button{pointer-events:auto;flex-basis:32px;width:32px;height:32px}.drawer{z-index:1400;height:100dvh;padding-top:max(20px,var(--safe-t))}.drawer[aria-hidden=true]{visibility:hidden}.drawer-mask{z-index:1399}.edge-toggle{z-index:1401;letter-spacing:0}.drawer-close{position:absolute;top:10px;right:12px}.drawer h3{padding-right:36px}.fav-head .fmeta .fn,.fav-head .fmeta .fp{display:block}.fav-item:focus-within .rm{opacity:1}.tnode{text-align:left;background:0 0;border:0;width:100%;display:block}.ctx-menu{z-index:1600;overscroll-behavior:contain;border-radius:8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}.ctx-item{width:100%;font:inherit;text-align:left;white-space:normal;overflow-wrap:anywhere;background:0 0;border:0;display:block}.modal-overlay{z-index:1500;padding:8px}.move-dialog,.dlg{border-radius:8px;max-height:calc(100dvh - 16px);overflow:auto}.move-list{flex-shrink:1;min-height:80px}.move-row{border:0;border-bottom:1px solid var(--line);text-align:left;background:#fff;width:100%;font-size:14px;display:block}.move-crumbs .text-button{color:var(--blue)}.move-actions,.dlg-actions{flex-wrap:wrap;flex-shrink:0}.toaster{z-index:2000}.log-head{flex-wrap:wrap}.log-modal{border-radius:8px;max-height:calc(100dvh - 24px)}.image-viewer{padding:64px 16px 20px;overflow:hidden}.image-toolbar{z-index:4;color:#fff;background:#000000bf;align-items:center;gap:8px;padding:10px 16px;display:flex;position:absolute;top:0;left:0;right:0}.image-title{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:14px;overflow:hidden}.image-toolbar .icon-button,.image-nav{color:#fff;background:#222;border-color:#555}.image-toolbar output{text-align:center;font-variant-numeric:tabular-nums;width:44px;font-size:12px}.image-viewer .imgview{transform-origin:50%;border-radius:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px)}.image-loading{z-index:1;position:absolute}.image-error,.viewer-status{color:#fff}.image-error{z-index:3;align-items:center;gap:12px;display:flex}.image-error .btn{align-items:center;gap:6px;display:inline-flex}.image-nav{z-index:3;position:absolute;top:50%}.image-nav.previous{left:12px}.image-nav.next{right:12px}.viewer-status .close{background:#222;border:0;font-size:20px}.viewer-status .close svg{width:22px}@media (width<=600px){.media-search{flex-basis:100%;max-width:none}.media-toolbar{gap:6px}.media-toolbar select{flex:1;padding:0 5px;font-size:12px}.icon-button{flex-basis:40px;width:40px;height:40px}.media-toolbar select{height:40px}.image-toolbar{gap:4px;padding:8px}.image-title{pointer-events:none;text-align:center;position:absolute;top:58px;left:12px;right:12px}.image-toolbar{justify-content:flex-end}.image-viewer{padding-top:84px}.image-viewer .imgview{max-height:calc(100dvh - 130px)}.image-nav.previous{left:6px}.image-nav.next{right:6px}}@media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}";
 	var gallery_default = ".g115-root{z-index:2147483000;background:var(--bg);position:fixed;inset:0;overflow:hidden}.g115-root .header{position:absolute}.g115-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:absolute;inset:0;overflow:auto}.g115-root .main{min-height:100%}.g115-root .folder{color:inherit;display:block}.masonry>.g115-cell{will-change:transform;position:absolute;top:0;left:0}.masonry>.g115-cell>.item{position:relative}.g115-scroll.g115-scrolling .item,.g115-scroll.g115-scrolling .folder{pointer-events:none}.g115-icon{display:block}.g115-video-box{aspect-ratio:16/9;background:linear-gradient(135deg,#2b2f36,#16181c)}.g115-badge{color:#ffd27a;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:8px;left:8px}.g115-launcher{z-index:2147482999;background:var(--blue);color:#fff;width:48px;height:48px;box-shadow:var(--sh-h);cursor:pointer;border:0;border-radius:50%;place-items:center;transition:transform .18s;display:grid;position:fixed;bottom:96px;right:24px}.g115-launcher:hover{transform:scale(1.08)}.g115-settings{top:calc(var(--header-h) + 8px);z-index:1300;border:1px solid var(--line);background:#fff;border-radius:12px;width:320px;max-width:calc(100vw - 32px);padding:6px 18px;position:absolute;right:24px;box-shadow:0 12px 34px #00000038}.g115-settings .row{cursor:pointer}.g115-settings .row:last-child{cursor:default}.g115-settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue)}.pswp__g115-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000c;flex:1;align-self:center;min-width:0;padding:0 16px;font-size:14px;overflow:hidden}.pswp__button.pswp__g115-original{color:#fff;width:auto;padding:0 14px;font-size:13px;font-weight:600}.pswp__button.pswp__g115-original[disabled]{opacity:.4;cursor:default}.g115-video-box img{object-fit:cover}.g115-skel-dark{background:linear-gradient(90deg,#24272d 25%,#2f333a 37%,#24272d 63%) 0 0/400% 100%;animation:1.3s infinite skel}.g115-cover-note{color:#c9ced6;text-align:center;z-index:2;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.g115-cover-retry{pointer-events:auto;z-index:3;color:#fff;cursor:pointer;background:#222;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px;position:relative}.fpreview{position:relative}.g115-video-badge{color:#fff;background:#f57c00eb;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.g115-cover-ctl{flex-shrink:0;align-items:center;gap:6px;display:flex}.g115-cover-ctl select{border:1px solid var(--line);background:#fff;border-radius:6px;height:32px;padding:0 6px;font-size:13px}.g115-cover-ctl .inp{width:72px;padding:6px 8px}.g115-root .card-open{pointer-events:none}.g115-star{z-index:4;color:#fff;cursor:pointer;opacity:0;background:#00000073;border:0;border-radius:50%;width:28px;height:28px;font-size:15px;line-height:28px;transition:opacity .15s;position:absolute;top:8px;right:8px}.item:hover .g115-star,.g115-star.on,.g115-star:focus-visible{opacity:1}.g115-star.on{color:var(--gold);background:#0000008c}@media (hover:none){.g115-star{opacity:1}}.g115-hover-bar{z-index:3;pointer-events:none;gap:3px;display:flex;position:absolute;bottom:4px;left:6px;right:6px}.g115-hover-bar i{background:#ffffff59;border-radius:2px;flex:1;height:3px}.g115-hover-bar i.ok{background:#fff9}.g115-hover-bar i.on{background:var(--blue)}.g115-fthumb{aspect-ratio:1;background:#e9eaec;display:block;position:relative;overflow:hidden}.g115-fthumb img{object-fit:cover;width:100%;height:100%;position:absolute;inset:0}.g115-fthumb.vid:after{content:\"▶\";color:#fff;text-shadow:0 0 3px #000;font-size:9px;position:absolute;bottom:2px;right:3px}.g115-video-badge{inset:6px auto auto 6px}.g115-drawer-empty{color:var(--ink-3);padding:20px 4px;font-size:13px}.g115-root .drawer .tnode{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.g115-detail{grid-template-columns:auto 1fr;gap:6px 14px;margin:4px 0 0;font-size:13px;display:grid}.g115-detail dt{color:var(--ink-3)}.g115-detail dd{word-break:break-all;color:var(--ink);margin:0}.g115-settings{max-height:calc(100dvh - var(--header-h) - 24px);overflow:auto}.g115-cache-row{flex-wrap:wrap}.g115-cache-row .lab small{display:block}.g115-cache-btns{flex-wrap:wrap;gap:8px;display:flex}.g115-settings{width:400px}.g115-err{color:#c62828}.g115-player{z-index:1800;background:#000;position:absolute;inset:0}.g115-player-frame{background:#000;border:0;width:100%;height:100%;position:absolute;inset:0}.g115-player-spin{margin:-20px 0 0 -20px;position:absolute;top:50%;left:50%}.g115-player-hud{z-index:2}.g115-player-close{z-index:3;color:#fff;cursor:pointer;opacity:.75;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;display:grid;position:absolute;top:10px;right:14px}.g115-player-close:hover{opacity:1;background:#c82828d9}.folder{position:relative}.folder:hover .g115-star,.folder .g115-star.on{opacity:1}.fav-cur{flex-shrink:0}.g115-tree{flex-direction:column;gap:1px;max-height:calc(100dvh - 90px);margin:0 -6px;padding:0 6px;display:flex;overflow:auto}.g115-tree-row{align-items:center;min-width:0;display:flex}.g115-tree-twisty{width:22px;height:30px;color:var(--ink-3);cursor:pointer;background:0 0;border:0;border-radius:4px;flex-shrink:0;place-items:center;font-size:12px;display:grid}.g115-tree-twisty:hover:not(:disabled){color:var(--ink);background:#f0f2f5}.g115-tree-twisty.leaf{cursor:default}.g115-tree-row .tnode{flex:1;min-width:0;padding-left:4px}.g115-tree-star{color:var(--gold,#f0a500)}.g115-tree-spin{border:2px solid #ccd;border-top-color:var(--blue);border-radius:50%;width:10px;height:10px;animation:.7s linear infinite g115spin}@keyframes g115spin{to{transform:rotate(360deg)}}.g115-root .drawer.left{overflow:auto}.g115-fav-img{aspect-ratio:16/9;background:#e9eaec;border-radius:6px;margin-top:9px;position:relative;overflow:hidden}.g115-fav-img img{object-fit:cover;width:100%;height:100%;display:block}.g115-fav-img .g115-fthumb{aspect-ratio:auto;position:absolute;inset:0}.g115-lite-video{background:#000;outline:none;width:100%;height:100%;position:absolute;inset:0}.g115-lite-bar{z-index:3;opacity:0;pointer-events:none;align-items:center;gap:8px;transition:opacity .2s;display:flex;position:absolute;top:10px;left:14px;right:70px}.g115-lite:hover .g115-lite-bar,.g115-lite-bar:focus-within{opacity:1}.g115-lite-bar>*{pointer-events:auto}.g115-lite-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000000e6;min-width:0;font-size:14px;overflow:hidden}.g115-lite-nav{color:#fff;cursor:pointer;background:#0000008c;border:0;border-radius:50%;flex-shrink:0;width:40px;height:40px;font-size:24px;line-height:1}.g115-lite-nav:hover:not(:disabled){background:#ffffff40}.g115-lite-nav:disabled{opacity:.3;cursor:default}.g115-lite-error{z-index:3;color:#fff;text-align:center;background:#141414eb;border-radius:10px;max-width:min(90vw,460px);padding:18px 22px;font-size:14px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.g115-lite-error .actions{flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;display:flex}@media (hover:none){.g115-lite-bar{opacity:1}}.g115-root .g115-notice{color:var(--ink-3);margin:-4px 2px 10px;font-size:12px}.g115-root .g115-fade-enter-active,.g115-root .g115-fade-leave-active{transition:opacity .4s}.g115-root .g115-fade-enter-from,.g115-root .g115-fade-leave-to{opacity:0}.g115-settings .row.g115-stack{cursor:default;flex-direction:column;align-items:stretch;gap:8px}.g115-settings .g115-stack>small{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-seg{gap:18px;font-size:13px;display:flex}.g115-seg label{cursor:pointer;align-items:center;gap:6px;display:inline-flex}.g115-seg label.off{opacity:.5;cursor:not-allowed}.g115-seg input{accent-color:var(--blue);margin:0}.g115-kv{color:var(--ink-2);justify-content:space-between;align-items:center;gap:10px;font-size:13px;display:flex}.g115-kv-val{align-items:center;gap:6px;min-width:0;display:inline-flex}.g115-kv-val em{color:var(--ink);text-overflow:ellipsis;white-space:nowrap;max-width:180px;font-style:normal;overflow:hidden}.g115-kv .inp{width:84px;padding:6px 8px}.g115-kv .btn{padding:4px 12px;font-size:12px}.g115-warn{color:#b45309}.g115-settings{overflow-x:hidden}.g115-root .item .filename{white-space:nowrap;text-overflow:ellipsis;word-break:normal;overflow:hidden}.g115-root .item .thumb{container-type:inline-size}.g115-root .video-overlay{width:clamp(22px,22cqw,60px);height:clamp(22px,22cqw,60px)}.g115-root .video-overlay:after{margin-left:clamp(1px,1.5cqw,4px);font-size:clamp(9px,8.8cqw,24px)}.g115-root .item .dur{padding:1px clamp(3px,2.6cqw,7px);font-size:clamp(9px,4.6cqw,11px);bottom:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}.g115-root .item .g115-star{width:clamp(20px,12cqw,28px);height:clamp(20px,12cqw,28px);font-size:clamp(11px,6.5cqw,15px);line-height:clamp(20px,12cqw,28px);top:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}@container (width<=110px){.g115-root .video-overlay{width:18px;height:18px;top:auto;bottom:4px;left:4px;transform:none}.g115-root .video-overlay:after{margin-left:2px;font-size:9px}}.g115-launcher-icon,.g115-root .brand .mark{place-items:center;line-height:0;display:grid}.pswp__g115-strip{z-index:20;opacity:0;pointer-events:none;justify-content:center;gap:6px;padding:0 12px;transition:opacity .25s;display:flex;position:absolute;bottom:10px;left:0;right:0;overflow:hidden}.pswp--ui-visible .pswp__g115-strip{opacity:1;pointer-events:auto}.pswp__g115-strip-item{cursor:pointer;opacity:.55;background:#222;border:2px solid #0000;border-radius:6px;flex:none;width:60px;height:60px;padding:0;transition:opacity .15s,border-color .15s;overflow:hidden}.pswp__g115-strip-item:hover{opacity:.9}.pswp__g115-strip-item.on{opacity:1;border-color:#fff}.pswp__g115-strip-item img{object-fit:cover;width:100%;height:100%;display:block}@media (width<=600px){.pswp__g115-strip-item{width:44px;height:44px}}.g115-pl{z-index:4;pointer-events:none;position:absolute;top:0;bottom:0;right:0}.g115-pl>*{pointer-events:auto}.g115-pl-edge{width:24px;position:absolute;top:0;bottom:0;right:0}.g115-pl-toggle{color:#fff;cursor:pointer;opacity:0;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;transition:opacity .2s,right .25s;display:grid;position:absolute;top:50%;right:10px;transform:translateY(-50%)}.g115-lite:hover .g115-pl-toggle,.g115-pl-toggle:focus-visible{opacity:.85}.g115-pl.open .g115-pl-toggle{opacity:0;pointer-events:none}@media (hover:none){.g115-pl-toggle{opacity:.85}}.g115-pl-panel{color:#eee;background:#121214f0;flex-direction:column;width:300px;max-width:86vw;transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;position:absolute;top:0;bottom:0;right:0;transform:translate(100%)}.g115-pl.open .g115-pl-panel{transform:none}.g115-pl-head{justify-content:space-between;align-items:center;gap:8px;margin-top:52px;padding:14px 14px 10px 16px;font-size:14px;display:flex}.g115-pl-pin{color:#ccc;cursor:pointer;background:0 0;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px}.g115-pl-pin.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-pl-list{overscroll-behavior:contain;flex-direction:column;flex:1;gap:6px;padding:0 10px 14px;display:flex;overflow:auto}.g115-pl-item{color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:8px;align-items:center;gap:10px;min-width:0;padding:5px;display:flex}.g115-pl-item:hover{background:#ffffff14}.g115-pl-item.on{background:#1976d259}.g115-pl-cover{aspect-ratio:16/9;background:#2a2c31;border-radius:5px;flex:0 0 112px;position:relative;overflow:hidden}.g115-pl-cover .g115-fthumb{aspect-ratio:auto;background:#2a2c31;position:absolute;inset:0}.g115-pl-cover .g115-fthumb.vid:after{display:none}.g115-pl-note{color:#999;place-items:center;font-size:11px;display:grid;position:absolute;inset:0}.g115-pl-dur{color:#fff;background:#000000b3;border-radius:3px;padding:0 4px;font-size:10px;position:absolute;bottom:3px;right:3px}.g115-pl-name{-webkit-line-clamp:2;word-break:break-all;-webkit-box-orient:vertical;flex:1;min-width:0;font-size:12px;line-height:1.4;display:-webkit-box;overflow:hidden}.g115-pl-more{place-items:center;padding:10px;display:grid}.g115-pl-more .spinner{width:24px;height:24px}.g115-lite.g115-pinned .g115-lite-video{width:auto;right:300px}.g115-lite.g115-pinned .g115-player-close{right:314px}@media (width<=600px){.g115-lite.g115-pinned .g115-lite-video{width:100%;right:0}}.g115-root .hbtn.g115-select-btn{font-size:13px}.g115-root .hbtn.g115-select-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-check{z-index:5;color:#0000;text-align:center;pointer-events:none;background:#00000059;border:2px solid #fff;border-radius:50%;width:24px;height:24px;font-size:14px;font-weight:700;line-height:20px;position:absolute;top:8px;left:8px;box-shadow:0 1px 4px #0006}.g115-check.on{background:var(--blue);color:#fff}.g115-root .item.g115-picked .thumb,.g115-root .folder.g115-picked .fpreview{outline:3px solid var(--blue);outline-offset:-3px}.g115-root .item.g115-picked,.g115-root .folder.g115-picked{box-shadow:0 0 0 2px var(--blue)}.g115-selbar{z-index:1350;border:1px solid var(--line);background:#fff;border-radius:12px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:10px 14px;display:flex;position:absolute;bottom:20px;left:50%;transform:translate(-50%);box-shadow:0 10px 30px #00000038}.g115-selbar-count{color:var(--ink-2);font-size:14px}.g115-selbar-count b{color:var(--blue)}.g115-selbar-tip{color:var(--ink-3);font-size:12px}.g115-selbar .btn{padding:6px 14px}.g115-selbar .btn:disabled{opacity:.45;cursor:default}.g115-root .btn.danger:not(:disabled):hover{color:#fff;background:#e53935;border-color:#e53935}.g115-del-sum{color:var(--ink-2);margin:6px 0 0;font-size:14px}.g115-del-warn{color:#b45309;margin:8px 0 0;font-size:13px}.g115-del-list{background:#f6f7f9;border-radius:8px;max-height:200px;margin:12px 0 0;padding:8px 10px;font-size:13px;list-style:none;overflow:auto}.g115-del-list li{white-space:nowrap;text-overflow:ellipsis;line-height:1.7;overflow:hidden}.g115-del-list li.more{color:var(--ink-3)}@media (width<=600px){.g115-selbar-tip{display:none}}.fpreview:has(.g115-check) .g115-video-badge{top:38px}";
 	var photoswipe_default = "/*! PhotoSwipe main CSS by Dmytro Semenov | photoswipe.com */\n.pswp{--pswp-bg:#000;--pswp-placeholder-bg:#222;--pswp-root-z-index:100000;--pswp-preloader-color:#4f4f4f66;--pswp-preloader-color-secondary:#ffffffe6;--pswp-icon-color:#fff;--pswp-icon-color-secondary:#4f4f4f;--pswp-icon-stroke-color:#4f4f4f;--pswp-icon-stroke-width:2px;--pswp-error-text-color:var(--pswp-icon-color);width:100%;height:100%;z-index:var(--pswp-root-z-index);touch-action:none;opacity:.003;contain:layout style size;-webkit-tap-highlight-color:#0000;outline:0;display:none;position:fixed;top:0;left:0}.pswp:focus{outline:0}.pswp *{box-sizing:border-box}.pswp img{max-width:none}.pswp--open{display:block}.pswp,.pswp__bg{will-change:opacity;transform:translateZ(0)}.pswp__bg{opacity:.005;background:var(--pswp-bg)}.pswp,.pswp__scroll-wrap{overflow:hidden}.pswp__scroll-wrap,.pswp__bg,.pswp__container,.pswp__item,.pswp__content,.pswp__img,.pswp__zoom-wrap{width:100%;height:100%;position:absolute;top:0;left:0}.pswp__img,.pswp__zoom-wrap{width:auto;height:auto}.pswp--click-to-zoom.pswp--zoom-allowed .pswp__img{cursor:-webkit-zoom-in;cursor:-moz-zoom-in;cursor:zoom-in}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img{cursor:move;cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img:active{cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img,.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img:active,.pswp__img{cursor:-webkit-zoom-out;cursor:-moz-zoom-out;cursor:zoom-out}.pswp__container,.pswp__img,.pswp__button,.pswp__counter{-webkit-user-select:none;user-select:none}.pswp__item{z-index:1;overflow:hidden}.pswp__hidden{display:none!important}.pswp__content{pointer-events:none}.pswp__content>*{pointer-events:auto}.pswp__error-msg-container{display:grid}.pswp__error-msg{color:var(--pswp-error-text-color);margin:auto;font-size:1em;line-height:1}.pswp .pswp__hide-on-close{opacity:.005;will-change:opacity;transition:opacity var(--pswp-transition-duration) cubic-bezier(.4, 0, .22, 1);z-index:10;pointer-events:none}.pswp--ui-visible .pswp__hide-on-close{opacity:1;pointer-events:auto}.pswp__button{cursor:pointer;width:50px;height:60px;box-shadow:none;opacity:.85;-webkit-appearance:none;-webkit-touch-callout:none;background:0 0;border:0;margin:0;padding:0;display:block;position:relative;overflow:hidden}.pswp__button:hover,.pswp__button:active,.pswp__button:focus{box-shadow:none;opacity:1;background:0 0;border:0;padding:0;transition:none}.pswp__button:disabled{opacity:.3;cursor:auto}.pswp__icn{fill:var(--pswp-icon-color);color:var(--pswp-icon-color-secondary);pointer-events:none;width:32px;height:32px;position:absolute;top:14px;left:9px;overflow:hidden}.pswp__icn-shadow{stroke:var(--pswp-icon-stroke-color);stroke-width:var(--pswp-icon-stroke-width);fill:none}.pswp__icn:focus{outline:0}div.pswp__img--placeholder,.pswp__img--with-bg{background:var(--pswp-placeholder-bg)}.pswp__top-bar{z-index:10;flex-direction:row;justify-content:flex-end;width:100%;height:60px;display:flex;position:absolute;top:0;left:0;pointer-events:none!important}.pswp__top-bar>*{pointer-events:auto;will-change:opacity}.pswp__button--close{margin-right:6px}.pswp__button--arrow{width:75px;height:100px;margin-top:-50px;position:absolute;top:50%}.pswp__button--arrow:disabled{cursor:default;display:none}.pswp__button--arrow .pswp__icn{background:0 0;border-radius:0;width:60px;height:60px;margin-top:-30px;top:50%}.pswp--one-slide .pswp__button--arrow{display:none}.pswp--touch .pswp__button--arrow{visibility:hidden}.pswp--has_mouse .pswp__button--arrow{visibility:visible}.pswp__button--arrow--prev{left:0;right:auto}.pswp__button--arrow--next{right:0}.pswp__button--arrow--next .pswp__icn{left:auto;right:14px;transform:scaleX(-1)}.pswp__button--zoom{display:none}.pswp--zoom-allowed .pswp__button--zoom{display:block}.pswp--zoomed-in .pswp__zoom-icn-bar-v{display:none}.pswp__preloader{width:50px;height:60px;margin-right:auto;position:relative;overflow:hidden}.pswp__preloader .pswp__icn{opacity:0;transition:opacity .2s linear;animation:.6s linear infinite pswp-clockwise}.pswp__preloader--active .pswp__icn{opacity:.85}@keyframes pswp-clockwise{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.pswp__counter{margin-top:15px;height:30px;color:var(--pswp-icon-color);text-shadow:1px 1px 3px var(--pswp-icon-color-secondary);opacity:.85;margin-inline-start:20px;font-size:14px;line-height:30px}.pswp--one-slide .pswp__counter{display:none}";
-	var SIZE_SUFFIX = /(\/thumb\/[^?#]*_)(\d+)(?=$|[?#])/;
-	function withThumbSize(url, size) {
-		return SIZE_SUFFIX.test(url) ? url.replace(SIZE_SUFFIX, `$1${size}`) : url;
-	}
-	function pickThumbSize(cssWidth, dpr = 1) {
-		const px = cssWidth * dpr;
-		if (px <= 480) return 480;
-		if (px <= 800) return 800;
-		return 1440;
-	}
-	function thumbExpiresAt(url) {
-		const t = Number(new URL(url).searchParams.get("t"));
-		return Number.isFinite(t) && t > 0 ? t * 1e3 : null;
-	}
-	var PLACEHOLDER = 480;
-	function isPlaceholder(loaded, requested, known) {
-		if (loaded.w !== PLACEHOLDER || loaded.h !== PLACEHOLDER) return false;
-		if (known) {
-			const expected = expectedThumbSize(known, requested);
-			return expected.w !== PLACEHOLDER || expected.h !== PLACEHOLDER;
-		}
-		return requested !== PLACEHOLDER;
-	}
-	function expectedThumbSize(known, requested) {
-		const w = requested === 0 ? known.w : Math.min(requested, known.w);
-		return {
-			w,
-			h: Math.round(known.h * w / known.w)
-		};
-	}
-	function isPlaceholderProbe(probe) {
-		return probe.w === PLACEHOLDER && probe.h === PLACEHOLDER;
-	}
-	function formatSize(bytes) {
-		if (bytes < 1024) return `${bytes} B`;
-		const units = [
-			"KB",
-			"MB",
-			"GB",
-			"TB"
-		];
-		let v = bytes / 1024;
-		let i = 0;
-		while (v >= 1024 && i < units.length - 1) {
-			v /= 1024;
-			i++;
-		}
-		return `${v.toFixed(1)} ${units[i]}`;
-	}
-	function formatDuration(seconds) {
-		const s = Math.max(0, Math.floor(seconds));
-		const m = Math.floor(s / 60);
-		const r = s % 60;
-		return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
-	}
-	function choosePlayer(pref, video, masterInstalled) {
-		const fallback = masterInstalled ? "master" : "official";
-		if (pref === "official") return "official";
-		if (pref === "master") return fallback;
-		return video.transcoded === false ? fallback : "lite";
-	}
-	function neighborVideo(list, id, step) {
-		const videos = list.filter((i) => i.kind === "video");
-		const at = videos.findIndex((i) => i.id === id);
-		return at < 0 ? void 0 : videos[at + step];
-	}
-	var SIZE_COLUMNS = {
-		XS: 6,
-		S: 5,
-		M: 4,
-		L: 3
-	};
-	function responsiveColumns(desktopCols, w) {
-		if (w >= 900) return desktopCols;
-		if (w >= 600) return Math.min(desktopCols, 4);
-		if (w >= 400) return Math.min(desktopCols, 3);
-		return Math.min(desktopCols, 2);
-	}
-	function shouldLoadMore(m, trigger) {
-		return m.scrollTop + m.clientHeight >= m.scrollHeight * trigger;
-	}
-	function isTouchPrimary() {
-		return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: none)").matches;
-	}
-	var SHAPES = "<path d=\"M9.5 21.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 20.6 11a5 5 0 0 1 1.9 9.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><rect x=\"11\" y=\"16\" width=\"3\" height=\"7\" rx=\"1\" fill=\"currentColor\"/><rect x=\"15\" y=\"16\" width=\"3\" height=\"4\" rx=\"1\" fill=\"currentColor\" opacity=\".7\"/><rect x=\"15\" y=\"21\" width=\"3\" height=\"5\" rx=\"1\" fill=\"currentColor\"/><rect x=\"19\" y=\"16\" width=\"3\" height=\"9\" rx=\"1\" fill=\"currentColor\" opacity=\".7\"/>";
-	function brandSvg(size, style = "") {
-		return `<svg width="${size}" height="${size}" viewBox="5 5 22 22" aria-hidden="true"${style ? ` style="${style}"` : ""}>${SHAPES}</svg>`;
-	}
 	var VIDEO_EXT = new Set([
 		"ts",
 		"wmv",
@@ -5191,8 +5103,8 @@
 		return `${WEBAPI}/files?${p}`;
 	}
 	var uidOf = (b) => b.uid === void 0 || b.uid === null || b.uid === "" ? void 0 : String(b.uid);
-	async function listPage(fetchJson, q) {
-		const body = check(await fetchJson(listUrl(q)));
+	async function listPage(fetchJson, q, signal) {
+		const body = check(await fetchJson(listUrl(q), signal));
 		const rows = Array.isArray(body.data) ? body.data : [];
 		const total = Number(body.count) || 0;
 		const nextOffset = q.offset + rows.length;
@@ -5224,11 +5136,11 @@
 		if (q.type) p.set("type", TYPE_PARAM[q.type]);
 		return `${WEBAPI}/files/search?${p}`;
 	}
-	async function searchPage(fetchJson, q) {
+	async function searchPage(fetchJson, q, signal) {
 		const raw = await fetchJson(searchUrl({
 			...q,
 			limit: Math.max(0, Math.min(q.limit, SEARCH_CAP - q.offset))
-		}));
+		}), signal);
 		if (raw === "") throw new ApiError("搜索请求响应内容为空");
 		const body = check(raw);
 		const rows = Array.isArray(body.data) ? body.data : [];
@@ -5244,8 +5156,8 @@
 			hasMore: rows.length > 0 && nextOffset < Math.min(total, 1e4)
 		};
 	}
-	async function categoryGet(fetchJson, cid) {
-		const b = check(await fetchJson(`${WEBAPI}/category/get?cid=${encodeURIComponent(cid)}`));
+	async function categoryGet(fetchJson, cid, signal) {
+		const b = check(await fetchJson(`${WEBAPI}/category/get?cid=${encodeURIComponent(cid)}`, signal));
 		return {
 			count: Number(b.count) || 0,
 			folderCount: Number(b.folder_count) || 0,
@@ -5269,13 +5181,930 @@
 		const sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
 		for (let i = 0; i < ids.length; i += DELETE_BATCH) {
 			if (i > 0) await sleep(1e3);
+			opts.beforeBatch?.();
+			const batch = ids.slice(i, i + DELETE_BATCH);
 			const form = {
 				pid,
 				ignore_warn: "1"
 			};
-			ids.slice(i, i + DELETE_BATCH).forEach((id, k) => form[`fid[${k}]`] = id);
+			batch.forEach((id, k) => form[`fid[${k}]`] = id);
 			check(await post(`${WEBAPI}/rb/delete`, form));
+			opts.onBatch?.(batch);
 		}
+	}
+	var CancelledError = class extends Error {
+		constructor() {
+			super("任务已取消");
+			this.name = "CancelledError";
+		}
+	};
+	var Scheduler = class {
+		options;
+		pending = [];
+		running = new Map();
+		seq = 0;
+		paused = false;
+		constructor(options) {
+			this.options = options;
+		}
+		add(fn, opts) {
+			const id = opts.id ?? `task-${++this.seq}`;
+			const existing = this.find(id);
+			if (existing) return existing.promise;
+			let resolve;
+			let reject;
+			const promise = new Promise((res, rej) => {
+				resolve = res;
+				reject = rej;
+			});
+			this.pending.push({
+				id,
+				lane: opts.lane,
+				priority: opts.priority ?? 0,
+				seq: ++this.seq,
+				fn,
+				controller: new AbortController(),
+				promise,
+				resolve,
+				reject
+			});
+			this.pump();
+			return promise;
+		}
+		promote(id, priority) {
+			const task = this.pending.find((t) => t.id === id);
+			if (!task) return false;
+			task.priority = Math.max(task.priority, priority);
+			this.pump();
+			return true;
+		}
+		cancel(id) {
+			this.drop((t) => t.id === id);
+		}
+		cancelLane(lane) {
+			this.drop((t) => t.lane === lane);
+		}
+		clear() {
+			this.drop(() => true);
+		}
+		pause() {
+			this.paused = true;
+		}
+		resume() {
+			this.paused = false;
+			this.pump();
+		}
+		get isPaused() {
+			return this.paused;
+		}
+		has(id) {
+			return !!this.find(id);
+		}
+		find(id) {
+			return this.running.get(id) ?? this.pending.find((t) => t.id === id);
+		}
+		drop(match) {
+			const removed = this.pending.filter(match);
+			this.pending = this.pending.filter((t) => !match(t));
+			for (const t of removed) t.reject(new CancelledError());
+			for (const t of [...this.running.values()].filter(match)) {
+				this.running.delete(t.id);
+				t.controller.abort();
+				t.reject(new CancelledError());
+			}
+			this.pump();
+		}
+		laneRunning(lane) {
+			let n = 0;
+			for (const t of this.running.values()) if (t.lane === lane) n++;
+			return n;
+		}
+		lanePriority(lane) {
+			return this.options.lanes[lane]?.priority ?? 0;
+		}
+		pump() {
+			if (this.paused) return;
+			this.pending.sort((a, b) => this.lanePriority(b.lane) - this.lanePriority(a.lane) || b.priority - a.priority || a.seq - b.seq);
+			for (let i = 0; i < this.pending.length && this.running.size < this.options.maxConcurrent;) {
+				const task = this.pending[i];
+				const limit = this.options.lanes[task.lane]?.maxConcurrent ?? this.options.maxConcurrent;
+				if (this.laneRunning(task.lane) >= limit) {
+					i++;
+					continue;
+				}
+				this.pending.splice(i, 1);
+				this.start(task);
+			}
+		}
+		start(task) {
+			this.running.set(task.id, task);
+			const settle = (ok, value) => {
+				if (this.running.get(task.id) !== task) return;
+				this.running.delete(task.id);
+				if (ok) task.resolve(value);
+				else task.reject(value);
+				this.pump();
+			};
+			let result;
+			try {
+				result = Promise.resolve(task.fn(task.controller.signal));
+			} catch (e) {
+				result = Promise.reject(e);
+			}
+			result.then((v) => settle(true, v), (e) => settle(false, e));
+		}
+	};
+	var IGNORED = new Set(["thumb", "po"]);
+	function sameContent(a, b) {
+		const ka = Object.keys(a).filter((k) => !IGNORED.has(k));
+		const kb = Object.keys(b).filter((k) => !IGNORED.has(k));
+		if (ka.length !== kb.length) return false;
+		const ra = a;
+		const rb = b;
+		return ka.every((k) => Object.is(ra[k], rb[k]));
+	}
+	function mergeRange(cached, fresh, opts) {
+		const freshIds = new Set(fresh.map((i) => i.id));
+		const pos = new Map(cached.map((item, i) => [item.id, i]));
+		const hits = fresh.map((i) => pos.get(i.id)).filter((i) => i !== void 0);
+		let changed = 0;
+		const rows = fresh.map((item) => {
+			const i = pos.get(item.id);
+			if (i === void 0) return item;
+			const old = cached[i];
+			if (!sameContent(old, item)) {
+				changed++;
+				return item;
+			}
+			return old.thumb === item.thumb && old.po === item.po ? old : item;
+		});
+		const added = fresh.filter((i) => !pos.has(i.id));
+		if (!hits.length && opts.offset !== void 0 && cached.some((i) => i.po !== void 0)) {
+			const offset = opts.offset;
+			const before = cached.filter((i) => (i.po ?? 0) < offset);
+			const after = opts.end ? [] : cached.filter((i) => (i.po ?? 0) > offset);
+			const kept = new Set([...before, ...after].map((i) => i.id));
+			return {
+				list: [
+					...before,
+					...rows,
+					...after
+				],
+				added,
+				removed: cached.filter((i) => !kept.has(i.id)),
+				changed
+			};
+		}
+		if (!hits.length) {
+			if (!opts.start) return {
+				list: cached,
+				added: [],
+				removed: [],
+				changed: 0
+			};
+			return opts.end ? {
+				list: rows,
+				added,
+				removed: cached,
+				changed
+			} : {
+				list: [...rows, ...cached],
+				added,
+				removed: [],
+				changed
+			};
+		}
+		const first = hits[0];
+		const last = hits.at(-1);
+		let lo = opts.start ? 0 : Math.min(first, last);
+		if (opts.ownPage) {
+			const own = cached.findIndex(opts.ownPage);
+			if (own >= 0 && own < lo) lo = own;
+		}
+		const hi = opts.end ? cached.length - 1 : Math.max(opts.start ? last : first, last);
+		const removed = cached.slice(lo, hi + 1).filter((i) => !freshIds.has(i.id));
+		const keep = (part) => part.filter((i) => !freshIds.has(i.id));
+		const list = [
+			...keep(cached.slice(0, lo)),
+			...rows,
+			...keep(cached.slice(hi + 1))
+		];
+		return {
+			list: list.length === cached.length && list.every((item, i) => item === cached[i]) ? cached : list,
+			added,
+			removed,
+			changed
+		};
+	}
+	function mergePage(cached, fresh, offset) {
+		const opts = {
+			start: offset === 0,
+			end: !fresh.hasMore,
+			ownPage: (i) => i.po === offset,
+			offset
+		};
+		const f = mergeRange(cached.folders, fresh.folders, opts);
+		const m = mergeRange(cached.media, fresh.media, opts);
+		let { nextOffset, hasMore } = cached;
+		const changedRange = f.added.length + f.removed.length + m.added.length + m.removed.length > 0;
+		if (opts.start && (fresh.total !== cached.total || changedRange)) {
+			nextOffset = fresh.nextOffset;
+			hasMore = fresh.hasMore;
+		} else if (!opts.start && fresh.total !== cached.total) {
+			nextOffset = 0;
+			hasMore = fresh.total > 0;
+		} else if (offset <= cached.nextOffset) {
+			nextOffset = opts.end ? fresh.nextOffset : Math.max(cached.nextOffset, fresh.nextOffset);
+			hasMore = !opts.end && nextOffset < fresh.total;
+			if (!opts.start && fresh.hasMore && !cached.hasMore) {
+				nextOffset = fresh.nextOffset;
+				hasMore = true;
+			}
+		}
+		return {
+			page: f.list === cached.folders && m.list === cached.media && fresh.total === cached.total && nextOffset === cached.nextOffset && hasMore === cached.hasMore ? cached : {
+				folders: f.list,
+				media: m.list,
+				total: fresh.total,
+				nextOffset,
+				hasMore
+			},
+			added: [...f.added, ...m.added],
+			removed: [...f.removed, ...m.removed],
+			changed: f.changed + m.changed
+		};
+	}
+	function changeNotice(r) {
+		const parts = [];
+		if (r.added.length) parts.push(`新增 ${r.added.length} 项`);
+		if (r.removed.length) parts.push(`删除 ${r.removed.length} 项`);
+		if (r.changed) parts.push(`修改 ${r.changed} 项`);
+		return parts.length ? `已更新：${parts.join("，")}` : "";
+	}
+	function reinsert(current, order, items) {
+		if (!items.length) return current;
+		const out = [...current];
+		const ids = new Set(out.map((i) => i.id));
+		const want = new Set(items.map((i) => i.id));
+		for (let k = 0; k < order.length; k++) {
+			const item = order[k];
+			if (!want.has(item.id) || ids.has(item.id)) continue;
+			let at = 0;
+			for (let j = k - 1; j >= 0; j--) {
+				const idx = out.findIndex((i) => i.id === order[j].id);
+				if (idx >= 0) {
+					at = idx + 1;
+					break;
+				}
+			}
+			out.splice(at, 0, item);
+			ids.add(item.id);
+		}
+		return out;
+	}
+	var CACHE_TTL = 5184e6;
+	var MEM_MAX = 50;
+	var PAGE_REFRESH_GAP = 6e4;
+	var ROOT = {
+		id: "0",
+		name: "根目录"
+	};
+	var LANE$5 = "list";
+	var emptyPage = () => ({
+		folders: [],
+		media: [],
+		total: 0,
+		nextOffset: 0,
+		hasMore: false
+	});
+	var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+	var PartialDeleteError = class extends Error {
+		deleted;
+		remaining;
+		constructor(deleted, remaining, cause) {
+			super(`已删除 ${deleted.length} 项，剩余 ${remaining.length} 项未确认删除：${cause instanceof Error ? cause.message : String(cause)}`, { cause });
+			this.deleted = deleted;
+			this.remaining = remaining;
+			this.name = "PartialDeleteError";
+		}
+	};
+	var Browser = class {
+		deps;
+		state = reactive({
+			uid: "",
+			cid: "0",
+			crumbs: [ROOT],
+			page: emptyPage(),
+			query: {
+				sort: "name",
+				order: "asc",
+				keyword: ""
+			},
+			loading: false,
+			loadingMore: false,
+			error: null,
+			risk: false,
+			capped: false,
+			notice: ""
+		});
+		seq = 0;
+		accountConfirmed = false;
+		cache = new Map();
+		crumbsOf = new Map();
+		pageRefresh = new Map();
+		verified = "all";
+		revealing = Promise.resolve();
+		pageSize;
+		now;
+		constructor(deps) {
+			this.deps = deps;
+			this.pageSize = deps.pageSize ?? 120;
+			this.now = deps.now ?? Date.now;
+			if (deps.lastUid) this.state.uid = deps.lastUid;
+		}
+		async open(cid, opts = {}) {
+			const seq = ++this.seq;
+			this.deps.scheduler.cancelLane(LANE$5);
+			const s = this.state;
+			s.cid = cid;
+			s.error = null;
+			s.loadingMore = false;
+			const key = this.key();
+			this.verified = "all";
+			if (!opts.force) {
+				let hit = this.memGet(key);
+				if (!this.fresh(hit) && this.deps.persist) {
+					s.loading = true;
+					hit = await this.deps.persist.get(key).catch(() => void 0);
+					if (seq !== this.seq) return;
+				}
+				if (this.fresh(hit)) {
+					Object.assign(s, {
+						page: markRaw(hit.page),
+						crumbs: hit.crumbs,
+						capped: hit.capped,
+						loading: false
+					});
+					if (!this.crumbsOf.has(cid)) this.crumbsOf.set(cid, hit.crumbs);
+					const age = this.now() - hit.at;
+					this.remember(key);
+					if (age >= 15e3 || this.state.uid && !this.accountConfirmed) {
+						this.verified = new Set([0]);
+						await this.revalidate(seq, key);
+					}
+					return;
+				}
+			}
+			s.page = markRaw(emptyPage());
+			s.capped = false;
+			s.loading = true;
+			try {
+				const first = await this.fetchFirst(cid, seq);
+				if (!first) return;
+				this.apply(first);
+				this.remember(this.key());
+			} catch (e) {
+				if (seq === this.seq) this.fail(e);
+			} finally {
+				if (seq === this.seq) s.loading = false;
+			}
+		}
+		async revalidate(seq, key) {
+			try {
+				const first = await this.fetchFirst(this.state.cid, seq);
+				if (!first || seq !== this.seq) return;
+				if (key !== this.key()) {
+					this.apply(first);
+					this.remember(this.key());
+					return;
+				}
+				const s = this.state;
+				const merged = mergePage(s.page, first.page, 0);
+				s.crumbs = first.crumbs;
+				s.capped = first.capped;
+				const notice = changeNotice(merged);
+				if (notice) s.notice = notice;
+				const held = this.deps.warm ? merged.added.filter((i) => i.kind === "image" && !!i.thumb) : [];
+				const heldIds = new Set(held.map((i) => i.id));
+				const page = held.length ? {
+					...merged.page,
+					media: merged.page.media.filter((i) => !heldIds.has(i.id))
+				} : merged.page;
+				if (page !== s.page) s.page = markRaw(page);
+				this.remember(key);
+				if (held.length) this.revealing = this.reveal(seq, key, merged.page.media, held);
+			} catch (e) {
+				if (e instanceof RiskControlError) this.reportRisk();
+			}
+		}
+		async reveal(seq, key, order, held) {
+			const [first, last] = this.deps.holdMs ?? [1e3, 5e3];
+			const settled = new Set();
+			const all = Promise.all(held.map((i) => this.deps.warm(i).catch(() => {}).then(() => void settled.add(i.id))));
+			await Promise.race([all, sleep(first)]);
+			if (!this.still(seq, key)) return;
+			this.insertHeld(key, order, held.filter((i) => settled.has(i.id)));
+			const rest = held.filter((i) => !settled.has(i.id));
+			if (!rest.length) return;
+			await Promise.race([all, sleep(Math.max(0, last - first))]);
+			if (!this.still(seq, key)) return;
+			this.insertHeld(key, order, rest);
+		}
+		insertHeld(key, order, items) {
+			if (!items.length) return;
+			const s = this.state;
+			s.page = markRaw({
+				...s.page,
+				media: reinsert(s.page.media, order, items)
+			});
+			this.remember(key);
+		}
+		verify(item) {
+			const offset = item.po ?? 0;
+			if (this.verified === "all" || this.verified.has(offset)) return;
+			this.verified.add(offset);
+			this.refreshItem(item);
+		}
+		refreshItem(item) {
+			const key = this.key();
+			const seq = this.seq;
+			const offset = item.po ?? 0;
+			const tag = `${key}#${offset}`;
+			const prev = this.pageRefresh.get(tag);
+			if (prev && this.now() - prev.at < PAGE_REFRESH_GAP) return prev.p;
+			const p = (async () => {
+				try {
+					const res = await this.fetchPage(offset);
+					if (!this.still(seq, key)) return;
+					if (res.uid && res.uid !== this.state.uid) {
+						this.noteAccount(res.uid);
+						await this.refresh();
+						return;
+					}
+					const s = this.state;
+					const merged = mergePage(s.page, toLoaded(res, offset), offset);
+					const notice = changeNotice(merged);
+					if (notice) s.notice = notice;
+					if (merged.page === s.page) return;
+					s.page = markRaw(merged.page);
+					this.remember(key);
+				} catch (e) {
+					if (e instanceof RiskControlError) this.reportRisk();
+				}
+			})();
+			this.pageRefresh.set(tag, {
+				at: this.now(),
+				p
+			});
+			return p;
+		}
+		still(seq, key) {
+			return seq === this.seq && key === this.key();
+		}
+		async fetchFirst(cid, seq) {
+			const s = this.state;
+			const first = await this.fetchPage(0);
+			if (seq !== this.seq) return void 0;
+			this.noteAccount(first.uid);
+			let page = toLoaded(first, 0);
+			if (s.query.type && !s.query.keyword && !page.folders.length) {
+				const folders = await this.fetchFolders(cid).catch(() => []);
+				if (seq !== this.seq) return void 0;
+				page = {
+					...page,
+					folders
+				};
+			}
+			let crumbs = first.path ? toCrumbs(first.path, cid) : this.crumbsOf.get(cid);
+			if (!crumbs) {
+				crumbs = await this.fetchCrumbs(cid);
+				if (seq !== this.seq) return void 0;
+			}
+			this.crumbsOf.set(cid, crumbs);
+			return {
+				page,
+				crumbs,
+				capped: "capped" in first && !!first.capped
+			};
+		}
+		apply(first) {
+			const s = this.state;
+			s.page = markRaw(first.page);
+			s.capped = first.capped;
+			s.crumbs = first.crumbs;
+		}
+		rememberCrumbs(cid, crumbs) {
+			this.crumbsOf.set(cid, crumbs);
+		}
+		moreRequest;
+		loadMore() {
+			if (this.moreRequest?.seq === this.seq) return this.moreRequest.promise;
+			const request = {
+				seq: this.seq,
+				promise: this.loadNextPage()
+			};
+			this.moreRequest = request;
+			request.promise.finally(() => {
+				if (this.moreRequest === request) this.moreRequest = void 0;
+			});
+			return request.promise;
+		}
+		async loadNewMedia(known, accepts) {
+			const seq = this.seq;
+			const key = this.key();
+			const visited = new Set();
+			while (this.still(seq, key)) {
+				const added = this.state.page.media.filter((i) => accepts(i) && !known.has(i.id));
+				if (added.length || !this.state.page.hasMore || this.state.loading || this.state.risk) return added;
+				const offset = this.state.page.nextOffset;
+				if (visited.has(offset)) return [];
+				visited.add(offset);
+				await this.loadMore();
+				if (this.state.error) throw new Error(this.state.error);
+			}
+			return [];
+		}
+		async loadNextPage() {
+			const s = this.state;
+			if (s.loading || s.loadingMore || !s.page.hasMore || s.risk) return;
+			const seq = this.seq;
+			s.loadingMore = true;
+			try {
+				const offset = s.page.nextOffset;
+				const next = await this.fetchPage(offset);
+				if (seq !== this.seq) return;
+				if (next.uid && next.uid !== s.uid) {
+					this.noteAccount(next.uid);
+					await this.refresh();
+					return;
+				}
+				const fresh = toLoaded(next, offset);
+				s.page = markRaw(mergePage(s.page, fresh, offset).page);
+				if (this.verified !== "all") this.verified.add(offset);
+				if ("capped" in next && next.capped) s.capped = true;
+				this.remember(this.key());
+			} catch (e) {
+				if (seq === this.seq) this.fail(e);
+			} finally {
+				if (seq === this.seq) s.loadingMore = false;
+			}
+		}
+		async ensureLoaded(count, maxPages = 20) {
+			for (let i = 0; i < maxPages && this.state.page.media.length < count && this.state.page.hasMore; i++) {
+				const seq = this.seq;
+				await this.loadMore();
+				if (seq !== this.seq || this.state.error || this.state.risk) return;
+			}
+		}
+		refresh() {
+			return this.open(this.state.cid, { force: true });
+		}
+		openFolder(cid) {
+			this.state.query.keyword = "";
+			return this.open(cid);
+		}
+		setQuery(patch) {
+			Object.assign(this.state.query, patch);
+			return this.open(this.state.cid);
+		}
+		async invalidate() {
+			this.cache.clear();
+			this.pageRefresh.clear();
+			await this.deps.persist?.clear().catch(() => {});
+			return this.refresh();
+		}
+		async toggleStar(item) {
+			if (!this.deps.postForm) throw new Error("未配置写接口");
+			const uid = this.state.uid;
+			const next = !item.starred;
+			try {
+				await setStar(this.deps.postForm, item.id, next);
+			} catch (e) {
+				if (e instanceof RiskControlError) this.reportRisk();
+				throw e;
+			}
+			if (uid !== this.state.uid) return;
+			this.applyStar(item.id, next);
+			this.deps.onStarChanged?.(item, next);
+		}
+		applyStar(id, starred) {
+			const swap = (list) => list.some((i) => i.id === id) ? list.map((i) => i.id === id ? {
+				...i,
+				starred
+			} : i) : list;
+			const patch = (page) => {
+				const media = swap(page.media);
+				const folders = swap(page.folders);
+				return media === page.media && folders === page.folders ? page : {
+					...page,
+					media,
+					folders
+				};
+			};
+			for (const [k, entry] of this.cache) {
+				const page = patch(entry.page);
+				if (page !== entry.page) this.cache.set(k, {
+					...entry,
+					page
+				});
+			}
+			const page = patch(this.state.page);
+			if (page === this.state.page) return;
+			this.state.page = markRaw(page);
+			this.remember(this.key());
+		}
+		async deleteItems(items) {
+			if (!this.deps.postForm) throw new Error("未配置写接口");
+			if (!items.length) return;
+			const groups = new Map();
+			for (const i of items) groups.set(i.parentId, [...groups.get(i.parentId) ?? [], i.id]);
+			const uid = this.state.uid;
+			const deleted = [];
+			const done = new Set();
+			try {
+				for (const [pid, ids] of groups) await deleteFiles(this.deps.postForm, pid, ids, {
+					beforeBatch: () => {
+						if (uid !== this.state.uid) throw new CancelledError();
+						if (this.state.risk) throw new RiskControlError();
+					},
+					onBatch: (ids) => {
+						const batchIds = new Set(ids);
+						const batch = items.filter((i) => batchIds.has(i.id));
+						batch.forEach((i) => done.add(i.id));
+						deleted.push(...batch);
+						if (uid === this.state.uid) this.applyDeleted(batch);
+					}
+				});
+			} catch (e) {
+				if (e instanceof RiskControlError) this.reportRisk();
+				if (deleted.length) throw new PartialDeleteError(deleted, items.filter((i) => !done.has(i.id)), e);
+				throw e;
+			}
+		}
+		applyDeleted(items) {
+			this.removeRows(new Set(items.map((i) => i.id)));
+			for (const i of items) {
+				if (i.kind !== "folder") continue;
+				for (const k of [...this.cache.keys()]) if (k.split("|")[1] === i.id) this.cache.delete(k);
+			}
+			this.deps.onDeleted?.(items);
+		}
+		removeRows(ids) {
+			const patch = (page) => {
+				const media = page.media.filter((i) => !ids.has(i.id));
+				const folders = page.folders.filter((i) => !ids.has(i.id));
+				const gone = page.media.length - media.length + page.folders.length - folders.length;
+				if (!gone) return page;
+				return {
+					...page,
+					media,
+					folders,
+					total: Math.max(0, page.total - gone),
+					nextOffset: Math.max(0, page.nextOffset - gone)
+				};
+			};
+			for (const [k, entry] of this.cache) {
+				const page = patch(entry.page);
+				if (page !== entry.page) this.cache.set(k, {
+					...entry,
+					page
+				});
+			}
+			const page = patch(this.state.page);
+			if (page === this.state.page) return;
+			this.state.page = markRaw(page);
+			this.remember(this.key());
+		}
+		positionKey() {
+			return this.key();
+		}
+		reportRisk() {
+			this.state.risk = true;
+			this.deps.scheduler.pause();
+		}
+		async resumeAfterVerify() {
+			this.state.risk = false;
+			this.deps.scheduler.resume();
+			await this.refresh();
+		}
+		key() {
+			return `${this.state.uid}|${this.state.cid}|${JSON.stringify(this.state.query)}`;
+		}
+		noteAccount(uid) {
+			if (!uid) return;
+			this.accountConfirmed = true;
+			if (uid === this.state.uid) return;
+			this.cache.clear();
+			this.crumbsOf.clear();
+			this.pageRefresh.clear();
+			this.verified = "all";
+			this.state.page = markRaw(emptyPage());
+			this.state.crumbs = [ROOT];
+			this.state.notice = "";
+			this.state.uid = uid;
+			this.deps.onAccount?.(uid);
+		}
+		remember(key) {
+			const s = this.state;
+			const entry = {
+				page: s.page,
+				crumbs: s.crumbs,
+				capped: s.capped,
+				at: this.now()
+			};
+			this.cache.delete(key);
+			this.cache.set(key, entry);
+			if (this.cache.size > MEM_MAX) this.cache.delete(this.cache.keys().next().value);
+			this.deps.persist?.put(key, entry).catch(() => {});
+		}
+		memGet(key) {
+			const hit = this.cache.get(key);
+			if (hit) {
+				this.cache.delete(key);
+				this.cache.set(key, hit);
+			}
+			return hit;
+		}
+		fresh(hit) {
+			return !!hit && this.now() - hit.at < 5184e6;
+		}
+		fail(e) {
+			if (e instanceof CancelledError) return;
+			if (e instanceof RiskControlError) {
+				this.reportRisk();
+				return;
+			}
+			this.state.error = e instanceof Error ? e.message : String(e);
+		}
+		fetchPage(offset) {
+			const { cid } = this.state;
+			const query = { ...this.state.query };
+			const base = {
+				cid,
+				offset,
+				limit: this.pageSize,
+				type: query.type
+			};
+			return this.deps.scheduler.add((signal) => query.keyword ? searchPage(this.deps.fetchJson, {
+				...base,
+				keyword: query.keyword
+			}, signal) : listPage(this.deps.fetchJson, {
+				...base,
+				sort: query.sort,
+				order: query.order
+			}, signal), { lane: LANE$5 });
+		}
+		async fetchFolders(cid) {
+			const { sort, order } = this.state.query;
+			return (await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
+				cid,
+				offset: 0,
+				limit: 1150,
+				sort,
+				order
+			}, signal), { lane: LANE$5 })).items.filter((i) => i.kind === "folder");
+		}
+		async fetchCrumbs(cid) {
+			if (cid === "0") return [ROOT];
+			try {
+				const info = await this.deps.scheduler.add((signal) => categoryGet(this.deps.fetchJson, cid, signal), { lane: LANE$5 });
+				return [
+					ROOT,
+					...info.paths.filter((p) => p.id !== "0").map((p) => ({
+						id: p.id,
+						name: p.name
+					})),
+					{
+						id: cid,
+						name: info.name || cid
+					}
+				];
+			} catch (e) {
+				if (e instanceof CancelledError || e instanceof RiskControlError) throw e;
+				return [ROOT, {
+					id: cid,
+					name: cid
+				}];
+			}
+		}
+	};
+	function toCrumbs(path, cid) {
+		const rest = path.filter((p) => p.id !== "0").map((p) => ({
+			id: p.id,
+			name: p.name || p.id
+		}));
+		if (cid !== "0" && rest.at(-1)?.id !== cid) rest.push({
+			id: cid,
+			name: cid
+		});
+		return [ROOT, ...rest];
+	}
+	function toLoaded(p, offset) {
+		const folders = [];
+		const media = [];
+		for (const raw of p.items) {
+			const item = {
+				...raw,
+				po: offset
+			};
+			if (item.kind === "folder") folders.push(item);
+			else if (item.kind === "image" || item.kind === "video") media.push(item);
+		}
+		return {
+			folders,
+			media,
+			total: p.total,
+			nextOffset: p.nextOffset,
+			hasMore: p.hasMore
+		};
+	}
+	var SIZE_SUFFIX = /(\/thumb\/[^?#]*_)(\d+)(?=$|[?#])/;
+	function withThumbSize(url, size) {
+		return SIZE_SUFFIX.test(url) ? url.replace(SIZE_SUFFIX, `$1${size}`) : url;
+	}
+	function pickThumbSize(cssWidth, dpr = 1) {
+		const px = cssWidth * dpr;
+		if (px <= 480) return 480;
+		if (px <= 800) return 800;
+		return 1440;
+	}
+	function thumbExpiresAt(url) {
+		const t = Number(new URL(url).searchParams.get("t"));
+		return Number.isFinite(t) && t > 0 ? t * 1e3 : null;
+	}
+	var PLACEHOLDER = 480;
+	function isPlaceholder(loaded, requested, known) {
+		if (loaded.w !== PLACEHOLDER || loaded.h !== PLACEHOLDER) return false;
+		if (known) {
+			const expected = expectedThumbSize(known, requested);
+			return expected.w !== PLACEHOLDER || expected.h !== PLACEHOLDER;
+		}
+		return requested !== PLACEHOLDER;
+	}
+	function expectedThumbSize(known, requested) {
+		const w = requested === 0 ? known.w : Math.min(requested, known.w);
+		return {
+			w,
+			h: Math.round(known.h * w / known.w)
+		};
+	}
+	function isPlaceholderProbe(probe) {
+		return probe.w === PLACEHOLDER && probe.h === PLACEHOLDER;
+	}
+	function formatSize(bytes) {
+		if (bytes < 1024) return `${bytes} B`;
+		const units = [
+			"KB",
+			"MB",
+			"GB",
+			"TB"
+		];
+		let v = bytes / 1024;
+		let i = 0;
+		while (v >= 1024 && i < units.length - 1) {
+			v /= 1024;
+			i++;
+		}
+		return `${v.toFixed(1)} ${units[i]}`;
+	}
+	function formatDuration(seconds) {
+		const s = Math.max(0, Math.floor(seconds));
+		const m = Math.floor(s / 60);
+		const r = s % 60;
+		return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+	}
+	function choosePlayer(pref, video, masterInstalled) {
+		const fallback = masterInstalled ? "master" : "official";
+		if (pref === "official") return "official";
+		if (pref === "master") return fallback;
+		return video.transcoded === false ? fallback : "lite";
+	}
+	function neighborVideo(list, id, step) {
+		const videos = list.filter((i) => i.kind === "video");
+		const at = videos.findIndex((i) => i.id === id);
+		return at < 0 ? void 0 : videos[at + step];
+	}
+	var SIZE_COLUMNS = {
+		XS: 6,
+		S: 5,
+		M: 4,
+		L: 3
+	};
+	function responsiveColumns(desktopCols, w) {
+		if (w >= 900) return desktopCols;
+		if (w >= 600) return Math.min(desktopCols, 4);
+		if (w >= 400) return Math.min(desktopCols, 3);
+		return Math.min(desktopCols, 2);
+	}
+	function shouldLoadMore(m, trigger) {
+		return m.scrollTop + m.clientHeight >= m.scrollHeight * trigger;
+	}
+	function isTouchPrimary() {
+		return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: none)").matches;
+	}
+	var SHAPES = "<path d=\"M9.5 21.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 20.6 11a5 5 0 0 1 1.9 9.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><rect x=\"11\" y=\"16\" width=\"3\" height=\"7\" rx=\"1\" fill=\"currentColor\"/><rect x=\"15\" y=\"16\" width=\"3\" height=\"4\" rx=\"1\" fill=\"currentColor\" opacity=\".7\"/><rect x=\"15\" y=\"21\" width=\"3\" height=\"5\" rx=\"1\" fill=\"currentColor\"/><rect x=\"19\" y=\"16\" width=\"3\" height=\"9\" rx=\"1\" fill=\"currentColor\" opacity=\".7\"/>";
+	function brandSvg(size, style = "") {
+		return `<svg width="${size}" height="${size}" viewBox="5 5 22 22" aria-hidden="true"${style ? ` style="${style}"` : ""}>${SHAPES}</svg>`;
 	}
 	var PUSH_URL = "https://115.com/?ct=play&ac=push";
 	var BATCH_PUSH_URL = "https://115.com/?ctl=play&ac=batch_push";
@@ -5306,6 +6135,11 @@
 	}
 	function parseTranscodeStatus(body) {
 		const b = body ?? {};
+		if ([
+			b.code,
+			b.errno,
+			b.msg_code
+		].some((code) => Number(code) === 911)) throw new RiskControlError();
 		if (Number(b.result) !== 0) return { kind: "unknown" };
 		const status = Number(b.status);
 		if (status === 1 || status === 3) return {
@@ -5321,18 +6155,36 @@
 	}
 	var transcodable = (i) => i.kind === "video" && i.transcoded === false && !!i.pickCode && !!i.sha1;
 	var POLL_MAX = 30;
+	var TranscodePausedError = class extends Error {
+		constructor() {
+			super("115 请求已暂停，请完成验证后继续");
+		}
+	};
 	var TranscodeService = class {
 		deps;
 		state = reactive({});
 		watching = new Map();
 		timer = null;
+		generation = 0;
+		polling = false;
 		constructor(deps) {
 			this.deps = deps;
 		}
 		view(id) {
 			return this.state[id];
 		}
+		reset() {
+			this.generation++;
+			this.watching.clear();
+			for (const id of Object.keys(this.state)) delete this.state[id];
+		}
+		assertReady(generation) {
+			if (generation !== this.generation) throw new CancelledError();
+			if (this.deps.paused?.()) throw new TranscodePausedError();
+		}
 		async submit(items) {
+			const generation = this.generation;
+			this.assertReady(generation);
 			const list = items.filter(transcodable).filter((i) => this.state[i.id]?.kind !== "pushing");
 			const result = {
 				submitted: 0,
@@ -5342,36 +6194,47 @@
 			};
 			if (!list.length) return result;
 			for (const i of list) this.state[i.id] = { kind: "pushing" };
-			const statuses = await this.checkAll(list);
-			const todo = [];
-			list.forEach((item, k) => {
-				const s = statuses[k];
-				if (s.kind === "failed") {
-					this.state[item.id] = { kind: "failed" };
-					result.failed++;
-				} else if (s.kind === "done") {
-					this.state[item.id] = { kind: "done" };
-					result.done++;
-					this.deps.refresh(item);
-				} else todo.push(item);
-			});
-			if (!todo.length) return result;
 			try {
-				if (todo.length === 1) await pushTranscode(this.deps.post, todo[0].pickCode, todo[0].sha1);
-				else await batchPushTranscode(this.deps.post, todo.map((i) => i.id), { sleep: this.deps.sleep });
+				const statuses = await this.checkAll(list, generation);
+				this.assertReady(generation);
+				const todo = [];
+				list.forEach((item, k) => {
+					const status = statuses[k];
+					if (status.kind === "failed") {
+						this.state[item.id] = { kind: "failed" };
+						result.failed++;
+					} else if (status.kind === "done") {
+						this.apply(item, status);
+						result.done++;
+					} else todo.push(item);
+				});
+				if (!todo.length) return result;
+				const post = (url, form) => {
+					this.assertReady(generation);
+					return this.deps.post(url, form);
+				};
+				if (todo.length === 1) await pushTranscode(post, todo[0].pickCode, todo[0].sha1);
+				else await batchPushTranscode(post, todo.map((i) => i.id), { sleep: this.deps.sleep });
+				if (generation !== this.generation) throw new CancelledError();
+				result.submitted = todo.length;
+				for (const item of todo) {
+					this.state[item.id] = { kind: "submitted" };
+					this.watch(item);
+				}
+				const after = await this.checkAll(todo, generation);
+				this.assertReady(generation);
+				todo.forEach((item, k) => this.apply(item, after[k]));
+				return result;
 			} catch (e) {
+				if (generation !== this.generation) throw e;
 				if (e instanceof RiskControlError) this.deps.onRisk?.();
 				const message = e instanceof Error ? e.message : String(e);
-				for (const i of todo) this.state[i.id] = {
+				for (const item of list) if (this.state[item.id]?.kind === "pushing") this.state[item.id] = {
 					kind: "error",
 					message
 				};
 				throw e;
 			}
-			result.submitted = todo.length;
-			const after = await this.checkAll(todo);
-			todo.forEach((item, k) => this.apply(item, after[k]));
-			return result;
 		}
 		apply(item, s) {
 			if (s.kind === "queued") {
@@ -5389,13 +6252,18 @@
 				this.watch(item);
 			}
 		}
-		async checkAll(items) {
+		async checkAll(items, generation) {
 			const out = [];
-			for (const i of items) try {
-				out.push(await checkTranscode(this.deps.postJson, i.sha1));
-			} catch (e) {
-				if (e instanceof RiskControlError) this.deps.onRisk?.();
-				out.push({ kind: "unknown" });
+			for (const i of items) {
+				this.assertReady(generation);
+				try {
+					const status = await checkTranscode(this.deps.postJson, i.sha1);
+					this.assertReady(generation);
+					out.push(status);
+				} catch (e) {
+					if (e instanceof RiskControlError || e instanceof TranscodePausedError || e instanceof CancelledError) throw e;
+					out.push({ kind: "unknown" });
+				}
 			}
 			return out;
 		}
@@ -5413,17 +6281,27 @@
 			}, this.deps.pollMs ?? 6e4);
 		}
 		async poll() {
-			if (this.deps.active && !this.deps.active()) {
+			if (this.polling) return;
+			if (this.deps.active && !this.deps.active() || this.deps.paused?.()) {
 				this.schedule();
 				return;
 			}
-			const items = [...this.watching.values()];
-			const statuses = await this.checkAll(items);
-			items.forEach((item, k) => {
-				const s = statuses[k];
-				if (s.kind !== "unknown") this.apply(item, s);
-			});
-			this.schedule();
+			this.polling = true;
+			const generation = this.generation;
+			try {
+				const items = [...this.watching.values()];
+				const statuses = await this.checkAll(items, generation);
+				this.assertReady(generation);
+				items.forEach((item, k) => {
+					const status = statuses[k];
+					if (status.kind !== "unknown") this.apply(item, status);
+				});
+			} catch (e) {
+				if (generation === this.generation && e instanceof RiskControlError) this.deps.onRisk?.();
+			} finally {
+				this.polling = false;
+				this.schedule();
+			}
 		}
 	};
 	function transcodeText(v) {
@@ -22526,8 +23404,8 @@
 			if (key || ended) return key;
 		}
 	}
-	var LANE$5 = "frames";
-	var PERMANENT = [NotTranscodedError, UnsupportedCodecError];
+	var LANE$4 = "frames";
+	var RETRY_COOLDOWN_ERRORS = [NotTranscodedError, UnsupportedCodecError];
 	var frameKey = (sha1, second) => `${sha1}_${second}`;
 	var FrameService = class {
 		deps;
@@ -22553,7 +23431,8 @@
 				return view;
 			}
 			const failure = this.failed.get(pickCode);
-			if (failure) throw failure;
+			if (failure && (this.deps.now ?? Date.now)() - failure.at < 6e4) throw failure.error;
+			if (failure) this.failed.delete(pickCode);
 			this.waiters.set(key, (this.waiters.get(key) ?? 0) + 1);
 			try {
 				const result = await this.deps.scheduler.add(async (signal) => {
@@ -22569,19 +23448,25 @@
 					if (++this.puts % 50 === 0) this.deps.cache.prune();
 					return fresh;
 				}, {
-					lane: LANE$5,
+					lane: LANE$4,
 					id: key,
 					priority: opts.priority ?? 0
 				});
 				return this.remember(key, result);
 			} catch (e) {
-				if (PERMANENT.some((C) => e instanceof C)) this.failed.set(pickCode, e);
+				if (RETRY_COOLDOWN_ERRORS.some((C) => e instanceof C)) this.failed.set(pickCode, {
+					error: e,
+					at: (this.deps.now ?? Date.now)()
+				});
 				throw e;
 			} finally {
 				const n = (this.waiters.get(key) ?? 1) - 1;
 				if (n > 0) this.waiters.set(key, n);
 				else this.waiters.delete(key);
 			}
+		}
+		invalidateFailure(pickCode) {
+			this.failed.delete(pickCode);
 		}
 		reset() {
 			for (const v of this.views.values()) this.revoke(v.url);
@@ -22652,13 +23537,20 @@
 				let body;
 				try {
 					body = JSON.parse(master);
-				} catch {}
+				} catch {
+					throw new Error("播放列表响应异常，请稍后重试");
+				}
 				if (Number(body?.code) === 911) throw new RiskControlError();
+				if (!body || typeof body !== "object") throw new Error("播放列表响应异常，请稍后重试");
 				throw new NotTranscodedError();
 			}
 			const variant = pickLowest(parseMaster(master, masterUrl));
-			if (!variant) throw new NotTranscodedError();
-			return parseMedia(await getText(variant.url, signal), variant.url);
+			if (!variant) throw new Error("播放列表缺少可用清晰度");
+			const media = await getText(variant.url, signal);
+			if (!media.trimStart().startsWith("#EXTM3U")) throw new Error("分片列表响应异常");
+			const parsed = parseMedia(media, variant.url);
+			if (!parsed.length) throw new Error("分片列表为空");
+			return parsed;
 		};
 		const segments = (pickCode, signal, fresh) => {
 			const hit = playlists.get(pickCode);
@@ -24773,128 +25665,6 @@
 			...unref(options)
 		})));
 	}
-	var CancelledError = class extends Error {
-		constructor() {
-			super("任务已取消");
-			this.name = "CancelledError";
-		}
-	};
-	var Scheduler = class {
-		options;
-		pending = [];
-		running = new Map();
-		seq = 0;
-		paused = false;
-		constructor(options) {
-			this.options = options;
-		}
-		add(fn, opts) {
-			const id = opts.id ?? `task-${++this.seq}`;
-			const existing = this.find(id);
-			if (existing) return existing.promise;
-			let resolve;
-			let reject;
-			const promise = new Promise((res, rej) => {
-				resolve = res;
-				reject = rej;
-			});
-			this.pending.push({
-				id,
-				lane: opts.lane,
-				priority: opts.priority ?? 0,
-				seq: ++this.seq,
-				fn,
-				controller: new AbortController(),
-				promise,
-				resolve,
-				reject
-			});
-			this.pump();
-			return promise;
-		}
-		promote(id, priority) {
-			const task = this.pending.find((t) => t.id === id);
-			if (!task) return false;
-			task.priority = Math.max(task.priority, priority);
-			this.pump();
-			return true;
-		}
-		cancel(id) {
-			this.drop((t) => t.id === id);
-		}
-		cancelLane(lane) {
-			this.drop((t) => t.lane === lane);
-		}
-		clear() {
-			this.drop(() => true);
-		}
-		pause() {
-			this.paused = true;
-		}
-		resume() {
-			this.paused = false;
-			this.pump();
-		}
-		get isPaused() {
-			return this.paused;
-		}
-		has(id) {
-			return !!this.find(id);
-		}
-		find(id) {
-			return this.running.get(id) ?? this.pending.find((t) => t.id === id);
-		}
-		drop(match) {
-			const removed = this.pending.filter(match);
-			this.pending = this.pending.filter((t) => !match(t));
-			for (const t of removed) t.reject(new CancelledError());
-			for (const t of [...this.running.values()].filter(match)) {
-				this.running.delete(t.id);
-				t.controller.abort();
-				t.reject(new CancelledError());
-			}
-			this.pump();
-		}
-		laneRunning(lane) {
-			let n = 0;
-			for (const t of this.running.values()) if (t.lane === lane) n++;
-			return n;
-		}
-		lanePriority(lane) {
-			return this.options.lanes[lane]?.priority ?? 0;
-		}
-		pump() {
-			if (this.paused) return;
-			this.pending.sort((a, b) => this.lanePriority(b.lane) - this.lanePriority(a.lane) || b.priority - a.priority || a.seq - b.seq);
-			for (let i = 0; i < this.pending.length && this.running.size < this.options.maxConcurrent;) {
-				const task = this.pending[i];
-				const limit = this.options.lanes[task.lane]?.maxConcurrent ?? this.options.maxConcurrent;
-				if (this.laneRunning(task.lane) >= limit) {
-					i++;
-					continue;
-				}
-				this.pending.splice(i, 1);
-				this.start(task);
-			}
-		}
-		start(task) {
-			this.running.set(task.id, task);
-			const settle = (ok, value) => {
-				if (this.running.get(task.id) !== task) return;
-				this.running.delete(task.id);
-				if (ok) task.resolve(value);
-				else task.reject(value);
-				this.pump();
-			};
-			let result;
-			try {
-				result = Promise.resolve(task.fn(task.controller.signal));
-			} catch (e) {
-				result = Promise.reject(e);
-			}
-			result.then((v) => settle(true, v), (e) => settle(false, e));
-		}
-	};
 	var IdbConn = class {
 		factory;
 		name;
@@ -25164,7 +25934,7 @@
 			this.name = "ExpiredThumbError";
 		}
 	};
-	var LANE$4 = "thumb";
+	var LANE$3 = "thumb";
 	var SIZES$1 = [
 		480,
 		800,
@@ -25294,7 +26064,7 @@
 					if (++this.puts % 50 === 0) this.deps.store.prune().catch(() => {});
 					return f;
 				}, {
-					lane: LANE$4,
+					lane: LANE$3,
 					id,
 					priority
 				});
@@ -25619,6 +26389,7 @@
 			}
 			watch(() => props.item.transcoded, (t, old) => {
 				if (t === false || old !== false) return;
+				if (props.item.pickCode) ctrl.frames.invalidateFailure(props.item.pickCode);
 				status.value = "idle";
 				load();
 			});
@@ -25908,6 +26679,7 @@
 					delta: first.start - top
 				};
 			}, { flush: "pre" });
+			let indexBySha = new Map();
 			watch(() => props.items, async (items) => {
 				const keep = anchor;
 				anchor = null;
@@ -25925,7 +26697,6 @@
 				}
 				prefetch();
 			}, { immediate: true });
-			let indexBySha = new Map();
 			function rebuildIndex(items) {
 				indexBySha = new Map();
 				items.forEach((item, i) => {
@@ -26212,6 +26983,7 @@
 				if (!open) restoredKey = "";
 			});
 			watch(() => [
+				s.uid,
 				s.cid,
 				JSON.stringify(s.query),
 				s.loading,
@@ -26284,6 +27056,10 @@
 			});
 			const menu = ref(null);
 			const detail = ref(null);
+			watch(() => s.uid, () => {
+				menu.value = null;
+				detail.value = null;
+			});
 			async function copyName(item) {
 				try {
 					await navigator.clipboard.writeText(item.name);
@@ -26326,7 +27102,14 @@
 			function selectAll() {
 				selection.setAll(order.value, !allPicked.value);
 			}
-			watch(() => [s.cid, JSON.stringify(s.query)], () => selection.stop());
+			watch(() => [
+				s.uid,
+				s.cid,
+				JSON.stringify(s.query)
+			], () => {
+				selection.stop();
+				confirmDel.value = null;
+			});
 			const confirmDel = ref(null);
 			const delBtn = ref(null);
 			async function askDelete(items) {
@@ -26362,8 +27145,9 @@
 					confirmDel.value = null;
 					if (sel.active) selection.stop();
 				} catch (e) {
+					if (e instanceof PartialDeleteError) c.items = e.remaining;
 					c.busy = false;
-					props.ctrl.toast(`删除失败：${e instanceof Error ? e.message : e}`);
+					props.ctrl.toast(e instanceof PartialDeleteError ? e.message : `删除失败：${e instanceof Error ? e.message : e}`);
 				}
 			}
 			const pickedTranscodable = computed(() => sel.active ? pickedItems().filter(transcodable).length : 0);
@@ -26386,8 +27170,10 @@
 				}
 			}
 			async function showDetails(item) {
+				const uid = s.uid;
 				let info;
 				if (item.kind === "folder") info = await props.ctrl.folderInfo.get(item.id).catch(() => void 0);
+				if (uid !== s.uid) return;
 				detail.value = {
 					title: item.name,
 					lines: detailLines(item, item.sha1 ? dims.get(item.sha1) : void 0, info)
@@ -26442,13 +27228,10 @@
 				const images = s.page.media.filter((m) => m.kind === "image" && m.thumb);
 				const index = images.findIndex((m) => m.id === item.id);
 				if (index < 0 || !root.value) return;
-				let known = images.length;
+				const known = new Set(images.map((i) => i.id));
 				openViewer(props.ctrl, images, index, root.value, async () => {
-					if (!s.page.hasMore) return [];
-					await browser.loadMore();
-					const all = s.page.media.filter((m) => m.kind === "image" && m.thumb);
-					const added = all.slice(known);
-					known = all.length;
+					const added = await browser.loadNewMedia(known, (i) => i.kind === "image" && !!i.thumb);
+					added.forEach((i) => known.add(i.id));
 					return added;
 				});
 			}
@@ -26690,7 +27473,7 @@
 						}, "重试")])])) : createCommentVNode("", true),
 						unref(s).page.folders.length ? (openBlock(), createElementBlock("div", _hoisted_46, [createBaseVNode("div", _hoisted_47, "📁 文件夹 · " + toDisplayString(unref(s).page.folders.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1), createBaseVNode("div", _hoisted_48, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(s).page.folders, (f) => {
 							return openBlock(), createBlock(FolderCard_default, {
-								key: f.id,
+								key: `${unref(s).uid}|${f.id}`,
 								folder: f,
 								onOpen: __props.ctrl.enter,
 								onMenu: openMenu,
@@ -26699,7 +27482,8 @@
 							}, null, 8, ["folder", "onOpen"]);
 						}), 128))])])) : createCommentVNode("", true),
 						unref(s).page.media.length ? (openBlock(), createElementBlock("div", _hoisted_49, "🖼 媒体 · " + toDisplayString(unref(s).page.media.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1)) : createCommentVNode("", true),
-						createVNode(Masonry_default, {
+						(openBlock(), createBlock(Masonry_default, {
+							key: unref(s).uid,
 							items: unref(s).page.media,
 							columns: columns.value,
 							"scroll-el": scrollEl.value,
@@ -26718,15 +27502,17 @@
 							"dims",
 							"show-filename",
 							"show-tags"
-						]),
+						])),
 						unref(s).loading || unref(s).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_50, [..._cache[63] || (_cache[63] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(s).capped ? (openBlock(), createElementBlock("div", _hoisted_51, "已到 115 搜索的 10000 条上限，请缩小搜索范围")) : empty.value ? (openBlock(), createElementBlock("div", _hoisted_52, toDisplayString(unref(s).query.keyword || unref(s).query.type ? "没有匹配的媒体" : "此目录为空"), 1)) : createCommentVNode("", true)
 					])], 544)) : createCommentVNode("", true),
-					createVNode(FavDrawer_default, {
+					(openBlock(), createBlock(FavDrawer_default, {
+						key: unref(s).uid,
 						onEnter: __props.ctrl.enter,
 						onView: openFavorite,
 						onUnstar: toggleStar
-					}, null, 8, ["onEnter"]),
-					createVNode(DirDrawer_default, {
+					}, null, 8, ["onEnter"])),
+					(openBlock(), createBlock(DirDrawer_default, {
+						key: unref(s).uid,
 						crumbs: unref(s).crumbs,
 						"current-id": unref(s).cid,
 						onOpen: __props.ctrl.enter
@@ -26734,7 +27520,7 @@
 						"crumbs",
 						"current-id",
 						"onOpen"
-					]),
+					])),
 					unref(ui).player?.kind === "lite" ? (openBlock(), createBlock(LitePlayer_default, {
 						key: 2,
 						item: unref(ui).player.item,
@@ -28042,7 +28828,7 @@
 		link.crossOrigin = "anonymous";
 		doc.head.appendChild(link);
 	}
-	var LANE$3 = "side";
+	var LANE$2 = "side";
 	var TTL = 3e6;
 	var Favorites = class {
 		deps;
@@ -28052,10 +28838,26 @@
 			loaded: false,
 			error: ""
 		});
+		uid = "";
+		generation = 0;
 		at = -Infinity;
 		running = null;
 		constructor(deps) {
 			this.deps = deps;
+		}
+		setAccount(uid) {
+			if (uid === this.uid) return;
+			this.uid = uid;
+			this.generation++;
+			this.deps.scheduler.cancelLane(LANE$2);
+			this.running = null;
+			this.at = -Infinity;
+			Object.assign(this.state, {
+				items: [],
+				loading: false,
+				loaded: false,
+				error: ""
+			});
 		}
 		has(id) {
 			return this.state.items.some((i) => i.id === id);
@@ -28063,8 +28865,11 @@
 		load(force = false) {
 			if (!force && this.state.loaded && this.now() - this.at < TTL) return Promise.resolve();
 			if (this.running) return this.running;
-			this.running = this.fetch().finally(() => this.running = null);
-			return this.running;
+			const p = this.fetch().finally(() => {
+				if (this.running === p) this.running = null;
+			});
+			this.running = p;
+			return p;
 		}
 		apply(item, starred) {
 			const rest = this.state.items.filter((i) => i.id !== item.id);
@@ -28074,6 +28879,7 @@
 			}]) : rest);
 		}
 		async fetch() {
+			const generation = this.generation;
 			const s = this.state;
 			const limit = this.deps.pageSize ?? 1150;
 			const maxPages = this.deps.maxPages ?? 5;
@@ -28083,15 +28889,16 @@
 				const items = [];
 				let offset = 0;
 				for (let i = 0; i < maxPages; i++) {
-					const page = await this.deps.scheduler.add(() => listPage(this.deps.fetchJson, {
+					const page = await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
 						cid: "0",
 						offset,
 						limit,
 						starred: true
-					}), {
-						lane: LANE$3,
+					}, signal), {
+						lane: LANE$2,
 						id: `fav_${offset}`
 					});
+					if (generation !== this.generation) return;
 					items.push(...page.items.filter((x) => x.kind !== "other"));
 					if (!page.hasMore) break;
 					offset = page.nextOffset;
@@ -28100,11 +28907,11 @@
 				s.loaded = true;
 				this.at = this.now();
 			} catch (e) {
-				if (e instanceof CancelledError) return;
+				if (generation !== this.generation || e instanceof CancelledError) return;
 				if (e instanceof RiskControlError) this.deps.onRisk();
 				else s.error = e instanceof Error ? e.message : String(e);
 			} finally {
-				s.loading = false;
+				if (generation === this.generation) s.loading = false;
 			}
 		}
 		now() {
@@ -28114,7 +28921,7 @@
 	function sortItems(items) {
 		return [...items.filter((i) => i.kind === "folder"), ...items.filter((i) => i.kind !== "folder")];
 	}
-	var LANE$2 = "meta";
+	var LANE$1 = "meta";
 	var PREVIEW_COUNT = 4;
 	var PREVIEW_FETCH = 24;
 	var previewable = (i) => i.kind === "image" && !!i.thumb || i.kind === "video" && i.transcoded === true;
@@ -28123,6 +28930,8 @@
 	var INFO_KEEP = 5184e6;
 	var FolderInfoService = class {
 		deps;
+		uid = "";
+		generation = 0;
 		cache = new Map();
 		previews = new Map();
 		clearedAt = -Infinity;
@@ -28130,6 +28939,23 @@
 		cancelled = new Set();
 		constructor(deps) {
 			this.deps = deps;
+		}
+		setAccount(uid) {
+			if (uid === this.uid) return;
+			this.uid = uid;
+			this.generation++;
+			this.deps.scheduler.cancelLane(LANE$1);
+			this.cache.clear();
+			this.previews.clear();
+			this.staleAt.clear();
+			this.cancelled.clear();
+			this.clearedAt = -Infinity;
+		}
+		key(cid) {
+			return `${this.uid}|${cid}`;
+		}
+		assertGeneration(generation) {
+			if (generation !== this.generation) throw new CancelledError();
 		}
 		peek(cid) {
 			const hit = this.cache.get(cid);
@@ -28149,10 +28975,12 @@
 			this.clearedAt = this.now();
 		}
 		async get(cid, onUpdate) {
+			const generation = this.generation;
 			let hit = this.cache.get(cid);
 			if (!hit || !this.infoFresh(hit.at, cid)) {
 				this.cancelled.delete(`meta_${cid}`);
 				const stored = await this.load(cid);
+				this.assertGeneration(generation);
 				if (this.cancelled.delete(`meta_${cid}`)) throw new CancelledError();
 				if (stored?.info && stored.infoAt !== void 0 && (!hit || stored.infoAt > hit.at)) {
 					hit = {
@@ -28173,10 +29001,12 @@
 			return hit && this.now() - hit.at < INFO_KEEP ? hit.items : void 0;
 		}
 		async preview(cid, onUpdate) {
+			const generation = this.generation;
 			let hit = this.previews.get(cid);
 			if (!hit || !this.previewFresh(hit.at, cid)) {
 				this.cancelled.delete(`preview_${cid}`);
 				const stored = await this.load(cid);
+				this.assertGeneration(generation);
 				if (this.cancelled.delete(`preview_${cid}`)) throw new CancelledError();
 				if (stored?.preview && stored.previewAt !== void 0 && (!hit || stored.previewAt > hit.at)) {
 					hit = {
@@ -28193,16 +29023,19 @@
 			return this.fetchPreview(cid);
 		}
 		async fetchPreview(cid) {
+			const generation = this.generation;
 			try {
-				const items = (await this.deps.scheduler.add(() => listPage(this.deps.fetchJson, {
+				const page = await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
 					cid,
 					offset: 0,
 					limit: PREVIEW_FETCH,
 					showDir: false
-				}), {
-					lane: LANE$2,
+				}, signal), {
+					lane: LANE$1,
 					id: `preview_${cid}`
-				})).items.filter(previewable).slice(0, PREVIEW_COUNT);
+				});
+				this.assertGeneration(generation);
+				const items = page.items.filter(previewable).slice(0, PREVIEW_COUNT);
 				this.previews.set(cid, {
 					items,
 					at: this.now()
@@ -28221,11 +29054,13 @@
 			}
 		}
 		async fetchInfo(cid) {
+			const generation = this.generation;
 			try {
-				const info = await this.deps.scheduler.add(() => categoryGet(this.deps.fetchJson, cid), {
-					lane: LANE$2,
+				const info = await this.deps.scheduler.add((signal) => categoryGet(this.deps.fetchJson, cid, signal), {
+					lane: LANE$1,
 					id: `meta_${cid}`
 				});
+				this.assertGeneration(generation);
 				const existing = this.cache.get(cid);
 				if (existing && this.infoFresh(existing.at, cid)) return existing.info;
 				this.cache.set(cid, {
@@ -28250,7 +29085,7 @@
 		}
 		async load(cid) {
 			if (!this.deps.persist) return void 0;
-			return this.deps.persist.get(cid).catch(() => void 0);
+			return this.deps.persist.get(this.key(cid)).catch(() => void 0);
 		}
 		save(cid) {
 			if (!this.deps.persist) return;
@@ -28266,7 +29101,8 @@
 				previewAt: preview.at
 			});
 			const persist = this.deps.persist;
-			this.load(cid).then((old) => persist.put(cid, {
+			const key = this.key(cid);
+			persist.get(key).catch(() => void 0).then((old) => persist.put(key, {
 				...old,
 				...entry
 			})).catch(() => {});
@@ -28275,7 +29111,7 @@
 			return (this.deps.now ?? Date.now)();
 		}
 	};
-	var LANE$1 = "tree";
+	var LANE = "tree";
 	var DirTree = class {
 		deps;
 		state = reactive({
@@ -28289,9 +29125,29 @@
 			loading: {},
 			error: ""
 		});
+		uid = "";
+		generation = 0;
 		inflight = new Map();
 		constructor(deps) {
 			this.deps = deps;
+		}
+		setAccount(uid) {
+			if (uid === this.uid) return;
+			this.uid = uid;
+			this.generation++;
+			this.deps.scheduler.cancelLane(LANE);
+			this.inflight.clear();
+			Object.assign(this.state, {
+				nodes: { ["0"]: {
+					id: "0",
+					name: "根目录",
+					starred: false
+				} },
+				children: {},
+				expanded: {},
+				loading: {},
+				error: ""
+			});
 		}
 		rows() {
 			const out = [];
@@ -28346,11 +29202,14 @@
 			if (this.state.children[id]) return Promise.resolve();
 			const running = this.inflight.get(id);
 			if (running) return running;
-			const p = this.fetchAll(id).finally(() => this.inflight.delete(id));
+			const p = this.fetchAll(id).finally(() => {
+				if (this.inflight.get(id) === p) this.inflight.delete(id);
+			});
 			this.inflight.set(id, p);
 			return p;
 		}
 		async fetchAll(id) {
+			const generation = this.generation;
 			const s = this.state;
 			const limit = this.deps.pageSize ?? 1150;
 			const maxPages = this.deps.maxPages ?? 10;
@@ -28360,27 +29219,28 @@
 				const folders = [];
 				let offset = 0;
 				for (let i = 0; i < maxPages; i++) {
-					const page = await this.deps.scheduler.add(() => listPage(this.deps.fetchJson, {
+					const page = await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
 						cid: id,
 						offset,
 						limit,
 						foldersOnly: true
-					}), {
-						lane: LANE$1,
+					}, signal), {
+						lane: LANE,
 						id: `tree_${id}_${offset}`
 					});
+					if (generation !== this.generation) return;
 					folders.push(...page.items.filter((x) => x.kind === "folder"));
 					if (!page.hasMore) break;
 					offset = page.nextOffset;
 				}
 				this.setChildren(id, folders);
 			} catch (e) {
-				if (e instanceof CancelledError) return;
+				if (generation !== this.generation || e instanceof CancelledError) return;
 				if (e instanceof RiskControlError) this.deps.onRisk();
 				else s.error = e instanceof Error ? e.message : String(e);
 				throw e;
 			} finally {
-				s.loading[id] = false;
+				if (generation === this.generation) s.loading[id] = false;
 			}
 		}
 		setChildren(parent, folders) {
@@ -28495,611 +29355,6 @@
 			...DEFAULTS,
 			...parsed,
 			cover
-		};
-	}
-	var IGNORED = new Set(["thumb", "po"]);
-	function sameContent(a, b) {
-		const ka = Object.keys(a).filter((k) => !IGNORED.has(k));
-		const kb = Object.keys(b).filter((k) => !IGNORED.has(k));
-		if (ka.length !== kb.length) return false;
-		const ra = a;
-		const rb = b;
-		return ka.every((k) => Object.is(ra[k], rb[k]));
-	}
-	function mergeRange(cached, fresh, opts) {
-		const freshIds = new Set(fresh.map((i) => i.id));
-		const pos = new Map(cached.map((item, i) => [item.id, i]));
-		const hits = fresh.map((i) => pos.get(i.id)).filter((i) => i !== void 0);
-		let changed = 0;
-		const rows = fresh.map((item) => {
-			const i = pos.get(item.id);
-			if (i === void 0) return item;
-			const old = cached[i];
-			if (!sameContent(old, item)) {
-				changed++;
-				return item;
-			}
-			return old.thumb === item.thumb && old.po === item.po ? old : item;
-		});
-		const added = fresh.filter((i) => !pos.has(i.id));
-		if (!hits.length) {
-			if (!opts.start) return {
-				list: cached,
-				added: [],
-				removed: [],
-				changed: 0
-			};
-			return opts.end ? {
-				list: rows,
-				added,
-				removed: cached,
-				changed
-			} : {
-				list: [...rows, ...cached],
-				added,
-				removed: [],
-				changed
-			};
-		}
-		const first = hits[0];
-		const last = hits.at(-1);
-		let lo = opts.start ? 0 : Math.min(first, last);
-		if (opts.ownPage) {
-			const own = cached.findIndex(opts.ownPage);
-			if (own >= 0 && own < lo) lo = own;
-		}
-		const hi = opts.end ? cached.length - 1 : Math.max(opts.start ? last : first, last);
-		const removed = cached.slice(lo, hi + 1).filter((i) => !freshIds.has(i.id));
-		const keep = (part) => part.filter((i) => !freshIds.has(i.id));
-		const list = [
-			...keep(cached.slice(0, lo)),
-			...rows,
-			...keep(cached.slice(hi + 1))
-		];
-		return {
-			list: list.length === cached.length && list.every((item, i) => item === cached[i]) ? cached : list,
-			added,
-			removed,
-			changed
-		};
-	}
-	function mergePage(cached, fresh, offset) {
-		const opts = {
-			start: offset === 0,
-			end: !fresh.hasMore,
-			ownPage: (i) => i.po === offset
-		};
-		const f = mergeRange(cached.folders, fresh.folders, opts);
-		const m = mergeRange(cached.media, fresh.media, opts);
-		let { nextOffset, hasMore } = cached;
-		if (opts.end) {
-			nextOffset = fresh.nextOffset;
-			hasMore = false;
-		} else if (opts.start) {
-			nextOffset = Math.min(fresh.total, Math.max(fresh.nextOffset, cached.nextOffset + fresh.total - cached.total));
-			hasMore = nextOffset < fresh.total;
-		}
-		return {
-			page: f.list === cached.folders && m.list === cached.media && fresh.total === cached.total && nextOffset === cached.nextOffset && hasMore === cached.hasMore ? cached : {
-				folders: f.list,
-				media: m.list,
-				total: fresh.total,
-				nextOffset,
-				hasMore
-			},
-			added: [...f.added, ...m.added],
-			removed: [...f.removed, ...m.removed],
-			changed: f.changed + m.changed
-		};
-	}
-	function changeNotice(r) {
-		const parts = [];
-		if (r.added.length) parts.push(`新增 ${r.added.length} 项`);
-		if (r.removed.length) parts.push(`删除 ${r.removed.length} 项`);
-		if (r.changed) parts.push(`修改 ${r.changed} 项`);
-		return parts.length ? `已更新：${parts.join("，")}` : "";
-	}
-	function reinsert(current, order, items) {
-		if (!items.length) return current;
-		const out = [...current];
-		const ids = new Set(out.map((i) => i.id));
-		const want = new Set(items.map((i) => i.id));
-		for (let k = 0; k < order.length; k++) {
-			const item = order[k];
-			if (!want.has(item.id) || ids.has(item.id)) continue;
-			let at = 0;
-			for (let j = k - 1; j >= 0; j--) {
-				const idx = out.findIndex((i) => i.id === order[j].id);
-				if (idx >= 0) {
-					at = idx + 1;
-					break;
-				}
-			}
-			out.splice(at, 0, item);
-			ids.add(item.id);
-		}
-		return out;
-	}
-	var combine = (left, right) => [...new Map([...left, ...right].map((item) => [item.id, item])).values()];
-	function appendPage(previous, next) {
-		return {
-			...next,
-			media: combine(previous.media, next.media),
-			folders: combine(previous.folders, next.folders)
-		};
-	}
-	var CACHE_TTL = 5184e6;
-	var MEM_MAX = 50;
-	var PAGE_REFRESH_GAP = 6e4;
-	var ROOT = {
-		id: "0",
-		name: "根目录"
-	};
-	var LANE = "list";
-	var emptyPage = () => ({
-		folders: [],
-		media: [],
-		total: 0,
-		nextOffset: 0,
-		hasMore: false
-	});
-	var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-	var Browser = class {
-		deps;
-		state = reactive({
-			uid: "",
-			cid: "0",
-			crumbs: [ROOT],
-			page: emptyPage(),
-			query: {
-				sort: "name",
-				order: "asc",
-				keyword: ""
-			},
-			loading: false,
-			loadingMore: false,
-			error: null,
-			risk: false,
-			capped: false,
-			notice: ""
-		});
-		seq = 0;
-		cache = new Map();
-		crumbsOf = new Map();
-		pageRefresh = new Map();
-		verified = "all";
-		revealing = Promise.resolve();
-		pageSize;
-		now;
-		constructor(deps) {
-			this.deps = deps;
-			this.pageSize = deps.pageSize ?? 120;
-			this.now = deps.now ?? Date.now;
-			if (deps.lastUid) this.state.uid = deps.lastUid;
-		}
-		async open(cid, opts = {}) {
-			const seq = ++this.seq;
-			this.deps.scheduler.cancelLane(LANE);
-			const s = this.state;
-			s.cid = cid;
-			s.error = null;
-			s.loadingMore = false;
-			const key = this.key();
-			this.verified = "all";
-			if (!opts.force) {
-				let hit = this.memGet(key);
-				if (!this.fresh(hit) && this.deps.persist) {
-					s.loading = true;
-					hit = await this.deps.persist.get(key).catch(() => void 0);
-					if (seq !== this.seq) return;
-				}
-				if (this.fresh(hit)) {
-					Object.assign(s, {
-						page: markRaw(hit.page),
-						crumbs: hit.crumbs,
-						capped: hit.capped,
-						loading: false
-					});
-					if (!this.crumbsOf.has(cid)) this.crumbsOf.set(cid, hit.crumbs);
-					const age = this.now() - hit.at;
-					this.remember(key);
-					if (age >= 15e3) {
-						this.verified = new Set([0]);
-						await this.revalidate(seq, key);
-					}
-					return;
-				}
-			}
-			s.page = markRaw(emptyPage());
-			s.capped = false;
-			s.loading = true;
-			try {
-				const first = await this.fetchFirst(cid, seq);
-				if (!first) return;
-				this.apply(first);
-				this.remember(this.key());
-			} catch (e) {
-				if (seq === this.seq) this.fail(e);
-			} finally {
-				if (seq === this.seq) s.loading = false;
-			}
-		}
-		async revalidate(seq, key) {
-			try {
-				const first = await this.fetchFirst(this.state.cid, seq);
-				if (!first || !this.still(seq, key)) return;
-				const s = this.state;
-				const merged = mergePage(s.page, first.page, 0);
-				s.crumbs = first.crumbs;
-				s.capped = first.capped;
-				const notice = changeNotice(merged);
-				if (notice) s.notice = notice;
-				const held = this.deps.warm ? merged.added.filter((i) => i.kind === "image" && !!i.thumb) : [];
-				const heldIds = new Set(held.map((i) => i.id));
-				const page = held.length ? {
-					...merged.page,
-					media: merged.page.media.filter((i) => !heldIds.has(i.id))
-				} : merged.page;
-				if (page !== s.page) s.page = markRaw(page);
-				this.remember(key);
-				if (held.length) this.revealing = this.reveal(seq, key, merged.page.media, held);
-			} catch (e) {
-				if (e instanceof RiskControlError) this.reportRisk();
-			}
-		}
-		async reveal(seq, key, order, held) {
-			const [first, last] = this.deps.holdMs ?? [1e3, 5e3];
-			const settled = new Set();
-			const all = Promise.all(held.map((i) => this.deps.warm(i).catch(() => {}).then(() => void settled.add(i.id))));
-			await Promise.race([all, sleep(first)]);
-			if (!this.still(seq, key)) return;
-			this.insertHeld(key, order, held.filter((i) => settled.has(i.id)));
-			const rest = held.filter((i) => !settled.has(i.id));
-			if (!rest.length) return;
-			await Promise.race([all, sleep(Math.max(0, last - first))]);
-			if (!this.still(seq, key)) return;
-			this.insertHeld(key, order, rest);
-		}
-		insertHeld(key, order, items) {
-			if (!items.length) return;
-			const s = this.state;
-			s.page = markRaw({
-				...s.page,
-				media: reinsert(s.page.media, order, items)
-			});
-			this.remember(key);
-		}
-		verify(item) {
-			const offset = item.po ?? 0;
-			if (this.verified === "all" || this.verified.has(offset)) return;
-			this.verified.add(offset);
-			this.refreshItem(item);
-		}
-		refreshItem(item) {
-			const key = this.key();
-			const seq = this.seq;
-			const offset = item.po ?? 0;
-			const tag = `${key}#${offset}`;
-			const prev = this.pageRefresh.get(tag);
-			if (prev && this.now() - prev.at < PAGE_REFRESH_GAP) return prev.p;
-			const p = (async () => {
-				try {
-					const res = await this.fetchPage(offset);
-					if (!this.still(seq, key)) return;
-					this.noteAccount(res.uid);
-					const s = this.state;
-					const merged = mergePage(s.page, toLoaded(res, offset), offset);
-					const notice = changeNotice(merged);
-					if (notice) s.notice = notice;
-					if (merged.page === s.page) return;
-					s.page = markRaw(merged.page);
-					this.remember(key);
-				} catch (e) {
-					if (e instanceof RiskControlError) this.reportRisk();
-				}
-			})();
-			this.pageRefresh.set(tag, {
-				at: this.now(),
-				p
-			});
-			return p;
-		}
-		still(seq, key) {
-			return seq === this.seq && key === this.key();
-		}
-		async fetchFirst(cid, seq) {
-			const s = this.state;
-			const first = await this.fetchPage(0);
-			if (seq !== this.seq) return void 0;
-			this.noteAccount(first.uid);
-			let page = toLoaded(first, 0);
-			if (s.query.type && !s.query.keyword && !page.folders.length) {
-				const folders = await this.fetchFolders(cid).catch(() => []);
-				if (seq !== this.seq) return void 0;
-				page = {
-					...page,
-					folders
-				};
-			}
-			let crumbs = first.path ? toCrumbs(first.path, cid) : this.crumbsOf.get(cid);
-			if (!crumbs) {
-				crumbs = await this.fetchCrumbs(cid);
-				if (seq !== this.seq) return void 0;
-			}
-			this.crumbsOf.set(cid, crumbs);
-			return {
-				page,
-				crumbs,
-				capped: "capped" in first && !!first.capped
-			};
-		}
-		apply(first) {
-			const s = this.state;
-			s.page = markRaw(first.page);
-			s.capped = first.capped;
-			s.crumbs = first.crumbs;
-		}
-		rememberCrumbs(cid, crumbs) {
-			this.crumbsOf.set(cid, crumbs);
-		}
-		async loadMore() {
-			const s = this.state;
-			if (s.loading || s.loadingMore || !s.page.hasMore || s.risk) return;
-			const seq = this.seq;
-			s.loadingMore = true;
-			try {
-				const offset = s.page.nextOffset;
-				const next = await this.fetchPage(offset);
-				if (seq !== this.seq) return;
-				this.noteAccount(next.uid);
-				s.page = markRaw(appendPage(s.page, toLoaded(next, offset)));
-				if (this.verified !== "all") this.verified.add(offset);
-				if ("capped" in next && next.capped) s.capped = true;
-				this.remember(this.key());
-			} catch (e) {
-				if (seq === this.seq) this.fail(e);
-			} finally {
-				if (seq === this.seq) s.loadingMore = false;
-			}
-		}
-		async ensureLoaded(count, maxPages = 20) {
-			for (let i = 0; i < maxPages && this.state.page.media.length < count && this.state.page.hasMore; i++) {
-				const seq = this.seq;
-				await this.loadMore();
-				if (seq !== this.seq || this.state.error || this.state.risk) return;
-			}
-		}
-		refresh() {
-			return this.open(this.state.cid, { force: true });
-		}
-		openFolder(cid) {
-			this.state.query.keyword = "";
-			return this.open(cid);
-		}
-		setQuery(patch) {
-			Object.assign(this.state.query, patch);
-			return this.open(this.state.cid);
-		}
-		async invalidate() {
-			this.cache.clear();
-			this.pageRefresh.clear();
-			await this.deps.persist?.clear().catch(() => {});
-			return this.refresh();
-		}
-		async toggleStar(item) {
-			if (!this.deps.postForm) throw new Error("未配置写接口");
-			const next = !item.starred;
-			try {
-				await setStar(this.deps.postForm, item.id, next);
-			} catch (e) {
-				if (e instanceof RiskControlError) this.reportRisk();
-				throw e;
-			}
-			this.applyStar(item.id, next);
-			this.deps.onStarChanged?.(item, next);
-		}
-		applyStar(id, starred) {
-			const swap = (list) => list.some((i) => i.id === id) ? list.map((i) => i.id === id ? {
-				...i,
-				starred
-			} : i) : list;
-			const patch = (page) => {
-				const media = swap(page.media);
-				const folders = swap(page.folders);
-				return media === page.media && folders === page.folders ? page : {
-					...page,
-					media,
-					folders
-				};
-			};
-			for (const [k, entry] of this.cache) {
-				const page = patch(entry.page);
-				if (page !== entry.page) this.cache.set(k, {
-					...entry,
-					page
-				});
-			}
-			const page = patch(this.state.page);
-			if (page === this.state.page) return;
-			this.state.page = markRaw(page);
-			this.remember(this.key());
-		}
-		async deleteItems(items) {
-			if (!this.deps.postForm) throw new Error("未配置写接口");
-			if (!items.length) return;
-			const groups = new Map();
-			for (const i of items) groups.set(i.parentId, [...groups.get(i.parentId) ?? [], i.id]);
-			try {
-				for (const [pid, ids] of groups) await deleteFiles(this.deps.postForm, pid, ids);
-			} catch (e) {
-				if (e instanceof RiskControlError) this.reportRisk();
-				throw e;
-			}
-			this.removeRows(new Set(items.map((i) => i.id)));
-			for (const i of items) {
-				if (i.kind !== "folder") continue;
-				for (const k of [...this.cache.keys()]) if (k.split("|")[1] === i.id) this.cache.delete(k);
-			}
-			this.deps.onDeleted?.(items);
-		}
-		removeRows(ids) {
-			const patch = (page) => {
-				const media = page.media.filter((i) => !ids.has(i.id));
-				const folders = page.folders.filter((i) => !ids.has(i.id));
-				const gone = page.media.length - media.length + page.folders.length - folders.length;
-				if (!gone) return page;
-				return {
-					...page,
-					media,
-					folders,
-					total: Math.max(0, page.total - gone),
-					nextOffset: Math.max(0, page.nextOffset - gone)
-				};
-			};
-			for (const [k, entry] of this.cache) {
-				const page = patch(entry.page);
-				if (page !== entry.page) this.cache.set(k, {
-					...entry,
-					page
-				});
-			}
-			const page = patch(this.state.page);
-			if (page === this.state.page) return;
-			this.state.page = markRaw(page);
-			this.remember(this.key());
-		}
-		positionKey() {
-			return this.key();
-		}
-		reportRisk() {
-			this.state.risk = true;
-			this.deps.scheduler.pause();
-		}
-		async resumeAfterVerify() {
-			this.state.risk = false;
-			this.deps.scheduler.resume();
-			await this.refresh();
-		}
-		key() {
-			return `${this.state.uid}|${this.state.cid}|${JSON.stringify(this.state.query)}`;
-		}
-		noteAccount(uid) {
-			if (!uid || uid === this.state.uid) return;
-			if (this.state.uid) this.cache.clear();
-			this.state.uid = uid;
-			this.deps.onAccount?.(uid);
-		}
-		remember(key) {
-			const s = this.state;
-			const entry = {
-				page: s.page,
-				crumbs: s.crumbs,
-				capped: s.capped,
-				at: this.now()
-			};
-			this.cache.delete(key);
-			this.cache.set(key, entry);
-			if (this.cache.size > MEM_MAX) this.cache.delete(this.cache.keys().next().value);
-			this.deps.persist?.put(key, entry).catch(() => {});
-		}
-		memGet(key) {
-			const hit = this.cache.get(key);
-			if (hit) {
-				this.cache.delete(key);
-				this.cache.set(key, hit);
-			}
-			return hit;
-		}
-		fresh(hit) {
-			return !!hit && this.now() - hit.at < 5184e6;
-		}
-		fail(e) {
-			if (e instanceof CancelledError) return;
-			if (e instanceof RiskControlError) {
-				this.reportRisk();
-				return;
-			}
-			this.state.error = e instanceof Error ? e.message : String(e);
-		}
-		fetchPage(offset) {
-			const { cid, query } = this.state;
-			const base = {
-				cid,
-				offset,
-				limit: this.pageSize,
-				type: query.type
-			};
-			return this.deps.scheduler.add(() => query.keyword ? searchPage(this.deps.fetchJson, {
-				...base,
-				keyword: query.keyword
-			}) : listPage(this.deps.fetchJson, {
-				...base,
-				sort: query.sort,
-				order: query.order
-			}), { lane: LANE });
-		}
-		async fetchFolders(cid) {
-			const { sort, order } = this.state.query;
-			return (await this.deps.scheduler.add(() => listPage(this.deps.fetchJson, {
-				cid,
-				offset: 0,
-				limit: 1150,
-				sort,
-				order
-			}), { lane: LANE })).items.filter((i) => i.kind === "folder");
-		}
-		async fetchCrumbs(cid) {
-			if (cid === "0") return [ROOT];
-			try {
-				const info = await this.deps.scheduler.add(() => categoryGet(this.deps.fetchJson, cid), { lane: LANE });
-				return [
-					ROOT,
-					...info.paths.filter((p) => p.id !== "0").map((p) => ({
-						id: p.id,
-						name: p.name
-					})),
-					{
-						id: cid,
-						name: info.name || cid
-					}
-				];
-			} catch (e) {
-				if (e instanceof CancelledError || e instanceof RiskControlError) throw e;
-				return [ROOT, {
-					id: cid,
-					name: cid
-				}];
-			}
-		}
-	};
-	function toCrumbs(path, cid) {
-		const rest = path.filter((p) => p.id !== "0").map((p) => ({
-			id: p.id,
-			name: p.name || p.id
-		}));
-		if (cid !== "0" && rest.at(-1)?.id !== cid) rest.push({
-			id: cid,
-			name: cid
-		});
-		return [ROOT, ...rest];
-	}
-	function toLoaded(p, offset) {
-		const folders = [];
-		const media = [];
-		for (const raw of p.items) {
-			const item = {
-				...raw,
-				po: offset
-			};
-			if (item.kind === "folder") folders.push(item);
-			else if (item.kind === "image" || item.kind === "video") media.push(item);
-		}
-		return {
-			folders,
-			media,
-			total: p.total,
-			nextOffset: p.nextOffset,
-			hasMore: p.hasMore
 		};
 	}
 	var MB = 1048576;
@@ -29360,13 +29615,24 @@
 			onDims: (sha1, d) => dims.set(sha1, d)
 		});
 		const browser = new Browser({
-			fetchJson: (url) => fetchJson(url),
+			fetchJson,
 			postForm,
 			scheduler,
 			persist: lists,
 			warm: (item) => thumbs.warm(item, ui.thumbSize),
 			lastUid: String(safeGet(kv, LAST_UID) ?? ""),
-			onAccount: (uid) => safeSet(kv, LAST_UID, uid),
+			onAccount: (uid) => {
+				safeSet(kv, LAST_UID, uid);
+				tree.setAccount(uid);
+				favorites.setAccount(uid);
+				folderInfo.setAccount(uid);
+				transcode.reset();
+				selection.stop();
+				viewer.onClose();
+				router.closeViewer();
+				ui.player = null;
+				if (ui.open) favorites.load();
+			},
 			onStarChanged: (item, on) => {
 				favorites.apply(item, on);
 				tree.applyStar(item.id, on);
@@ -29380,12 +29646,12 @@
 		});
 		const onRisk = () => browser.reportRisk();
 		const tree = new DirTree({
-			fetchJson: (url) => fetchJson(url),
+			fetchJson,
 			scheduler,
 			onRisk
 		});
 		const favorites = new Favorites({
-			fetchJson: (url) => fetchJson(url),
+			fetchJson,
 			scheduler,
 			onRisk
 		});
@@ -29418,7 +29684,7 @@
 			maxEntries: 5e3
 		});
 		const folderInfo = new FolderInfoService({
-			fetchJson: (url) => fetchJson(url),
+			fetchJson,
 			scheduler,
 			onRisk,
 			persist: folderStore
@@ -29442,9 +29708,13 @@
 		const transcode = new TranscodeService({
 			post: postForm,
 			postJson,
-			refresh: (item) => browser.refreshItem(item),
+			refresh: (item) => {
+				if (item.pickCode) frames.invalidateFailure(item.pickCode);
+				return browser.refreshItem(item);
+			},
 			onRisk: () => browser.reportRisk(),
-			active: () => ui.open
+			active: () => ui.open,
+			paused: () => browser.state.risk
 		});
 		const ui = reactive({
 			open: false,
@@ -29454,6 +29724,9 @@
 			settingsOpen: false,
 			thumbSize: 480
 		});
+		tree.setAccount(browser.state.uid);
+		favorites.setAccount(browser.state.uid);
+		folderInfo.setAccount(browser.state.uid);
 		const viewer = { onClose: () => {} };
 		let savedOverflow = "";
 		let toastTimer;
@@ -29534,8 +29807,9 @@
 				savedOverflow = win.document.documentElement.style.overflow;
 				win.document.documentElement.style.overflow = "hidden";
 				router.openOverlay(cid);
-				browser.open(cid);
-				favorites.load();
+				browser.open(cid).then(() => {
+					if (ui.open) favorites.load();
+				});
 			},
 			close() {
 				router.closeOverlay();
@@ -29543,8 +29817,9 @@
 			refresh() {
 				folderInfo.clear();
 				tree.clear();
-				browser.refresh();
-				favorites.load(true);
+				browser.refresh().then(() => {
+					if (ui.open) favorites.load(true);
+				});
 			},
 			enter(cid) {
 				if (cid === browser.state.cid) return;
@@ -29576,7 +29851,13 @@
 				startPlayer(item, this.playerList(), void 0, p.live);
 			},
 			async playerLoadMore() {
-				if (ui.player?.live && browser.state.page.hasMore) await browser.loadMore();
+				if (!ui.player?.live || !browser.state.page.hasMore) return;
+				const known = new Set(browser.state.page.media.map((i) => i.id));
+				try {
+					await browser.loadNewMedia(known, (i) => i.kind === "video");
+				} catch (e) {
+					toast(e instanceof Error ? e.message : String(e));
+				}
 			},
 			prefetchVideo(item) {
 				if (!item.pickCode || choosePlayer(settings.player, item, ui.master) !== "lite") return;
