@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.2.1
+// @version      0.2.2
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -1252,6 +1252,25 @@
 	function proxyRefs(objectWithRefs) {
 		return isReactive(objectWithRefs) ? objectWithRefs : new Proxy(objectWithRefs, shallowUnwrapHandlers);
 	}
+	var CustomRefImpl = class {
+		constructor(factory) {
+			this["__v_isRef"] = true;
+			this._value = void 0;
+			const dep = this.dep = new Dep();
+			const { get, set } = factory(dep.track.bind(dep), dep.trigger.bind(dep));
+			this._get = get;
+			this._set = set;
+		}
+		get value() {
+			return this._value = this._get();
+		}
+		set value(newVal) {
+			this._set(newVal);
+		}
+	};
+	function customRef(factory) {
+		return new CustomRefImpl(factory);
+	}
 	var ComputedRefImpl = class {
 		constructor(fn, setter, isSSR) {
 			this.fn = fn;
@@ -1682,6 +1701,9 @@
 			return ctx;
 		}
 	};
+	function watchSyncEffect(effect, options) {
+		return doWatch(effect, null, { flush: "sync" });
+	}
 	function watch(source, cb, options) {
 		return doWatch(source, cb, options);
 	}
@@ -2309,6 +2331,11 @@
 	function normalizePropsOrEmits(props) {
 		return isArray(props) ? props.reduce((normalized, p) => (normalized[p] = null, normalized), {}) : props;
 	}
+	function mergeModels(a, b) {
+		if (!a || !b) return a || b;
+		if (isArray(a) && isArray(b)) return a.concat(b);
+		return extend({}, normalizePropsOrEmits(a), normalizePropsOrEmits(b));
+	}
 	var shouldCacheAccess = true;
 	function applyOptions(instance) {
 		const options = resolveMergedOptions(instance);
@@ -2615,6 +2642,55 @@
 		};
 	}
 	var currentApp = null;
+	function useModel(props, name, options = EMPTY_OBJ) {
+		const i = getCurrentInstance();
+		const camelizedName = camelize(name);
+		const hyphenatedName = hyphenate(name);
+		const modifiers = getModelModifiers(props, camelizedName);
+		const res = customRef((track, trigger) => {
+			let localValue;
+			let prevSetValue = EMPTY_OBJ;
+			let prevEmittedValue;
+			watchSyncEffect(() => {
+				const propValue = props[camelizedName];
+				if (hasChanged(localValue, propValue)) {
+					localValue = propValue;
+					trigger();
+				}
+			});
+			return {
+				get() {
+					track();
+					return options.get ? options.get(localValue) : localValue;
+				},
+				set(value) {
+					const emittedValue = options.set ? options.set(value) : value;
+					if (!hasChanged(emittedValue, localValue) && !(prevSetValue !== EMPTY_OBJ && hasChanged(value, prevSetValue))) return;
+					const rawProps = i.vnode.props;
+					const hasVModel = !!(rawProps && (name in rawProps || camelizedName in rawProps || hyphenatedName in rawProps) && (`onUpdate:${name}` in rawProps || `onUpdate:${camelizedName}` in rawProps || `onUpdate:${hyphenatedName}` in rawProps));
+					if (!hasVModel) {
+						localValue = value;
+						trigger();
+					}
+					i.emit(`update:${name}`, emittedValue);
+					if (hasChanged(value, prevSetValue) && (hasChanged(value, emittedValue) && !hasChanged(emittedValue, prevEmittedValue) || hasVModel && prevSetValue !== EMPTY_OBJ && !hasChanged(emittedValue, localValue))) trigger();
+					prevSetValue = value;
+					prevEmittedValue = emittedValue;
+				}
+			};
+		});
+		res[Symbol.iterator] = () => {
+			let i2 = 0;
+			return { next() {
+				if (i2 < 2) return {
+					value: i2++ ? modifiers || EMPTY_OBJ : res,
+					done: false
+				};
+				else return { done: true };
+			} };
+		};
+		return res;
+	}
 	var getModelModifiers = (props, modelName) => {
 		return modelName === "modelValue" || modelName === "model-value" ? props.modelModifiers : props[`${modelName}Modifiers`] || props[`${camelize(modelName)}Modifiers`] || props[`${hyphenate(modelName)}Modifiers`];
 	};
@@ -4994,7 +5070,7 @@
 	}
 	var cloudflow_default = ":host{--bg:#f5f5f5;--card:#fff;--line:#e5e7eb;--line-2:#eee;--ink:#333;--ink-2:#666;--ink-3:#999;--blue:#1976d2;--blue-soft:#e3f2fd;--img:#1976d2;--img-soft:#e3f2fd;--vid:#f57c00;--vid-soft:#fff3e0;--gold:gold;--r:8px;--sh:0 2px 8px #0000001a;--sh-h:0 6px 16px #0000002e;--header-h:64px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}.g115-root,.g115-root *{box-sizing:border-box;margin:0;padding:0}.g115-root{background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif}a{color:inherit;text-decoration:none}.header{height:calc(var(--header-h) + var(--safe-t));padding-top:var(--safe-t);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);z-index:1200;background:#ffffffeb;position:fixed;top:0;left:0;right:0}.header-inner{height:100%;padding:0 max(24px,var(--safe-l)) 0 max(24px,var(--safe-r));justify-content:space-between;align-items:center;gap:16px;display:flex}.header-left{flex:1;align-items:center;gap:16px;min-width:0;display:flex}.brand{flex-shrink:0;align-items:center;gap:9px;display:flex}.brand .mark{background:var(--blue);color:#fff;border-radius:8px;place-items:center;width:30px;height:30px;font-size:16px;font-weight:700;display:grid}.brand b{font-size:17px;font-weight:700}.brand b span{color:var(--blue)}.breadcrumb{white-space:nowrap;align-items:center;gap:6px;min-width:0;font-size:14px;display:flex;overflow-x:auto}.breadcrumb .sep{color:var(--ink-3);font-size:12px}.breadcrumb a{color:var(--ink-2);border-radius:4px;padding:4px 8px;transition:all .15s}.breadcrumb a:hover{color:var(--blue);background:var(--blue-soft)}.breadcrumb .current{color:var(--ink);padding:4px 8px;font-weight:600}.header-right{flex-shrink:0;align-items:center;gap:8px;display:flex}.hbtn{border:1px solid var(--line);height:38px;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:8px;align-items:center;gap:6px;padding:0 12px;font-size:13px;transition:all .18s;display:flex}.hbtn:hover{color:var(--ink);border-color:#cfd4da}.hbtn.icon{justify-content:center;width:38px;padding:0;font-size:16px}.seg{border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);color:var(--ink-3);font:inherit;cursor:pointer;background:0 0;height:36px;padding:0 12px;font-size:13px;transition:all .18s}.seg button:last-child{border-right:0}.seg button.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.main{padding:calc(var(--header-h) + var(--safe-t) + 18px) 10px 40px;max-width:1840px;margin:0 auto}.sec-title{color:var(--ink-3);align-items:center;gap:8px;margin:0 2px 12px;font-size:13px;display:flex}.folder-section{margin-bottom:22px}.folder-more{margin:14px auto 0;display:block}.folders{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;display:grid}.folder{border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:#fff;transition:all .2s;overflow:hidden}.folder:hover{box-shadow:var(--sh);transform:translateY(-3px)}.fpreview{background:#e9eaec;grid-template-columns:repeat(4,1fr);gap:2px;display:grid;position:relative}.fpreview img{aspect-ratio:1;object-fit:cover;width:100%;display:block}.fpreview-empty{aspect-ratio:4;color:#b9bdc3;background:#f0f1f3;grid-column:1/-1;place-items:center;font-size:22px;display:grid}.thumb-box{aspect-ratio:1;background:#f0f0f0;width:100%;line-height:0;display:block;position:relative;overflow:hidden}.thumb-box img{object-fit:cover;opacity:0;width:100%;height:100%;transition:opacity .25s;position:absolute;inset:0}.thumb-box.ready img{opacity:1}.thumb-box .thumb-skel{width:100%;height:100%;position:absolute;inset:0}.thumb-skel{background:linear-gradient(90deg,#ececec 25%,#f5f5f5 37%,#ececec 63%) 0 0/400% 100%;animation:1.3s infinite skel}@keyframes skel{0%{background-position:100% 0}to{background-position:-100% 0}}.sprite-strip{background:#000;line-height:0;display:none;position:absolute;inset:0;overflow:hidden}.sprite-strip.on{display:block}.sprite-strip img{max-width:none;height:100%;position:absolute;top:0;left:0}.fpreview .more{color:#fff;background:#0009;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.finfo{justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;display:flex}.finfo .fn{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden}.finfo .fc{color:var(--ink-3);flex-shrink:0;font-size:11px}.gallery-columns{align-items:flex-start;gap:15px;display:flex}.gallery-column{flex-direction:column;flex:1;gap:15px;display:flex}.masonry{width:100%;position:relative}.masonry>.item{position:absolute;top:0;left:0}.spinner{border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;width:40px;height:40px;animation:.8s linear infinite spin;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}.item{border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;background:#fff;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}.item:hover{box-shadow:var(--sh-h);transform:translateY(-5px)}.item .thumb{line-height:0;display:block;position:relative}.item .info{padding:12px}.item .filename{color:var(--ink);word-break:break-all;font-size:13px;line-height:1.4}.item .type{border-radius:4px;margin-top:8px;padding:3px 8px;font-size:11px;font-weight:500;display:inline-block}.type.image{background:var(--img-soft);color:var(--img)}.type.video{background:var(--vid-soft);color:var(--vid)}.dur{color:#fff;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600;position:absolute;bottom:8px;right:8px}.video-overlay{background:#0009;border-radius:50%;justify-content:center;align-items:center;width:60px;height:60px;transition:all .25s;display:flex;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.video-overlay:after{content:\"▶\";color:#fff;margin-left:4px;font-size:24px}.item:hover .video-overlay{background:var(--blue)}.edge-toggle{color:#fff;cursor:pointer;z-index:201;writing-mode:vertical-rl;letter-spacing:2px;border:none;padding:15px 9px;font-size:14px;font-weight:600;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:calc(50% - 30px);box-shadow:0 2px 12px #0003}.edge-toggle.fav{background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:0 8px 8px 0;left:0}.edge-toggle.tree{background:linear-gradient(135deg,#4facfe,#00c6fb);border-radius:8px 0 0 8px;right:0}.drawer{z-index:200;background:#fff;width:340px;height:100vh;padding:20px;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:0;overflow:auto}.drawer.left{left:-360px;box-shadow:2px 0 16px #0000001f}.drawer.right{right:-360px;box-shadow:-2px 0 16px #0000001f}.fav-group.open .edge-toggle.fav{left:340px}.fav-group.open .drawer.left{left:0}.tree-group.open .edge-toggle.tree{right:340px}.tree-group.open .drawer.right{right:0}.drawer h3{margin-bottom:16px;font-size:16px}.fav-item{cursor:pointer;background:#f8f9fa;border-radius:8px;margin-bottom:10px;padding:11px;transition:all .18s}.fav-item:hover{background:#eef0f2}.fav-head{align-items:center;gap:10px;display:flex}.fav-head .fic{color:#e0a800;background:#fff7d6;border-radius:7px;flex-shrink:0;place-items:center;width:30px;height:30px;display:grid}.fav-head .fmeta{flex:1;overflow:hidden}.fav-head .fn{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.fav-head .fp{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.fav-head .rm{color:#fff;cursor:pointer;opacity:0;background:#f44336;border:0;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px;transition:all .18s}.fav-item:hover .rm{opacity:1}.fav-thumbs{grid-template-columns:repeat(4,1fr);gap:4px;margin-top:9px;display:grid}.fav-thumbs .ft{aspect-ratio:1;background:#e9eaec;border-radius:5px;position:relative;overflow:hidden}.fav-thumbs .ft .thumb-box{position:absolute;inset:0}.fav-thumbs .ft.vid:after{content:\"▶\";color:#fff;z-index:2;background:#0000004d;place-items:center;font-size:13px;display:grid;position:absolute;inset:0}.tnode{cursor:pointer;color:var(--ink-2);white-space:nowrap;text-overflow:ellipsis;border-radius:6px;padding:7px 9px;font-size:14px;overflow:hidden}.tnode:hover{color:var(--ink);background:#f0f2f5}.tnode.cur{color:var(--blue);font-weight:600}.l2{padding-left:20px}.l3{padding-left:38px}.modal{z-index:1700;background:#000000f2;display:none;position:fixed;inset:0}.modal.show{justify-content:center;align-items:center;display:flex}.modal .close{color:#f1f1f1;cursor:pointer;z-index:1301;font-size:38px;font-weight:700;line-height:1;position:fixed;top:18px;right:34px}.modal .close:hover{color:#ff5252}.player{width:94vw;max-width:1600px;max-height:90vh;position:relative}.ptitle-top{z-index:6;color:#fff;text-shadow:0 1px 4px #000000e6;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;font-size:14px;position:absolute;top:10px;left:14px;right:60px;overflow:hidden}.hud{z-index:6;color:#fff;pointer-events:none;background:#0000009e;border-radius:10px;padding:10px 18px;font-size:20px;font-weight:600;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.stage{aspect-ratio:16/9;background:#000;border-radius:10px;width:100%;max-height:90vh;position:relative;overflow:hidden}.stage img{object-fit:contain;opacity:.9;width:100%;height:100%}.stage .big{place-items:center;display:grid;position:absolute;inset:0}.stage .big span{color:#111;cursor:pointer;background:#ffffffeb;border-radius:50%;place-items:center;width:76px;height:76px;font-size:28px;display:grid}.pbar{color:#fff;background:linear-gradient(#0000,#000c);padding:14px 16px;position:absolute;bottom:0;left:0;right:0}.pscrub{background:#ffffff4d;border-radius:3px;height:4px;margin-bottom:10px;position:relative}.pscrub i{background:var(--blue);border-radius:3px;width:35%;position:absolute;top:0;bottom:0;left:0}.pctl{align-items:center;gap:14px;font-size:14px;display:flex}.pctl .r{gap:14px;margin-left:auto;display:flex}.pctl span{cursor:pointer;opacity:.92}.ptitle{color:#eee;text-align:center;margin-top:12px;font-size:14px}.modal .imgview{object-fit:contain;touch-action:none;border-radius:8px;max-width:94vw;max-height:90vh}.set-wrap{grid-template-columns:220px 1fr;align-items:start;gap:26px;max-width:1100px;margin:0 auto;display:grid}@media (width<=820px){.set-wrap{grid-template-columns:1fr}.set-nav{display:none}}.set-nav{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;position:sticky;top:84px}.set-nav a{color:var(--ink-2);cursor:pointer;border-radius:8px;padding:9px 12px;font-size:14px;transition:all .15s;display:block}.set-nav a:hover{color:var(--ink);background:#f5f7f9}.set-nav a.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.set-title{margin-bottom:4px;font-size:26px;font-weight:700}.set-sub{color:var(--ink-3);margin-bottom:22px;font-size:14px}.panel{border:1px solid var(--line);background:#fff;border-radius:12px;margin-bottom:18px;padding:22px}.panel h3{align-items:center;gap:9px;margin-bottom:4px;font-size:17px;font-weight:600;display:flex}.panel .desc{color:var(--ink-3);margin-bottom:18px;font-size:13px}.row{border-bottom:1px solid var(--line-2);justify-content:space-between;align-items:center;gap:16px;padding:13px 0;display:flex}.row:last-child{border:0}.row .lab b{font-size:14px;font-weight:500;display:block}.row .lab small{color:var(--ink-3);font-size:12px}.valctl{align-items:center;gap:14px;display:flex}.val{color:var(--blue);white-space:nowrap;font-size:14px;font-weight:600}.toggle{cursor:pointer;background:#d4d7dc;border-radius:999px;flex-shrink:0;width:46px;height:26px;transition:all .25s;position:relative}.toggle.on{background:var(--blue)}.toggle i{background:#fff;border-radius:50%;width:22px;height:22px;transition:all .25s;position:absolute;top:2px;left:2px;box-shadow:0 1px 3px #0000004d}.toggle.on i{left:22px}.slider{background:#e3e6ea;border-radius:4px;width:150px;height:6px;position:relative}.slider i{background:var(--blue);border-radius:4px;position:absolute;top:0;bottom:0;left:0}.slider i:after{content:\"\";border:1px solid var(--line);background:#fff;border-radius:50%;width:16px;height:16px;position:absolute;top:50%;right:-7px;transform:translateY(-50%);box-shadow:0 1px 4px #00000059}.inp{border:1px solid var(--line);font:inherit;width:240px;color:var(--ink);border-radius:8px;outline:none;padding:9px 12px;font-size:13px}.inp:focus{border-color:var(--blue)}.btn{border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;background:#fff;border-radius:8px;padding:9px 16px;font-size:13px;transition:all .18s}.btn:hover{border-color:#c4c9cf}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:#e53935;border-color:#f3c0bb}.actions{flex-wrap:wrap;gap:10px;margin-top:16px;display:flex}.progbar{background:#e3e6ea;border-radius:6px;height:10px;margin:6px 0 4px;overflow:hidden}.progbar i{background:linear-gradient(90deg,var(--blue),#42a5f5);background-size:200% 100%;border-radius:6px;width:64%;height:100%;animation:2.4s linear infinite flow;display:block}@keyframes flow{to{background-position:200% 0}}.progtext{color:var(--ink-3);margin:6px 0 2px;font-size:12px}.stat-grid{grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;display:grid}.stat{border:1px solid var(--line);background:#f8f9fa;border-radius:10px;padding:15px}.stat b{font-size:25px;font-weight:700;display:block}.stat.ok b{color:#2e9e5b}.stat.pend b{color:#f57c00}.stat.fail b{color:#e53935}.stat.skip b{color:var(--ink-3)}.stat small{color:var(--ink-3);font-size:12px}@media (width<=420px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat small{white-space:nowrap}}.usage{margin:8px 0 16px}.usage .ut{color:var(--ink-2);justify-content:space-between;margin-bottom:6px;font-size:13px;display:flex}.usage .ub{background:#e3e6ea;border-radius:5px;height:9px;overflow:hidden}.usage .ub i{border-radius:5px;height:100%;display:block}.back{color:var(--ink-2);cursor:pointer;align-items:center;gap:6px;margin-bottom:14px;font-size:14px;display:inline-flex}.loading-tip{text-align:center;color:var(--ink-3);padding:60px 20px;font-size:14px}.back:hover{color:var(--blue)}.cache-dot{z-index:3;pointer-events:none;background:#2ecc71;border-radius:50%;width:9px;height:9px;position:absolute;bottom:7px;left:7px;box-shadow:0 0 0 2px #ffffffd9,0 0 6px #2ecc7199}.fav-cur{border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;background:#fff;border-radius:16px;margin-left:10px;padding:5px 12px;font-size:12px;transition:all .2s}.fav-cur:hover{border-color:var(--gold);color:var(--gold)}.fav-cur.on{background:var(--gold,#f0a500);color:#fff;border-color:var(--gold,#f0a500)}.sprite-hover{z-index:500;pointer-events:none;background:#000;border:2px solid #fff;border-radius:8px;position:fixed;overflow:hidden;box-shadow:0 10px 36px #00000073}.sprite-hover img{width:auto;max-width:96vw;height:140px;display:block}.ctx-menu{z-index:600;border:1px solid var(--line);-webkit-user-select:none;user-select:none;background:#fff;border-radius:10px;min-width:176px;padding:6px;font-size:13px;position:fixed;box-shadow:0 12px 34px #00000038}.ctx-item{cursor:pointer;color:var(--ink);white-space:nowrap;border-radius:7px;padding:8px 12px}.ctx-item:hover{background:var(--blue-soft,#e3f2fd)}.ctx-item.danger{color:#e53935}.ctx-item.danger:hover{background:#fdecea}.ctx-sep{background:var(--line-2,#eee);height:1px;margin:5px 8px}.modal-overlay{z-index:550;background:#00000073;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.move-dialog{background:#fff;border-radius:14px;flex-direction:column;width:440px;max-width:92vw;max-height:80vh;padding:22px;display:flex;box-shadow:0 20px 60px #0000004d}.move-dialog h3{margin-bottom:12px;font-size:17px}.move-crumbs{color:var(--ink-2);flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px;display:flex}.move-crumbs a{color:var(--blue);cursor:pointer}.move-crumbs .sep{color:var(--ink-3);margin:0 6px}.move-list{border:1px solid var(--line);border-radius:9px;flex:1;min-height:140px;max-height:46vh;overflow:auto}.move-row{cursor:pointer;border-bottom:1px solid var(--line-2,#f0f0f0);padding:10px 14px}.move-row:hover{background:var(--blue-soft,#e3f2fd)}.move-empty{text-align:center;color:var(--ink-3);padding:24px;font-size:13px}.move-actions{justify-content:flex-end;gap:10px;margin-top:16px;display:flex}.dlg{background:#fff;border-radius:14px;width:380px;max-width:92vw;padding:22px;box-shadow:0 20px 60px #0000004d}.dlg h3{word-break:break-all;margin-bottom:12px;font-size:17px}.dlg-msg{color:var(--ink-2);white-space:pre-line;word-break:break-all;font-size:14px;line-height:1.6}.dlg-input{width:100%;margin-top:2px}.dlg-actions{justify-content:flex-end;gap:10px;margin-top:18px;display:flex}.toaster{left:50%;bottom:max(32px,calc(20px + var(--safe-b)));z-index:400;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;transform:translate(-50%)}.toast{pointer-events:auto;color:#fff;cursor:pointer;background:#212121ed;border-radius:9px;max-width:90vw;padding:11px 22px;font-size:14px;font-weight:500;animation:.22s toast-in;box-shadow:0 8px 24px #00000047}.toast.err{background:#c0392b}@keyframes toast-in{0%{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media (hover:none){.item:hover,.folder:hover{box-shadow:var(--sh);transform:none}.item:active{transform:scale(.98)}.fav-head .rm{opacity:1}.fav-item:active{background:#eef0f2}.hbtn:active,.btn:active,.seg button:active,.fav-cur:active,.ctx-item:active,.move-row:active,.tnode:active,.breadcrumb a:active,.set-nav a:active{filter:brightness(.94)}}@media (width<=768px){.header-inner{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r));gap:8px}.header-left{gap:8px}.brand b{display:none}.brand .mark{width:34px;height:34px;font-size:17px}.header-right{gap:6px}.header-right .seg{display:none}.hbtn.icon{width:44px;height:44px;font-size:19px}.fav-cur{border-radius:10px;flex-shrink:0;place-items:center;width:40px;height:40px;margin-left:2px;padding:0;font-size:19px;display:grid}.fav-cur .lbl{display:none}.breadcrumb{gap:4px;font-size:13px}.breadcrumb a,.breadcrumb .current{padding:6px}.main{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r))}.folders{grid-template-columns:repeat(2,1fr);gap:10px}.gallery-columns,.gallery-column{gap:10px}}.drawer-mask{z-index:199;opacity:0;visibility:hidden;background:#0000006b;transition:opacity .25s,visibility .25s;position:fixed;inset:0}@media (hover:none){.fav-group.open .drawer-mask,.tree-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.drawer{width:min(86vw,320px);padding:18px;padding-bottom:max(18px,var(--safe-b))}.fav-group.open .edge-toggle.fav{left:min(86vw,320px)}.tree-group.open .edge-toggle.tree{right:min(86vw,320px)}.edge-toggle{padding:18px 11px;font-size:15px}.modal .close{top:calc(8px + var(--safe-t));right:calc(10px + var(--safe-r));background:#00000073;border-radius:50%;place-items:center;width:44px;height:44px;font-size:30px;display:grid}.player{width:100vw;max-width:100vw}.ptitle-top{top:calc(10px + var(--safe-t));left:14px;right:64px}.hud{padding:9px 16px;font-size:18px}.ctx-menu{min-width:200px;padding:6px}.ctx-item{padding:12px 14px}.ctx-sep{margin:5px 10px}.move-dialog{width:94vw;padding:18px;padding-bottom:max(18px,var(--safe-b))}.move-row{padding:13px 14px}}.prog-block{margin-top:16px}.prog-head{align-items:center;gap:12px;display:flex}.prog-title{white-space:nowrap;font-weight:600}.prog-pct{text-align:right;color:#2e9e5b;min-width:44px}.progress-track{background:#eef0f2;border-radius:4px;flex:1;height:8px;overflow:hidden}.progress-fill{background:linear-gradient(90deg,#4caf7d,#2e9e5b);border-radius:4px;height:100%;transition:width .4s}.log-modal{color:#d7dae0;background:#1b1e24;border-radius:12px;flex-direction:column;width:min(860px,92vw);max-height:80vh;display:flex;overflow:hidden}.log-head{border-bottom:1px solid #2c313a;align-items:center;gap:12px;padding:12px 16px;display:flex}.log-head b{margin-right:auto;font-size:15px}.log-filter{color:#9aa3af;cursor:pointer;align-items:center;gap:5px;font-size:13px;display:flex}.log-body{padding:10px 14px;font:12px/1.7 ui-monospace,Consolas,monospace;overflow:auto}.log-line{white-space:pre-wrap;word-break:break-all;gap:10px;padding:1px 0;display:flex}.log-line.log-err{background:#e539351f}.log-ts{color:#6b7482;flex-shrink:0}.log-lv{color:#9aa3af;flex-shrink:0;width:60px}.log-lv.lv-error,.log-lv.lv-critical{color:#ff6b66;font-weight:700}.log-lv.lv-warning{color:#f5a623}.log-empty{color:#6b7482;text-align:center;padding:20px}button,input,select{font-family:inherit}button:disabled{cursor:not-allowed;opacity:.55}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.brand,.back,.text-button{color:inherit;font:inherit;text-align:left;background:0 0;border:0}.text-button{cursor:pointer}.toggle{border:0}.icon-button{border:1px solid var(--line);width:36px;height:36px;color:var(--ink);cursor:pointer;background:#fff;border-radius:6px;flex:0 0 36px;justify-content:center;align-items:center;padding:0;display:inline-flex}.icon-button.active{background:var(--blue-soft);color:var(--blue)}.icon-button.danger{color:#c62828}.media-toolbar{border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:12px;display:flex}.media-search{border:1px solid var(--line);background:#fff;border-radius:6px;flex:1;align-items:center;min-width:180px;max-width:380px;display:flex}.media-search input{background:0 0;border:0;width:100%;min-width:0;padding:9px 10px;font-size:13px}.media-search .icon-button{border:0}.media-toolbar select{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:0;max-width:100%;height:36px;padding:0 8px;font-size:13px}.selection-tools{flex-wrap:wrap;align-items:center;gap:12px;width:100%;padding-top:4px;font-size:13px;display:flex}.selection-tools label{cursor:pointer;align-items:center;gap:6px;display:flex}.selection-tools input{width:17px;height:17px}.operation-feedback,.sync-error{color:#8b3029;overflow-wrap:anywhere;border-bottom:1px solid #ebc6c2;margin:0 0 16px;padding:14px 0;font-size:13px}.operation-feedback ul{max-height:160px;margin:8px 0 0;padding-left:18px;overflow:auto}.operation-feedback li{margin-top:4px}.operation-feedback .actions{margin-top:10px}.item.selected{outline:2px solid var(--blue);outline-offset:1px}.card-open{z-index:1;cursor:pointer;background:0 0;border:0;width:100%;height:100%;position:absolute;inset:0}.card-open:focus-visible{outline-offset:-3px}.media-select{z-index:5;cursor:pointer;width:20px;height:20px;accent-color:var(--blue);position:absolute;top:10px;left:10px}.pinned-mark{z-index:2;color:#bf7200;pointer-events:none;background:#fff;border-radius:4px;padding:4px;position:absolute;top:8px;right:8px}.thumb-status{color:var(--ink-2);z-index:2;pointer-events:none;text-align:center;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.thumb-status.unavailable{background:#eceff1}.thumb-status .icon-button{pointer-events:auto;flex-basis:32px;width:32px;height:32px}.drawer{z-index:1400;height:100dvh;padding-top:max(20px,var(--safe-t))}.drawer[aria-hidden=true]{visibility:hidden}.drawer-mask{z-index:1399}.edge-toggle{z-index:1401;letter-spacing:0}.drawer-close{position:absolute;top:10px;right:12px}.drawer h3{padding-right:36px}.fav-head .fmeta .fn,.fav-head .fmeta .fp{display:block}.fav-item:focus-within .rm{opacity:1}.tnode{text-align:left;background:0 0;border:0;width:100%;display:block}.ctx-menu{z-index:1600;overscroll-behavior:contain;border-radius:8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}.ctx-item{width:100%;font:inherit;text-align:left;white-space:normal;overflow-wrap:anywhere;background:0 0;border:0;display:block}.modal-overlay{z-index:1500;padding:8px}.move-dialog,.dlg{border-radius:8px;max-height:calc(100dvh - 16px);overflow:auto}.move-list{flex-shrink:1;min-height:80px}.move-row{border:0;border-bottom:1px solid var(--line);text-align:left;background:#fff;width:100%;font-size:14px;display:block}.move-crumbs .text-button{color:var(--blue)}.move-actions,.dlg-actions{flex-wrap:wrap;flex-shrink:0}.toaster{z-index:2000}.log-head{flex-wrap:wrap}.log-modal{border-radius:8px;max-height:calc(100dvh - 24px)}.image-viewer{padding:64px 16px 20px;overflow:hidden}.image-toolbar{z-index:4;color:#fff;background:#000000bf;align-items:center;gap:8px;padding:10px 16px;display:flex;position:absolute;top:0;left:0;right:0}.image-title{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:14px;overflow:hidden}.image-toolbar .icon-button,.image-nav{color:#fff;background:#222;border-color:#555}.image-toolbar output{text-align:center;font-variant-numeric:tabular-nums;width:44px;font-size:12px}.image-viewer .imgview{transform-origin:50%;border-radius:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px)}.image-loading{z-index:1;position:absolute}.image-error,.viewer-status{color:#fff}.image-error{z-index:3;align-items:center;gap:12px;display:flex}.image-error .btn{align-items:center;gap:6px;display:inline-flex}.image-nav{z-index:3;position:absolute;top:50%}.image-nav.previous{left:12px}.image-nav.next{right:12px}.viewer-status .close{background:#222;border:0;font-size:20px}.viewer-status .close svg{width:22px}@media (width<=600px){.media-search{flex-basis:100%;max-width:none}.media-toolbar{gap:6px}.media-toolbar select{flex:1;padding:0 5px;font-size:12px}.icon-button{flex-basis:40px;width:40px;height:40px}.media-toolbar select{height:40px}.image-toolbar{gap:4px;padding:8px}.image-title{pointer-events:none;text-align:center;position:absolute;top:58px;left:12px;right:12px}.image-toolbar{justify-content:flex-end}.image-viewer{padding-top:84px}.image-viewer .imgview{max-height:calc(100dvh - 130px)}.image-nav.previous{left:6px}.image-nav.next{right:6px}}@media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}";
 	var gallery_default = ".g115-root{z-index:2147483000;background:var(--bg);position:fixed;inset:0;overflow:hidden}.g115-root .header{position:absolute}.g115-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:absolute;inset:0;overflow:auto}.g115-root .main{min-height:100%}.g115-root .folder{color:inherit;display:block}.masonry>.g115-cell{will-change:transform;position:absolute;top:0;left:0}.masonry>.g115-cell>.item{position:relative}.g115-scroll.g115-scrolling .item,.g115-scroll.g115-scrolling .folder{pointer-events:none}.g115-icon{display:block}.g115-video-box{aspect-ratio:16/9;background:linear-gradient(135deg,#2b2f36,#16181c)}.g115-badge{color:#ffd27a;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:8px;left:8px}.g115-launcher{z-index:2147482999;background:var(--blue);color:#fff;width:48px;height:48px;box-shadow:var(--sh-h);cursor:pointer;border:0;border-radius:50%;place-items:center;transition:transform .18s;display:grid;position:fixed;bottom:96px;right:24px}.g115-launcher:hover{transform:scale(1.08)}.g115-settings{top:calc(var(--header-h) + 8px);z-index:1300;border:1px solid var(--line);background:#fff;border-radius:12px;width:320px;max-width:calc(100vw - 32px);padding:6px 18px;position:absolute;right:24px;box-shadow:0 12px 34px #00000038}.g115-settings .row{cursor:pointer}.g115-settings .row:last-child{cursor:default}.g115-settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue)}.pswp__g115-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000c;flex:1;align-self:center;min-width:0;padding:0 16px;font-size:14px;overflow:hidden}.pswp__button.pswp__g115-original{color:#fff;width:auto;padding:0 14px;font-size:13px;font-weight:600}.pswp__button.pswp__g115-original[disabled]{opacity:.4;cursor:default}.g115-video-box img{object-fit:cover}.g115-skel-dark{background:linear-gradient(90deg,#24272d 25%,#2f333a 37%,#24272d 63%) 0 0/400% 100%;animation:1.3s infinite skel}.g115-cover-note{color:#c9ced6;text-align:center;z-index:2;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.g115-cover-retry{pointer-events:auto;z-index:3;color:#fff;cursor:pointer;background:#222;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px;position:relative}.fpreview{position:relative}.g115-video-badge{color:#fff;background:#f57c00eb;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.g115-cover-ctl{flex-shrink:0;align-items:center;gap:6px;display:flex}.g115-cover-ctl select{border:1px solid var(--line);background:#fff;border-radius:6px;height:32px;padding:0 6px;font-size:13px}.g115-cover-ctl .inp{width:72px;padding:6px 8px}.g115-root .card-open{pointer-events:none}.g115-star{z-index:4;color:#fff;cursor:pointer;opacity:0;background:#00000073;border:0;border-radius:50%;width:28px;height:28px;font-size:15px;line-height:28px;transition:opacity .15s;position:absolute;top:8px;right:8px}.item:hover .g115-star,.g115-star.on,.g115-star:focus-visible{opacity:1}.g115-star.on{color:var(--gold);background:#0000008c}@media (hover:none){.g115-star{opacity:1}}.g115-hover-bar{z-index:3;pointer-events:none;gap:3px;display:flex;position:absolute;bottom:4px;left:6px;right:6px}.g115-hover-bar i{background:#ffffff59;border-radius:2px;flex:1;height:3px}.g115-hover-bar i.ok{background:#fff9}.g115-hover-bar i.on{background:var(--blue)}.g115-fthumb{aspect-ratio:1;background:#e9eaec;display:block;position:relative;overflow:hidden}.g115-fthumb img{object-fit:cover;width:100%;height:100%;position:absolute;inset:0}.g115-fthumb.vid:after{content:\"▶\";color:#fff;text-shadow:0 0 3px #000;font-size:9px;position:absolute;bottom:2px;right:3px}.g115-video-badge{inset:6px auto auto 6px}.g115-drawer-empty{color:var(--ink-3);padding:20px 4px;font-size:13px}.g115-root .drawer .tnode{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.g115-detail{grid-template-columns:auto 1fr;gap:6px 14px;margin:4px 0 0;font-size:13px;display:grid}.g115-detail dt{color:var(--ink-3)}.g115-detail dd{word-break:break-all;color:var(--ink);margin:0}.g115-settings{max-height:calc(100dvh - var(--header-h) - 24px);overflow:auto}.g115-cache-row{flex-wrap:wrap}.g115-cache-row .lab small{display:block}.g115-cache-btns{flex-wrap:wrap;gap:8px;display:flex}.g115-settings{width:400px}.g115-err{color:#c62828}.g115-player{z-index:1800;background:#000;position:absolute;inset:0}.g115-player-frame{background:#000;border:0;width:100%;height:100%;position:absolute;inset:0}.g115-player-spin{margin:-20px 0 0 -20px;position:absolute;top:50%;left:50%}.g115-player-hud{z-index:2}.g115-player-close{z-index:3;color:#fff;cursor:pointer;opacity:.75;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;display:grid;position:absolute;top:10px;right:14px}.g115-player-close:hover{opacity:1;background:#c82828d9}.folder{position:relative}.folder:hover .g115-star,.folder .g115-star.on{opacity:1}.fav-cur{flex-shrink:0}.g115-tree{flex-direction:column;gap:1px;max-height:calc(100dvh - 90px);margin:0 -6px;padding:0 6px;display:flex;overflow:auto}.g115-tree-row{align-items:center;min-width:0;display:flex}.g115-tree-twisty{width:22px;height:30px;color:var(--ink-3);cursor:pointer;background:0 0;border:0;border-radius:4px;flex-shrink:0;place-items:center;font-size:12px;display:grid}.g115-tree-twisty:hover:not(:disabled){color:var(--ink);background:#f0f2f5}.g115-tree-twisty.leaf{cursor:default}.g115-tree-row .tnode{flex:1;min-width:0;padding-left:4px}.g115-tree-star{color:var(--gold,#f0a500)}.g115-tree-spin{border:2px solid #ccd;border-top-color:var(--blue);border-radius:50%;width:10px;height:10px;animation:.7s linear infinite g115spin}@keyframes g115spin{to{transform:rotate(360deg)}}.g115-root .drawer.left{overflow:auto}.g115-fav-img{aspect-ratio:16/9;background:#e9eaec;border-radius:6px;margin-top:9px;position:relative;overflow:hidden}.g115-fav-img img{object-fit:cover;width:100%;height:100%;display:block}.g115-fav-img .g115-fthumb{aspect-ratio:auto;position:absolute;inset:0}.g115-lite-video{background:#000;outline:none;width:100%;height:100%;position:absolute;inset:0}.g115-lite-bar{z-index:3;opacity:0;pointer-events:none;align-items:center;gap:8px;transition:opacity .2s;display:flex;position:absolute;top:10px;left:14px;right:70px}.g115-lite:hover .g115-lite-bar,.g115-lite-bar:focus-within{opacity:1}.g115-lite-bar>*{pointer-events:auto}.g115-lite-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000000e6;min-width:0;font-size:14px;overflow:hidden}.g115-lite-nav{color:#fff;cursor:pointer;background:#0000008c;border:0;border-radius:50%;flex-shrink:0;width:40px;height:40px;font-size:24px;line-height:1}.g115-lite-nav:hover:not(:disabled){background:#ffffff40}.g115-lite-nav:disabled{opacity:.3;cursor:default}.g115-lite-error{z-index:3;color:#fff;text-align:center;background:#141414eb;border-radius:10px;max-width:min(90vw,460px);padding:18px 22px;font-size:14px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.g115-lite-error .actions{flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;display:flex}@media (hover:none){.g115-lite-bar{opacity:1}}.g115-root .g115-notice{color:var(--ink-3);margin:-4px 2px 10px;font-size:12px}.g115-root .g115-fade-enter-active,.g115-root .g115-fade-leave-active{transition:opacity .4s}.g115-root .g115-fade-enter-from,.g115-root .g115-fade-leave-to{opacity:0}.g115-settings .row.g115-stack{cursor:default;flex-direction:column;align-items:stretch;gap:8px}.g115-settings .g115-stack>small{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-seg{gap:18px;font-size:13px;display:flex}.g115-seg label{cursor:pointer;align-items:center;gap:6px;display:inline-flex}.g115-seg label.off{opacity:.5;cursor:not-allowed}.g115-seg input{accent-color:var(--blue);margin:0}.g115-kv{color:var(--ink-2);justify-content:space-between;align-items:center;gap:10px;font-size:13px;display:flex}.g115-kv-val{align-items:center;gap:6px;min-width:0;display:inline-flex}.g115-kv-val em{color:var(--ink);text-overflow:ellipsis;white-space:nowrap;max-width:180px;font-style:normal;overflow:hidden}.g115-kv .inp{width:84px;padding:6px 8px}.g115-kv .btn{padding:4px 12px;font-size:12px}.g115-warn{color:#b45309}.g115-settings{overflow-x:hidden}.g115-root .item .filename{white-space:nowrap;text-overflow:ellipsis;word-break:normal;overflow:hidden}.g115-root .item .thumb{container-type:inline-size}.g115-root .video-overlay{width:clamp(22px,22cqw,60px);height:clamp(22px,22cqw,60px)}.g115-root .video-overlay:after{margin-left:clamp(1px,1.5cqw,4px);font-size:clamp(9px,8.8cqw,24px)}.g115-root .item .dur{padding:1px clamp(3px,2.6cqw,7px);font-size:clamp(9px,4.6cqw,11px);bottom:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}.g115-root .item .g115-star{width:clamp(20px,12cqw,28px);height:clamp(20px,12cqw,28px);font-size:clamp(11px,6.5cqw,15px);line-height:clamp(20px,12cqw,28px);top:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}@container (width<=110px){.g115-root .video-overlay{width:18px;height:18px;top:auto;bottom:4px;left:4px;transform:none}.g115-root .video-overlay:after{margin-left:2px;font-size:9px}}.g115-launcher-icon,.g115-root .brand .mark{place-items:center;line-height:0;display:grid}.pswp__g115-strip{z-index:20;opacity:0;pointer-events:none;justify-content:center;gap:6px;padding:0 12px;transition:opacity .25s;display:flex;position:absolute;bottom:10px;left:0;right:0;overflow:hidden}.pswp--ui-visible .pswp__g115-strip{opacity:1;pointer-events:auto}.pswp__g115-strip-item{cursor:pointer;opacity:.55;background:#222;border:2px solid #0000;border-radius:6px;flex:none;width:60px;height:60px;padding:0;transition:opacity .15s,border-color .15s;overflow:hidden}.pswp__g115-strip-item:hover{opacity:.9}.pswp__g115-strip-item.on{opacity:1;border-color:#fff}.pswp__g115-strip-item img{object-fit:cover;width:100%;height:100%;display:block}@media (width<=600px){.pswp__g115-strip-item{width:44px;height:44px}}.g115-pl{z-index:4;pointer-events:none;position:absolute;top:0;bottom:0;right:0}.g115-pl>*{pointer-events:auto}.g115-pl-edge{width:24px;position:absolute;top:0;bottom:0;right:0}.g115-pl-toggle{color:#fff;cursor:pointer;opacity:0;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;transition:opacity .2s,right .25s;display:grid;position:absolute;top:50%;right:10px;transform:translateY(-50%)}.g115-lite:hover .g115-pl-toggle,.g115-pl-toggle:focus-visible{opacity:.85}.g115-pl.open .g115-pl-toggle{opacity:0;pointer-events:none}@media (hover:none){.g115-pl-toggle{opacity:.85}}.g115-pl-panel{color:#eee;background:#121214f0;flex-direction:column;width:300px;max-width:86vw;transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;position:absolute;top:0;bottom:0;right:0;transform:translate(100%)}.g115-pl.open .g115-pl-panel{transform:none}.g115-pl-head{justify-content:space-between;align-items:center;gap:8px;margin-top:52px;padding:14px 14px 10px 16px;font-size:14px;display:flex}.g115-pl-pin{color:#ccc;cursor:pointer;background:0 0;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px}.g115-pl-pin.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-pl-list{overscroll-behavior:contain;flex-direction:column;flex:1;gap:6px;padding:0 10px 14px;display:flex;overflow:auto}.g115-pl-item{color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:8px;align-items:center;gap:10px;min-width:0;padding:5px;display:flex}.g115-pl-item:hover{background:#ffffff14}.g115-pl-item.on{background:#1976d259}.g115-pl-cover{aspect-ratio:16/9;background:#2a2c31;border-radius:5px;flex:0 0 112px;position:relative;overflow:hidden}.g115-pl-cover .g115-fthumb{aspect-ratio:auto;background:#2a2c31;position:absolute;inset:0}.g115-pl-cover .g115-fthumb.vid:after{display:none}.g115-pl-note{color:#999;place-items:center;font-size:11px;display:grid;position:absolute;inset:0}.g115-pl-dur{color:#fff;background:#000000b3;border-radius:3px;padding:0 4px;font-size:10px;position:absolute;bottom:3px;right:3px}.g115-pl-name{-webkit-line-clamp:2;word-break:break-all;-webkit-box-orient:vertical;flex:1;min-width:0;font-size:12px;line-height:1.4;display:-webkit-box;overflow:hidden}.g115-pl-more{place-items:center;padding:10px;display:grid}.g115-pl-more .spinner{width:24px;height:24px}.g115-lite.g115-pinned .g115-lite-video{width:auto;right:300px}.g115-lite.g115-pinned .g115-player-close{right:314px}@media (width<=600px){.g115-lite.g115-pinned .g115-lite-video{width:100%;right:0}}.g115-root .hbtn.g115-select-btn{font-size:13px}.g115-root .hbtn.g115-select-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-check{z-index:5;color:#0000;text-align:center;pointer-events:none;background:#00000059;border:2px solid #fff;border-radius:50%;width:24px;height:24px;font-size:14px;font-weight:700;line-height:20px;position:absolute;top:8px;left:8px;box-shadow:0 1px 4px #0006}.g115-check.on{background:var(--blue);color:#fff}.g115-root .item.g115-picked .thumb,.g115-root .folder.g115-picked .fpreview{outline:3px solid var(--blue);outline-offset:-3px}.g115-root .item.g115-picked,.g115-root .folder.g115-picked{box-shadow:0 0 0 2px var(--blue)}.g115-selbar{z-index:1350;border:1px solid var(--line);background:#fff;border-radius:12px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:10px 14px;display:flex;position:absolute;bottom:20px;left:50%;transform:translate(-50%);box-shadow:0 10px 30px #00000038}.g115-selbar-count{color:var(--ink-2);font-size:14px}.g115-selbar-count b{color:var(--blue)}.g115-selbar-tip{color:var(--ink-3);font-size:12px}.g115-selbar .btn{padding:6px 14px}.g115-selbar .btn:disabled{opacity:.45;cursor:default}.g115-root .btn.danger:not(:disabled):hover{color:#fff;background:#e53935;border-color:#e53935}.g115-del-sum{color:var(--ink-2);margin:6px 0 0;font-size:14px}.g115-del-warn{color:#b45309;margin:8px 0 0;font-size:13px}.g115-del-list{background:#f6f7f9;border-radius:8px;max-height:200px;margin:12px 0 0;padding:8px 10px;font-size:13px;list-style:none;overflow:auto}.g115-del-list li{white-space:nowrap;text-overflow:ellipsis;line-height:1.7;overflow:hidden}.g115-del-list li.more{color:var(--ink-3)}@media (width<=600px){.g115-selbar-tip{display:none}}.fpreview:has(.g115-check) .g115-video-badge{top:38px}";
-	var collections_default = ".g115-rail{z-index:1401;max-height:calc(100dvh - var(--header-h) - 32px);flex-direction:column;gap:6px;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%)}.g115-rail-group.open .g115-rail{left:340px}.g115-rail-btn{color:#fff;cursor:pointer;writing-mode:vertical-rl;font:inherit;letter-spacing:1px;border:0;border-radius:0 8px 8px 0;flex-shrink:0;padding:12px 9px;font-size:14px;font-weight:600;transition:filter .15s,padding .15s;box-shadow:0 2px 12px #0003}.g115-rail-btn.fav{background:linear-gradient(135deg,#f093fb,#f5576c);padding:15px 9px}.g115-rail-btn.coll{background:linear-gradient(135deg,#43cea2,#2f80b5)}.g115-rail-btn:hover,.g115-rail-btn.on{filter:brightness(1.08);padding-left:12px}.g115-rail-btn.cur{box-shadow:inset 3px 0 #fffffff2,0 2px 12px #0003}.g115-rail-btn.bad{background:linear-gradient(135deg,#9e9e9e,#6d6d6d)}.g115-rail-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.g115-rail-colls{overscroll-behavior:contain;scrollbar-width:none;flex-direction:column;gap:6px;min-height:0;padding-right:6px;display:flex;overflow-y:auto}.g115-rail-colls::-webkit-scrollbar{display:none}.g115-rail-name{text-overflow:ellipsis;white-space:nowrap;max-height:7.5em;display:inline-block;overflow:hidden}.g115-rail-warn{margin-top:4px;font-size:12px;display:inline-block}.g115-rail-group.open .drawer.left{left:0}@media (hover:none){.g115-rail-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.g115-rail-group.open .g115-rail{left:min(86vw,320px)}.g115-rail-btn{padding:14px 10px}.g115-rail-name{max-height:6em}}.g115-crumb-cur{cursor:pointer;font:inherit;color:inherit;background:0 0;border:0;border-radius:6px;margin:-2px -4px;padding:2px 4px}.g115-crumb-cur:hover,.g115-crumb-cur:focus-visible{background:#f0f2f5}.g115-settings{width:460px;padding:0 18px 6px}.g115-tabs{z-index:1;border-bottom:1px solid var(--line);scrollbar-width:none;background:#fff;gap:2px;margin:0 -18px;padding:8px 12px 0;display:flex;position:sticky;top:0;overflow-x:auto}.g115-tabs::-webkit-scrollbar{display:none}.g115-tab{font:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-bottom:2px solid #0000;flex-shrink:0;margin-bottom:-1px;padding:8px 10px;font-size:13px}.g115-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}.g115-settings .seg button{padding:4px 10px}.g115-coll-set{padding:12px 0}.g115-coll-head b{font-size:14px;font-weight:600;display:block}.g115-coll-head small,.g115-coll-tip{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-coll-warn{color:#8a4b00;background:#fff4e5;border-radius:8px;margin:8px 0;padding:8px 10px;font-size:12px}.g115-coll-list{flex-direction:column;gap:6px;margin:10px 0;display:flex}.g115-coll-row{border:1px solid var(--line-2);background:#fff;border-radius:8px;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;transition:box-shadow .2s,border-color .2s;display:flex}.g115-coll-row.flash{border-color:var(--blue);box-shadow:0 0 0 3px #1976d226}.g115-coll-row.dragging{opacity:.55}.g115-coll-row.drop-before{box-shadow:inset 0 3px 0 var(--blue)}.g115-coll-row.drop-after{box-shadow:inset 0 -3px 0 var(--blue)}.g115-coll-grip{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;color:var(--ink-3);padding:0 4px;font-size:18px}.g115-coll-main{flex-direction:column;flex:1;min-width:120px;display:flex}.g115-coll-name{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.g115-coll-path{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.g115-coll-btns,.g115-coll-confirm{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.g115-coll-btns .btn,.g115-coll-confirm .btn{padding:4px 10px;font-size:12px}.g115-coll-confirm small{color:var(--ink-2);flex-basis:100%;font-size:12px}.g115-coll-rename.inp{width:100%;padding:4px 8px}.g115-coll-add{margin:4px 0 6px}.g115-picker{flex-direction:column;width:480px;max-height:min(680px,100dvh - 16px);display:flex;position:relative}.g115-picker h3{padding-right:36px}.g115-pick-crumbs{flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;font-size:13px;display:flex}.g115-pick-crumbs .sep{color:var(--ink-3)}.g115-pick-crumbs .text-button{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:2px;font-size:13px}.g115-pick-list{border:1px solid var(--line-2);overscroll-behavior:contain;border-radius:8px;flex:1;min-height:200px;max-height:50vh;padding:4px;overflow:auto}.g115-pick-row{cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink);background:0 0;border:0;border-radius:6px;align-items:center;gap:8px;padding:8px 10px;font-size:14px;display:flex}.g115-pick-row:hover,.g115-pick-row:focus-visible{background:#f2f4f7}.g115-pick-name{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.g115-pick-badge{color:#a15c00;background:#fff4e0;border-radius:4px;flex-shrink:0;padding:1px 6px;font-size:11px}.g115-pick-go{color:var(--ink-3)}.g115-pick-new{flex-wrap:wrap;align-items:center;gap:6px;padding:6px;display:flex}.g115-pick-new .inp{flex:1;width:auto;min-width:140px;padding:6px 8px}.g115-pick-new small{flex-basis:100%}.g115-pick-more{color:var(--ink-3);justify-content:space-between;align-items:center;gap:8px;padding:10px 4px;font-size:12px;display:flex}.g115-pick-foot{flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;display:flex}.g115-pick-reason{color:var(--ink-3);text-align:right;flex:1;font-size:12px}.g115-pick-foot>.btn.primary{margin-left:auto}.g115-pick-reason+.btn.primary{margin-left:0}.g115-bind{width:420px}.g115-bind-field{color:var(--ink-2);flex-direction:column;gap:6px;font-size:13px;display:flex}.g115-bind-path{color:var(--ink);word-break:break-all;margin:10px 0 0;font-size:13px}.g115-bind-note{color:var(--ink-3);margin:8px 0 0;font-size:12px}.g115-fav-tools{flex-direction:column;gap:8px;margin:-6px 0 12px;display:flex}.g115-fav-search{align-items:center;display:flex;position:relative}.g115-fav-search .inp{width:100%;padding:7px 34px 7px 10px}.g115-fav-search .icon-button{position:absolute;right:2px}.g115-fav-kinds{gap:4px;display:flex}.g115-fav-kinds button{border:1px solid var(--line);font:inherit;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:14px;flex:1;padding:4px 0;font-size:12px}.g115-fav-kinds button.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-coll-meta{align-items:center;gap:10px;margin:-8px 0 12px;display:flex}.g115-coll-meta .g115-coll-path{flex:1;min-width:0}.g115-coll-meta .btn{flex-shrink:0;padding:5px 12px;font-size:12px}.g115-coll-gone{color:#8a1c1c;background:#fff4f4;border-radius:8px;flex-direction:column;gap:10px;padding:12px;font-size:13px;display:flex}.g115-coll-gone p{margin:0}";
+	var collections_default = ".g115-rail{z-index:1401;max-height:calc(100dvh - var(--header-h) - 32px);flex-direction:column;gap:6px;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%)}.g115-rail-group.open .g115-rail{left:340px}.g115-rail-btn{color:#fff;cursor:pointer;writing-mode:vertical-rl;font:inherit;letter-spacing:1px;border:0;border-radius:0 8px 8px 0;flex-shrink:0;padding:12px 9px;font-size:14px;font-weight:600;transition:filter .15s,padding .15s;box-shadow:0 2px 12px #0003}.g115-rail-btn.fav{background:linear-gradient(135deg,#f093fb,#f5576c);padding:15px 9px}.g115-rail-btn.coll{background:linear-gradient(135deg,#43cea2,#2f80b5)}.g115-rail-btn:hover,.g115-rail-btn.on{filter:brightness(1.08);padding-left:12px}.g115-rail-btn.cur{box-shadow:inset 3px 0 #fffffff2,0 2px 12px #0003}.g115-rail-btn.bad{background:linear-gradient(135deg,#9e9e9e,#6d6d6d)}.g115-rail-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.g115-rail-colls{overscroll-behavior:contain;scrollbar-width:none;flex-direction:column;gap:6px;min-height:0;padding-right:6px;display:flex;overflow-y:auto}.g115-rail-colls::-webkit-scrollbar{display:none}.g115-rail-name{text-overflow:ellipsis;white-space:nowrap;max-height:7.5em;display:inline-block;overflow:hidden}.g115-rail-warn{margin-top:4px;font-size:12px;display:inline-block}.g115-rail-group.open .drawer.left{left:0}@media (hover:none){.g115-rail-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.g115-rail-group.open .g115-rail{left:min(86vw,320px)}.g115-rail-btn{padding:14px 10px}.g115-rail-name{max-height:6em}}.g115-crumb-cur{cursor:pointer;font:inherit;color:inherit;background:0 0;border:0;border-radius:6px;margin:-2px -4px;padding:2px 4px}.g115-crumb-cur:hover,.g115-crumb-cur:focus-visible{background:#f0f2f5}.g115-settings{width:460px;padding:0 18px 6px}.g115-tabs{z-index:1;border-bottom:1px solid var(--line);scrollbar-width:none;background:#fff;gap:2px;margin:0 -18px;padding:8px 12px 0;display:flex;position:sticky;top:0;overflow-x:auto}.g115-tabs::-webkit-scrollbar{display:none}.g115-tab{font:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-bottom:2px solid #0000;flex-shrink:0;margin-bottom:-1px;padding:8px 10px;font-size:13px}.g115-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}.g115-settings .seg button{padding:4px 10px}.g115-coll-set{padding:12px 0}.g115-coll-head b{font-size:14px;font-weight:600;display:block}.g115-coll-head small,.g115-coll-tip{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-coll-warn{color:#8a4b00;background:#fff4e5;border-radius:8px;margin:8px 0;padding:8px 10px;font-size:12px}.g115-coll-list{flex-direction:column;gap:6px;margin:10px 0;display:flex}.g115-coll-row{border:1px solid var(--line-2);background:#fff;border-radius:8px;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;transition:box-shadow .2s,border-color .2s;display:flex}.g115-coll-row.flash{border-color:var(--blue);box-shadow:0 0 0 3px #1976d226}.g115-coll-row.dragging{opacity:.55}.g115-coll-row.drop-before{box-shadow:inset 0 3px 0 var(--blue)}.g115-coll-row.drop-after{box-shadow:inset 0 -3px 0 var(--blue)}.g115-coll-grip{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;color:var(--ink-3);padding:0 4px;font-size:18px}.g115-coll-main{flex-direction:column;flex:1;min-width:120px;display:flex}.g115-coll-name{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.g115-coll-path{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.g115-coll-btns,.g115-coll-confirm{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.g115-coll-btns .btn,.g115-coll-confirm .btn{padding:4px 10px;font-size:12px}.g115-coll-confirm small{color:var(--ink-2);flex-basis:100%;font-size:12px}.g115-coll-rename.inp{width:100%;padding:4px 8px}.g115-coll-add{margin:4px 0 6px}.g115-picker{flex-direction:column;width:480px;max-height:min(680px,100dvh - 16px);display:flex;position:relative}.g115-picker h3{padding-right:36px}.g115-pick-crumbs{flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;font-size:13px;display:flex}.g115-pick-crumbs .sep{color:var(--ink-3)}.g115-pick-crumbs .text-button{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:2px;font-size:13px}.g115-pick-list{border:1px solid var(--line-2);overscroll-behavior:contain;border-radius:8px;flex:1;min-height:200px;max-height:50vh;padding:4px;overflow:auto}.g115-pick-row{cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink);background:0 0;border:0;border-radius:6px;align-items:center;gap:8px;padding:8px 10px;font-size:14px;display:flex}.g115-pick-row:hover,.g115-pick-row:focus-visible{background:#f2f4f7}.g115-pick-name{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.g115-pick-badge{color:#a15c00;background:#fff4e0;border-radius:4px;flex-shrink:0;padding:1px 6px;font-size:11px}.g115-pick-go{color:var(--ink-3)}.g115-pick-new{flex-wrap:wrap;align-items:center;gap:6px;padding:6px;display:flex}.g115-pick-new .inp{flex:1;width:auto;min-width:140px;padding:6px 8px}.g115-pick-new small{flex-basis:100%}.g115-pick-more{color:var(--ink-3);justify-content:space-between;align-items:center;gap:8px;padding:10px 4px;font-size:12px;display:flex}.g115-pick-foot{flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;display:flex}.g115-pick-reason{color:var(--ink-3);text-align:right;flex:1;font-size:12px}.g115-pick-foot>.btn.primary{margin-left:auto}.g115-pick-reason+.btn.primary{margin-left:0}.g115-bind{width:420px}.g115-bind-field{color:var(--ink-2);flex-direction:column;gap:6px;font-size:13px;display:flex}.g115-bind-path{color:var(--ink);word-break:break-all;margin:10px 0 0;font-size:13px}.g115-bind-note{color:var(--ink-3);margin:8px 0 0;font-size:12px}.g115-fav-tools{flex-direction:column;gap:8px;margin:-6px 0 12px;display:flex}.g115-fav-search{align-items:center;display:flex;position:relative}.g115-fav-search .inp{width:100%;padding:7px 34px 7px 10px}.g115-fav-search .icon-button{position:absolute;right:2px}.g115-fav-kinds{gap:4px;display:flex}.g115-fav-kinds button{border:1px solid var(--line);font:inherit;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:14px;flex:1;padding:4px 0;font-size:12px}.g115-fav-kinds button.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-coll-meta{align-items:center;gap:10px;margin:-8px 0 12px;display:flex}.g115-coll-meta .g115-coll-path{flex:1;min-width:0}.g115-coll-meta .btn{flex-shrink:0;padding:5px 12px;font-size:12px}.g115-coll-gone{color:#8a1c1c;background:#fff4f4;border-radius:8px;flex-direction:column;gap:10px;padding:12px;font-size:13px;display:flex}.g115-coll-gone p{margin:0}.g115-coll-count{color:var(--ink-3);margin:-4px 0 10px;font-size:12px;display:block}";
 	var photoswipe_default = "/*! PhotoSwipe main CSS by Dmytro Semenov | photoswipe.com */\n.pswp{--pswp-bg:#000;--pswp-placeholder-bg:#222;--pswp-root-z-index:100000;--pswp-preloader-color:#4f4f4f66;--pswp-preloader-color-secondary:#ffffffe6;--pswp-icon-color:#fff;--pswp-icon-color-secondary:#4f4f4f;--pswp-icon-stroke-color:#4f4f4f;--pswp-icon-stroke-width:2px;--pswp-error-text-color:var(--pswp-icon-color);width:100%;height:100%;z-index:var(--pswp-root-z-index);touch-action:none;opacity:.003;contain:layout style size;-webkit-tap-highlight-color:#0000;outline:0;display:none;position:fixed;top:0;left:0}.pswp:focus{outline:0}.pswp *{box-sizing:border-box}.pswp img{max-width:none}.pswp--open{display:block}.pswp,.pswp__bg{will-change:opacity;transform:translateZ(0)}.pswp__bg{opacity:.005;background:var(--pswp-bg)}.pswp,.pswp__scroll-wrap{overflow:hidden}.pswp__scroll-wrap,.pswp__bg,.pswp__container,.pswp__item,.pswp__content,.pswp__img,.pswp__zoom-wrap{width:100%;height:100%;position:absolute;top:0;left:0}.pswp__img,.pswp__zoom-wrap{width:auto;height:auto}.pswp--click-to-zoom.pswp--zoom-allowed .pswp__img{cursor:-webkit-zoom-in;cursor:-moz-zoom-in;cursor:zoom-in}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img{cursor:move;cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img:active{cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img,.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img:active,.pswp__img{cursor:-webkit-zoom-out;cursor:-moz-zoom-out;cursor:zoom-out}.pswp__container,.pswp__img,.pswp__button,.pswp__counter{-webkit-user-select:none;user-select:none}.pswp__item{z-index:1;overflow:hidden}.pswp__hidden{display:none!important}.pswp__content{pointer-events:none}.pswp__content>*{pointer-events:auto}.pswp__error-msg-container{display:grid}.pswp__error-msg{color:var(--pswp-error-text-color);margin:auto;font-size:1em;line-height:1}.pswp .pswp__hide-on-close{opacity:.005;will-change:opacity;transition:opacity var(--pswp-transition-duration) cubic-bezier(.4, 0, .22, 1);z-index:10;pointer-events:none}.pswp--ui-visible .pswp__hide-on-close{opacity:1;pointer-events:auto}.pswp__button{cursor:pointer;width:50px;height:60px;box-shadow:none;opacity:.85;-webkit-appearance:none;-webkit-touch-callout:none;background:0 0;border:0;margin:0;padding:0;display:block;position:relative;overflow:hidden}.pswp__button:hover,.pswp__button:active,.pswp__button:focus{box-shadow:none;opacity:1;background:0 0;border:0;padding:0;transition:none}.pswp__button:disabled{opacity:.3;cursor:auto}.pswp__icn{fill:var(--pswp-icon-color);color:var(--pswp-icon-color-secondary);pointer-events:none;width:32px;height:32px;position:absolute;top:14px;left:9px;overflow:hidden}.pswp__icn-shadow{stroke:var(--pswp-icon-stroke-color);stroke-width:var(--pswp-icon-stroke-width);fill:none}.pswp__icn:focus{outline:0}div.pswp__img--placeholder,.pswp__img--with-bg{background:var(--pswp-placeholder-bg)}.pswp__top-bar{z-index:10;flex-direction:row;justify-content:flex-end;width:100%;height:60px;display:flex;position:absolute;top:0;left:0;pointer-events:none!important}.pswp__top-bar>*{pointer-events:auto;will-change:opacity}.pswp__button--close{margin-right:6px}.pswp__button--arrow{width:75px;height:100px;margin-top:-50px;position:absolute;top:50%}.pswp__button--arrow:disabled{cursor:default;display:none}.pswp__button--arrow .pswp__icn{background:0 0;border-radius:0;width:60px;height:60px;margin-top:-30px;top:50%}.pswp--one-slide .pswp__button--arrow{display:none}.pswp--touch .pswp__button--arrow{visibility:hidden}.pswp--has_mouse .pswp__button--arrow{visibility:visible}.pswp__button--arrow--prev{left:0;right:auto}.pswp__button--arrow--next{right:0}.pswp__button--arrow--next .pswp__icn{left:auto;right:14px;transform:scaleX(-1)}.pswp__button--zoom{display:none}.pswp--zoom-allowed .pswp__button--zoom{display:block}.pswp--zoomed-in .pswp__zoom-icn-bar-v{display:none}.pswp__preloader{width:50px;height:60px;margin-right:auto;position:relative;overflow:hidden}.pswp__preloader .pswp__icn{opacity:0;transition:opacity .2s linear;animation:.6s linear infinite pswp-clockwise}.pswp__preloader--active .pswp__icn{opacity:.85}@keyframes pswp-clockwise{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.pswp__counter{margin-top:15px;height:30px;color:var(--pswp-icon-color);text-shadow:1px 1px 3px var(--pswp-icon-color-secondary);opacity:.85;margin-inline-start:20px;font-size:14px;line-height:30px}.pswp--one-slide .pswp__counter{display:none}";
 	var VIDEO_EXT = new Set([
 		"ts",
@@ -9922,23 +9998,23 @@
 			if (el?.isConnected) setTimeout(() => el.focus({ preventScroll: true }));
 		});
 	}
-	var _hoisted_1$22 = { class: "g115-bind-field" };
-	var _hoisted_2$20 = ["title"];
-	var _hoisted_3$18 = {
+	var _hoisted_1$23 = { class: "g115-bind-field" };
+	var _hoisted_2$21 = ["title"];
+	var _hoisted_3$19 = {
 		key: 0,
 		class: "g115-bind-note"
 	};
-	var _hoisted_4$17 = {
+	var _hoisted_4$18 = {
 		key: 1,
 		class: "g115-del-warn"
 	};
-	var _hoisted_5$15 = {
+	var _hoisted_5$16 = {
 		key: 2,
 		class: "g115-err"
 	};
-	var _hoisted_6$14 = { class: "dlg-actions" };
-	var _hoisted_7$13 = ["disabled"];
-	var _hoisted_8$13 = ["disabled"];
+	var _hoisted_6$13 = { class: "dlg-actions" };
+	var _hoisted_7$12 = ["disabled"];
+	var _hoisted_8$12 = ["disabled"];
 	var BindDialog_default = defineComponent({
 		__name: "BindDialog",
 		setup(__props) {
@@ -9964,7 +10040,7 @@
 					"aria-label": "设为合集"
 				}, [
 					_cache[6] || (_cache[6] = createBaseVNode("h3", null, "设为合集", -1)),
-					createBaseVNode("label", _hoisted_1$22, [_cache[5] || (_cache[5] = createBaseVNode("span", null, "名称", -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_1$23, [_cache[5] || (_cache[5] = createBaseVNode("span", null, "名称", -1)), withDirectives(createBaseVNode("input", {
 						ref_key: "input",
 						ref: input,
 						"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => unref(cui).state.bind.name = $event),
@@ -9976,29 +10052,29 @@
 					createBaseVNode("p", {
 						class: "g115-bind-path",
 						title: unref(pathText)(unref(cui).state.bind.target.path)
-					}, "📁 " + toDisplayString(unref(pathText)(unref(cui).state.bind.target.path)), 9, _hoisted_2$20),
-					unref(cui).state.bind.count === void 0 && !unref(cui).state.bind.error ? (openBlock(), createElementBlock("p", _hoisted_3$18, "正在读取目录信息…")) : unref(cui).state.bind.count ? (openBlock(), createElementBlock("p", _hoisted_4$17, "该目录已有 " + toDisplayString(unref(cui).state.bind.count) + " 项。在合集里删除会真正删除这些文件（进回收站）。", 1)) : createCommentVNode("", true),
+					}, "📁 " + toDisplayString(unref(pathText)(unref(cui).state.bind.target.path)), 9, _hoisted_2$21),
+					unref(cui).state.bind.count === void 0 && !unref(cui).state.bind.error ? (openBlock(), createElementBlock("p", _hoisted_3$19, "正在读取目录信息…")) : unref(cui).state.bind.count ? (openBlock(), createElementBlock("p", _hoisted_4$18, "该目录已有 " + toDisplayString(unref(cui).state.bind.count) + " 项。在合集里删除会真正删除这些文件（进回收站）。", 1)) : createCommentVNode("", true),
 					_cache[7] || (_cache[7] = createBaseVNode("p", { class: "g115-bind-note" }, "只在左侧加一个入口，不会改动网盘里的文件；与收藏（星标）互不影响。", -1)),
-					unref(cui).state.bind.error ? (openBlock(), createElementBlock("p", _hoisted_5$15, toDisplayString(unref(cui).state.bind.error), 1)) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_6$14, [createBaseVNode("button", {
+					unref(cui).state.bind.error ? (openBlock(), createElementBlock("p", _hoisted_5$16, toDisplayString(unref(cui).state.bind.error), 1)) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_6$13, [createBaseVNode("button", {
 						class: "btn",
 						disabled: unref(cui).state.bind.busy,
 						onClick: _cache[2] || (_cache[2] = ($event) => unref(cui).closeBind())
-					}, "取消", 8, _hoisted_7$13), createBaseVNode("button", {
+					}, "取消", 8, _hoisted_7$12), createBaseVNode("button", {
 						class: "btn primary",
 						disabled: unref(cui).state.bind.busy || !unref(cui).state.bind.name.trim(),
 						onClick: _cache[3] || (_cache[3] = ($event) => unref(cui).saveBind())
-					}, toDisplayString(unref(cui).state.bind.busy ? "保存中…" : "保存"), 9, _hoisted_8$13)])
+					}, toDisplayString(unref(cui).state.bind.busy ? "保存中…" : "保存"), 9, _hoisted_8$12)])
 				], 512)])) : createCommentVNode("", true);
 			};
 		}
 	});
-	var _hoisted_1$21 = {
+	var _hoisted_1$22 = {
 		key: 0,
 		class: "ctx-sep",
 		role: "separator"
 	};
-	var _hoisted_2$19 = ["disabled", "onClick"];
+	var _hoisted_2$20 = ["disabled", "onClick"];
 	var ContextMenu_default = defineComponent({
 		__name: "ContextMenu",
 		props: {
@@ -10071,19 +10147,19 @@
 					}),
 					onContextmenu: _cache[0] || (_cache[0] = withModifiers(() => {}, ["prevent"]))
 				}, [(openBlock(true), createElementBlock(Fragment, null, renderList(__props.items, (it, i) => {
-					return openBlock(), createElementBlock(Fragment, { key: i }, [it.sep ? (openBlock(), createElementBlock("div", _hoisted_1$21)) : (openBlock(), createElementBlock("button", {
+					return openBlock(), createElementBlock(Fragment, { key: i }, [it.sep ? (openBlock(), createElementBlock("div", _hoisted_1$22)) : (openBlock(), createElementBlock("button", {
 						key: 1,
 						role: "menuitem",
 						class: normalizeClass(["ctx-item", { danger: it.danger }]),
 						disabled: it.disabled,
 						onClick: withModifiers(($event) => run(it), ["stop"])
-					}, toDisplayString(it.label), 11, _hoisted_2$19))], 64);
+					}, toDisplayString(it.label), 11, _hoisted_2$20))], 64);
 				}), 128))], 36);
 			};
 		}
 	});
-	var _hoisted_1$20 = ["width", "height"];
-	var _hoisted_2$18 = ["d"];
+	var _hoisted_1$21 = ["width", "height"];
+	var _hoisted_2$19 = ["d"];
 	var PATHS = {
 		search: ["M21 21l-4.3-4.3", "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"],
 		x: ["M18 6 6 18", "M6 6l12 12"],
@@ -10142,31 +10218,31 @@
 					return openBlock(), createElementBlock("path", {
 						key: d,
 						d
-					}, null, 8, _hoisted_2$18);
-				}), 128))], 8, _hoisted_1$20);
+					}, null, 8, _hoisted_2$19);
+				}), 128))], 8, _hoisted_1$21);
 			};
 		}
 	});
-	var _hoisted_1$19 = ["aria-expanded"];
-	var _hoisted_2$17 = ["role", "aria-hidden"];
-	var _hoisted_3$17 = ["tabindex"];
-	var _hoisted_4$16 = ["aria-expanded"];
-	var _hoisted_5$14 = [
+	var _hoisted_1$20 = ["aria-expanded"];
+	var _hoisted_2$18 = ["role", "aria-hidden"];
+	var _hoisted_3$18 = ["tabindex"];
+	var _hoisted_4$17 = ["aria-expanded"];
+	var _hoisted_5$15 = [
 		"disabled",
 		"aria-label",
 		"onClick"
 	];
-	var _hoisted_6$13 = {
+	var _hoisted_6$12 = {
 		key: 0,
 		class: "g115-tree-spin"
 	};
-	var _hoisted_7$12 = ["title", "onClick"];
-	var _hoisted_8$12 = {
+	var _hoisted_7$11 = ["title", "onClick"];
+	var _hoisted_8$11 = {
 		key: 0,
 		class: "g115-tree-star",
 		title: "已加星标"
 	};
-	var _hoisted_9$11 = {
+	var _hoisted_9$10 = {
 		key: 0,
 		class: "g115-drawer-empty g115-err"
 	};
@@ -10177,7 +10253,7 @@
 			currentId: {}
 		},
 		emits: ["open"],
-		setup(__props, { emit: __emit }) {
+		setup(__props, { expose: __expose, emit: __emit }) {
 			const props = __props;
 			const emit = __emit;
 			const tree = inject("g115ctrl").tree;
@@ -10210,6 +10286,10 @@
 			}
 			watch(open, (v) => v && void reveal());
 			watch(() => props.currentId, () => open.value && void reveal());
+			__expose({
+				close: () => open.value = false,
+				isOpen: () => open.value
+			});
 			function go(cid) {
 				if (isTouchPrimary()) open.value = false;
 				emit("open", cid);
@@ -10226,7 +10306,7 @@
 						class: "edge-toggle tree",
 						"aria-expanded": open.value,
 						onClick: _cache[0] || (_cache[0] = ($event) => open.value = true)
-					}, "目录", 8, _hoisted_1$19),
+					}, "目录", 8, _hoisted_1$20),
 					createBaseVNode("div", {
 						class: "drawer-mask",
 						onClick: _cache[1] || (_cache[1] = ($event) => open.value = false)
@@ -10244,7 +10324,7 @@
 							"aria-label": "关闭目录",
 							tabindex: open.value ? 0 : -1,
 							onClick: _cache[2] || (_cache[2] = ($event) => open.value = false)
-						}, [createVNode(Icon_default, { name: "x" })], 8, _hoisted_3$17),
+						}, [createVNode(Icon_default, { name: "x" })], 8, _hoisted_3$18),
 						open.value ? (openBlock(), createElementBlock("div", {
 							key: 0,
 							ref_key: "list",
@@ -10263,42 +10343,42 @@
 								disabled: r.leaf,
 								"aria-label": r.expanded ? "收起" : "展开",
 								onClick: ($event) => unref(tree).toggle(r.node.id).catch(() => {})
-							}, [r.loading ? (openBlock(), createElementBlock("span", _hoisted_6$13)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode(toDisplayString(r.leaf ? "" : r.expanded ? "▾" : "▸"), 1)], 64))], 10, _hoisted_5$14), createBaseVNode("button", {
+							}, [r.loading ? (openBlock(), createElementBlock("span", _hoisted_6$12)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode(toDisplayString(r.leaf ? "" : r.expanded ? "▾" : "▸"), 1)], 64))], 10, _hoisted_5$15), createBaseVNode("button", {
 								class: normalizeClass(["tnode", { cur: r.node.id === __props.currentId }]),
 								title: r.node.name,
 								onClick: ($event) => go(r.node.id)
-							}, [createTextVNode(toDisplayString(r.node.id === "0" ? "🏠" : r.expanded ? "📂" : "📁") + " " + toDisplayString(r.node.name), 1), r.node.starred ? (openBlock(), createElementBlock("span", _hoisted_8$12, " ★")) : createCommentVNode("", true)], 10, _hoisted_7$12)], 12, _hoisted_4$16);
-						}), 128)), unref(tree).state.error ? (openBlock(), createElementBlock("div", _hoisted_9$11, "加载失败：" + toDisplayString(unref(tree).state.error), 1)) : createCommentVNode("", true)], 512)) : createCommentVNode("", true)
-					], 8, _hoisted_2$17)
+							}, [createTextVNode(toDisplayString(r.node.id === "0" ? "🏠" : r.expanded ? "📂" : "📁") + " " + toDisplayString(r.node.name), 1), r.node.starred ? (openBlock(), createElementBlock("span", _hoisted_8$11, " ★")) : createCommentVNode("", true)], 10, _hoisted_7$11)], 12, _hoisted_4$17);
+						}), 128)), unref(tree).state.error ? (openBlock(), createElementBlock("div", _hoisted_9$10, "加载失败：" + toDisplayString(unref(tree).state.error), 1)) : createCommentVNode("", true)], 512)) : createCommentVNode("", true)
+					], 8, _hoisted_2$18)
 				], 34);
 			};
 		}
 	});
-	var _hoisted_1$18 = ["aria-label"];
-	var _hoisted_2$16 = {
+	var _hoisted_1$19 = ["aria-label"];
+	var _hoisted_2$17 = {
 		class: "g115-pick-crumbs",
 		"aria-label": "选择器路径"
 	};
-	var _hoisted_3$16 = {
+	var _hoisted_3$17 = {
 		key: 0,
 		class: "sep"
 	};
-	var _hoisted_4$15 = ["onClick"];
-	var _hoisted_5$13 = { key: 2 };
-	var _hoisted_6$12 = {
+	var _hoisted_4$16 = ["onClick"];
+	var _hoisted_5$14 = { key: 2 };
+	var _hoisted_6$11 = {
 		key: 0,
 		class: "g115-pick-new"
 	};
-	var _hoisted_7$11 = ["disabled", "onKeydown"];
-	var _hoisted_8$11 = ["disabled"];
-	var _hoisted_9$10 = ["disabled"];
+	var _hoisted_7$10 = ["disabled", "onKeydown"];
+	var _hoisted_8$10 = ["disabled"];
+	var _hoisted_9$9 = ["disabled"];
 	var _hoisted_10$7 = {
 		key: 0,
 		class: "g115-err"
 	};
 	var _hoisted_11$5 = ["title", "onClick"];
-	var _hoisted_12$4 = { class: "g115-pick-name" };
-	var _hoisted_13$4 = {
+	var _hoisted_12$5 = { class: "g115-pick-name" };
+	var _hoisted_13$5 = {
 		key: 0,
 		class: "g115-pick-badge"
 	};
@@ -10401,18 +10481,18 @@
 						"aria-label": "关闭",
 						onClick: _cache[0] || (_cache[0] = ($event) => unref(cui).closePicker())
 					}, [createVNode(Icon_default, { name: "x" })]),
-					createBaseVNode("nav", _hoisted_2$16, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(ps).crumbs, (c, i) => {
-						return openBlock(), createElementBlock(Fragment, { key: c.id }, [i ? (openBlock(), createElementBlock("span", _hoisted_3$16, "›")) : createCommentVNode("", true), i < unref(ps).crumbs.length - 1 ? (openBlock(), createElementBlock("button", {
+					createBaseVNode("nav", _hoisted_2$17, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(ps).crumbs, (c, i) => {
+						return openBlock(), createElementBlock(Fragment, { key: c.id }, [i ? (openBlock(), createElementBlock("span", _hoisted_3$17, "›")) : createCommentVNode("", true), i < unref(ps).crumbs.length - 1 ? (openBlock(), createElementBlock("button", {
 							key: 1,
 							class: "text-button",
 							onClick: ($event) => go(c.id, i)
-						}, toDisplayString(c.name), 9, _hoisted_4$15)) : (openBlock(), createElementBlock("b", _hoisted_5$13, toDisplayString(c.name), 1))], 64);
+						}, toDisplayString(c.name), 9, _hoisted_4$16)) : (openBlock(), createElementBlock("b", _hoisted_5$14, toDisplayString(c.name), 1))], 64);
 					}), 128))]),
 					createBaseVNode("div", {
 						class: "g115-pick-list",
 						onScrollPassive: onScroll
 					}, [
-						creating.value ? (openBlock(), createElementBlock("div", _hoisted_6$12, [
+						creating.value ? (openBlock(), createElementBlock("div", _hoisted_6$11, [
 							_cache[8] || (_cache[8] = createBaseVNode("span", { "aria-hidden": "true" }, "📁", -1)),
 							withDirectives(createBaseVNode("input", {
 								ref_key: "input",
@@ -10424,17 +10504,17 @@
 								"data-esc-local": "",
 								disabled: busy.value,
 								onKeydown: [withKeys(withModifiers(create, ["prevent"]), ["enter"]), _cache[2] || (_cache[2] = withKeys(withModifiers(($event) => creating.value = false, ["stop", "prevent"]), ["esc"]))]
-							}, null, 40, _hoisted_7$11), [[vModelText, newName.value]]),
+							}, null, 40, _hoisted_7$10), [[vModelText, newName.value]]),
 							createBaseVNode("button", {
 								class: "btn primary",
 								disabled: busy.value,
 								onClick: create
-							}, toDisplayString(busy.value ? "新建中…" : "确定"), 9, _hoisted_8$11),
+							}, toDisplayString(busy.value ? "新建中…" : "确定"), 9, _hoisted_8$10),
 							createBaseVNode("button", {
 								class: "btn",
 								disabled: busy.value,
 								onClick: _cache[3] || (_cache[3] = ($event) => creating.value = false)
-							}, "取消", 8, _hoisted_9$10),
+							}, "取消", 8, _hoisted_9$9),
 							createError.value ? (openBlock(), createElementBlock("small", _hoisted_10$7, toDisplayString(createError.value), 1)) : createCommentVNode("", true)
 						])) : createCommentVNode("", true),
 						(openBlock(true), createElementBlock(Fragment, null, renderList(unref(ps).folders, (f) => {
@@ -10444,8 +10524,8 @@
 								title: f.name,
 								onClick: ($event) => enter(f)
 							}, [
-								createBaseVNode("span", _hoisted_12$4, "📁 " + toDisplayString(f.name), 1),
-								badge(f) ? (openBlock(), createElementBlock("small", _hoisted_13$4, toDisplayString(badge(f)), 1)) : createCommentVNode("", true),
+								createBaseVNode("span", _hoisted_12$5, "📁 " + toDisplayString(f.name), 1),
+								badge(f) ? (openBlock(), createElementBlock("small", _hoisted_13$5, toDisplayString(badge(f)), 1)) : createCommentVNode("", true),
 								_cache[9] || (_cache[9] = createBaseVNode("span", {
 									class: "g115-pick-go",
 									"aria-hidden": "true"
@@ -10473,323 +10553,7 @@
 							onClick: _cache[6] || (_cache[6] = ($event) => unref(cui).pick())
 						}, "选择此目录", 8, _hoisted_21$2)
 					])
-				], 8, _hoisted_1$18)]);
-			};
-		}
-	});
-	var pools = new Map();
-	function onceVisible(el, root, margin, cb) {
-		if (typeof IntersectionObserver === "undefined") {
-			cb();
-			return () => {};
-		}
-		let byMargin = pools.get(root);
-		if (!byMargin) pools.set(root, byMargin = new Map());
-		let shared = byMargin.get(margin);
-		if (!shared) {
-			const callbacks = new Map();
-			shared = {
-				io: new IntersectionObserver((entries) => {
-					for (const e of entries) {
-						if (!e.isIntersecting) continue;
-						const fn = callbacks.get(e.target);
-						release(e.target);
-						fn?.();
-					}
-				}, {
-					root,
-					rootMargin: margin
-				}),
-				callbacks
-			};
-			byMargin.set(margin, shared);
-		}
-		const s = shared;
-		s.callbacks.set(el, cb);
-		s.io.observe(el);
-		function release(target) {
-			if (!s.callbacks.delete(target)) return;
-			s.io.unobserve(target);
-			if (s.callbacks.size) return;
-			s.io.disconnect();
-			byMargin.delete(margin);
-			if (!byMargin.size) pools.delete(root);
-		}
-		return () => release(el);
-	}
-	var _hoisted_1$17 = ["src"];
-	var FolderThumb_default = defineComponent({
-		__name: "FolderThumb",
-		props: { item: {} },
-		setup(__props) {
-			const props = __props;
-			const ctrl = inject("g115ctrl");
-			const url = ref(props.item.kind === "image" ? ctrl.thumbs.peek(props.item.sha1)?.url ?? "" : "");
-			const second = computed(() => coverTime(props.item.duration ?? 0, ctrl.settings.cover));
-			let loading = false;
-			let alive = true;
-			onMounted(() => {
-				if (url.value) return;
-				loading = true;
-				(props.item.kind === "video" ? ctrl.frames.frame(props.item, second.value, { priority: -10 }) : ctrl.thumbs.load(props.item, 480, { priority: -10 })).then((v) => {
-					if (alive) url.value = v.url;
-				}, () => {}).finally(() => loading = false);
-			});
-			onBeforeUnmount(() => {
-				alive = false;
-				if (!loading) return;
-				if (props.item.kind === "video") ctrl.frames.cancel(props.item, second.value);
-				else ctrl.thumbs.cancel(props.item, 480);
-			});
-			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock("span", { class: normalizeClass(["g115-fthumb", { vid: __props.item.kind === "video" }]) }, [url.value ? (openBlock(), createElementBlock("img", {
-					key: 0,
-					src: url.value,
-					alt: "",
-					decoding: "async"
-				}, null, 8, _hoisted_1$17)) : createCommentVNode("", true)], 2);
-			};
-		}
-	});
-	var _hoisted_1$16 = ["title"];
-	var _hoisted_2$15 = { class: "fav-head" };
-	var _hoisted_3$15 = { class: "fic" };
-	var _hoisted_4$14 = { class: "fmeta" };
-	var _hoisted_5$12 = { class: "fn" };
-	var _hoisted_6$11 = { class: "fp" };
-	var _hoisted_7$10 = {
-		key: 0,
-		class: "fav-thumbs"
-	};
-	var _hoisted_8$10 = {
-		key: 1,
-		class: "g115-fav-img"
-	};
-	var _hoisted_9$9 = ["src"];
-	var _hoisted_10$6 = {
-		key: 2,
-		class: "g115-fav-img vid"
-	};
-	var DrawerItem_default = defineComponent({
-		__name: "DrawerItem",
-		props: {
-			item: {},
-			scrollRoot: {}
-		},
-		emits: ["open"],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const ctrl = inject("g115ctrl");
-			const el = ref(null);
-			const isFolder = props.item.kind === "folder";
-			const info = ref(isFolder ? ctrl.folderInfo.peek(props.item.id) : void 0);
-			const preview = ref(isFolder ? ctrl.folderInfo.peekPreview(props.item.id) : void 0);
-			let unobserve;
-			let pending = false;
-			function load() {
-				pending = true;
-				const id = props.item.id;
-				Promise.allSettled([ctrl.folderInfo.get(id, (v) => info.value = v).then((v) => info.value = v), ctrl.folderInfo.preview(id, (v) => preview.value = v).then((v) => preview.value = v)]).finally(() => pending = false);
-			}
-			onMounted(() => {
-				if (!isFolder || ctrl.folderInfo.isFresh(props.item.id) || !el.value) return;
-				unobserve = onceVisible(el.value, props.scrollRoot, "120px", load);
-			});
-			onBeforeUnmount(() => {
-				unobserve?.();
-				if (pending) ctrl.folderInfo.cancel(props.item.id);
-			});
-			const kindText = (i) => i.kind === "folder" ? "文件夹" : i.kind === "video" ? "视频" : "图片";
-			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock("div", {
-					ref_key: "el",
-					ref: el,
-					class: "fav-item",
-					role: "button",
-					tabindex: "0",
-					title: __props.item.name,
-					onClick: _cache[0] || (_cache[0] = ($event) => emit("open", __props.item)),
-					onKeydown: _cache[1] || (_cache[1] = withKeys(($event) => emit("open", __props.item), ["enter"]))
-				}, [createBaseVNode("div", _hoisted_2$15, [
-					createBaseVNode("div", _hoisted_3$15, toDisplayString(__props.item.kind === "folder" ? "📁" : __props.item.kind === "video" ? "▶" : "🖼"), 1),
-					createBaseVNode("div", _hoisted_4$14, [createBaseVNode("div", _hoisted_5$12, toDisplayString(__props.item.name), 1), createBaseVNode("div", _hoisted_6$11, [createTextVNode(toDisplayString(kindText(__props.item)), 1), info.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(" · " + toDisplayString(info.value.count) + " 项", 1)], 64)) : createCommentVNode("", true)])]),
-					renderSlot(_ctx.$slots, "default")
-				]), isFolder && preview.value?.length ? (openBlock(), createElementBlock("div", _hoisted_7$10, [(openBlock(true), createElementBlock(Fragment, null, renderList(preview.value, (p) => {
-					return openBlock(), createElementBlock("span", {
-						key: p.id,
-						class: normalizeClass(["ft", { vid: p.kind === "video" }])
-					}, [createVNode(FolderThumb_default, { item: p }, null, 8, ["item"])], 2);
-				}), 128))])) : __props.item.kind === "image" && __props.item.thumb ? (openBlock(), createElementBlock("div", _hoisted_8$10, [createBaseVNode("img", {
-					src: unref(withThumbSize)(__props.item.thumb, 480),
-					alt: "",
-					referrerpolicy: "no-referrer",
-					decoding: "async",
-					loading: "lazy"
-				}, null, 8, _hoisted_9$9)])) : __props.item.kind === "video" ? (openBlock(), createElementBlock("div", _hoisted_10$6, [createVNode(FolderThumb_default, { item: __props.item }, null, 8, ["item"])])) : createCommentVNode("", true)], 40, _hoisted_1$16);
-			};
-		}
-	});
-	var _hoisted_1$15 = ["title"];
-	var _hoisted_2$14 = { class: "g115-coll-meta" };
-	var _hoisted_3$14 = ["title"];
-	var _hoisted_4$13 = ["disabled"];
-	var _hoisted_5$11 = {
-		key: 0,
-		class: "g115-coll-gone",
-		role: "alert"
-	};
-	var _hoisted_6$10 = {
-		key: 0,
-		class: "g115-coll-confirm"
-	};
-	var _hoisted_7$9 = {
-		key: 1,
-		class: "g115-cache-btns"
-	};
-	var _hoisted_8$9 = {
-		key: 0,
-		class: "g115-drawer-empty g115-err"
-	};
-	var _hoisted_9$8 = {
-		key: 2,
-		class: "loading-tip"
-	};
-	var _hoisted_10$5 = {
-		key: 3,
-		class: "g115-drawer-empty g115-err"
-	};
-	var _hoisted_11$4 = {
-		key: 4,
-		class: "g115-drawer-empty"
-	};
-	var CollectionPanel_default = defineComponent({
-		__name: "CollectionPanel",
-		props: {
-			rec: {},
-			scrollRoot: {}
-		},
-		emits: [
-			"enter",
-			"openCollection",
-			"view",
-			"play"
-		],
-		setup(__props, { emit: __emit }) {
-			const props = __props;
-			const emit = __emit;
-			const ctrl = inject("g115ctrl");
-			const feed = ctrl.feed;
-			const fs = feed.state;
-			const status = computed(() => ctrl.collections.state.status[props.rec.cid]);
-			const unavailable = computed(() => status.value?.state === "unavailable");
-			const risk = computed(() => ctrl.browser.state.risk);
-			const unbinding = ref(false);
-			async function load(force = false) {
-				const { sort, order } = ctrl.browser.state.query;
-				const cid = props.rec.cid;
-				unbinding.value = false;
-				try {
-					const st = await ctrl.collections.check(cid);
-					if (cid !== props.rec.cid || st.state === "unavailable") return;
-				} catch (e) {
-					if (e instanceof RiskControlError) ctrl.browser.reportRisk();
-					if (e instanceof RiskControlError || e instanceof CancelledError) return;
-				}
-				await feed.open(cid, sort, order, force);
-				await nextTick();
-				fill();
-			}
-			watch(() => props.rec.cid, () => void load(), { immediate: true });
-			function fill() {
-				const el = props.scrollRoot;
-				if (!el || fs.cid !== props.rec.cid) return;
-				if (el.scrollTop + el.clientHeight * 2 >= el.scrollHeight) feed.loadMore().then(() => nextTick()).then(() => {
-					if (fs.hasMore && !fs.loadingMore && !fs.error) fill();
-				});
-			}
-			const onScroll = () => fill();
-			watch(() => props.scrollRoot, (el, old) => {
-				old?.removeEventListener("scroll", onScroll);
-				el?.addEventListener("scroll", onScroll, { passive: true });
-			}, { immediate: true });
-			onBeforeUnmount(() => props.scrollRoot?.removeEventListener("scroll", onScroll));
-			const images = computed(() => fs.media.filter((m) => m.kind === "image" && !!m.thumb));
-			const videos = computed(() => fs.media.filter((m) => m.kind === "video"));
-			async function more(known) {
-				const cid = props.rec.cid;
-				for (let i = 0; i < 20 && fs.cid === cid; i++) {
-					const added = images.value.filter((m) => !known.has(m.id));
-					if (added.length || !fs.hasMore || fs.error) {
-						added.forEach((m) => known.add(m.id));
-						return added;
-					}
-					await feed.loadMore();
-				}
-				return [];
-			}
-			function open(item) {
-				if (item.kind === "folder") return emit("enter", item.id);
-				if (item.kind === "video") return emit("play", item, videos.value);
-				const list = images.value;
-				const known = new Set(list.map((m) => m.id));
-				emit("view", item, list, () => more(known));
-			}
-			async function unbind() {
-				const name = props.rec.name;
-				const saved = await ctrl.collections.remove(props.rec.cid);
-				ctrl.toast(saved ? `已解除绑定「${name}」，网盘目录未改动` : "已解除绑定，但保存失败，仅本页保留");
-			}
-			return (_ctx, _cache) => {
-				return openBlock(), createElementBlock(Fragment, null, [
-					createBaseVNode("h3", { title: __props.rec.name }, toDisplayString(__props.rec.name), 9, _hoisted_1$15),
-					createBaseVNode("div", _hoisted_2$14, [createBaseVNode("small", {
-						class: "g115-coll-path",
-						title: unref(pathText)(__props.rec.path)
-					}, [createTextVNode(toDisplayString(unref(pathText)(__props.rec.path)), 1), status.value?.state === "ok" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(" · " + toDisplayString((status.value.count ?? 0).toLocaleString()) + " 项", 1)], 64)) : createCommentVNode("", true)], 8, _hoisted_3$14), createBaseVNode("button", {
-						class: "btn primary",
-						disabled: unavailable.value,
-						onClick: _cache[0] || (_cache[0] = ($event) => emit("openCollection", __props.rec.cid))
-					}, "进入合集", 8, _hoisted_4$13)]),
-					unavailable.value ? (openBlock(), createElementBlock("div", _hoisted_5$11, [_cache[6] || (_cache[6] = createBaseVNode("p", null, "目标目录不可用（可能已删除，或当前账号无权访问）。", -1)), unbinding.value ? (openBlock(), createElementBlock("div", _hoisted_6$10, [
-						_cache[5] || (_cache[5] = createBaseVNode("small", null, "解除绑定不会删除网盘目录及其中文件", -1)),
-						createBaseVNode("button", {
-							class: "btn danger",
-							onClick: unbind
-						}, "确认解除"),
-						createBaseVNode("button", {
-							class: "btn",
-							onClick: _cache[1] || (_cache[1] = ($event) => unbinding.value = false)
-						}, "取消")
-					])) : (openBlock(), createElementBlock("div", _hoisted_7$9, [createBaseVNode("button", {
-						class: "btn primary",
-						onClick: _cache[2] || (_cache[2] = ($event) => unref(ctrl).collectionUi.rebind(__props.rec.cid))
-					}, "重新选择"), createBaseVNode("button", {
-						class: "btn",
-						onClick: _cache[3] || (_cache[3] = ($event) => unbinding.value = true)
-					}, "解除绑定")]))])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-						risk.value ? (openBlock(), createElementBlock("div", _hoisted_8$9, "115 要求人机验证，已暂停加载。完成验证后在主页面点「继续」。")) : createCommentVNode("", true),
-						unref(fs).cid === __props.rec.cid ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(fs).folders, (f) => {
-							return openBlock(), createBlock(DrawerItem_default, {
-								key: f.id,
-								item: f,
-								"scroll-root": __props.scrollRoot,
-								onOpen: open
-							}, null, 8, ["item", "scroll-root"]);
-						}), 128)), (openBlock(true), createElementBlock(Fragment, null, renderList(unref(fs).media, (m) => {
-							return openBlock(), createBlock(DrawerItem_default, {
-								key: m.id,
-								item: m,
-								"scroll-root": __props.scrollRoot,
-								onOpen: open
-							}, null, 8, ["item", "scroll-root"]);
-						}), 128))], 64)) : createCommentVNode("", true),
-						unref(fs).loading || unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_9$8, [..._cache[7] || (_cache[7] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(fs).error && !risk.value ? (openBlock(), createElementBlock("div", _hoisted_10$5, [createTextVNode("加载失败：" + toDisplayString(unref(fs).error) + " ", 1), createBaseVNode("button", {
-							class: "btn",
-							onClick: _cache[4] || (_cache[4] = ($event) => unref(fs).media.length ? unref(feed).loadMore() : load(true))
-						}, "重试")])) : unref(fs).cid === __props.rec.cid && !unref(fs).folders.length && !unref(fs).media.length && !risk.value ? (openBlock(), createElementBlock("div", _hoisted_11$4, toDisplayString(status.value?.state === "ok" && status.value.count ? "这里没有文件夹、图片或视频" : "空目录"), 1)) : createCommentVNode("", true)
-					], 64))
-				], 64);
+				], 8, _hoisted_1$19)]);
 			};
 		}
 	});
@@ -10943,45 +10707,27 @@
 	function sortItems(items) {
 		return [...items.filter((i) => i.kind === "folder"), ...items.filter((i) => i.kind !== "folder")];
 	}
-	var _hoisted_1$14 = { class: "g115-fav-tools" };
-	var _hoisted_2$13 = { class: "g115-fav-search" };
-	var _hoisted_3$13 = {
+	var _hoisted_1$18 = { class: "g115-fav-tools" };
+	var _hoisted_2$16 = { class: "g115-fav-search" };
+	var _hoisted_3$16 = ["placeholder", "aria-label"];
+	var _hoisted_4$15 = {
 		class: "g115-fav-kinds",
 		role: "radiogroup",
-		"aria-label": "收藏类型"
+		"aria-label": "类型"
 	};
-	var _hoisted_4$12 = ["aria-checked", "onClick"];
-	var _hoisted_5$10 = ["onClick"];
-	var _hoisted_6$9 = {
-		key: 0,
-		class: "loading-tip"
-	};
-	var _hoisted_7$8 = {
-		key: 1,
-		class: "g115-drawer-empty g115-err"
-	};
-	var _hoisted_8$8 = {
-		key: 2,
-		class: "g115-drawer-empty"
-	};
-	var _hoisted_9$7 = {
-		key: 3,
-		class: "g115-pick-more"
-	};
-	var FavPanel_default = defineComponent({
-		__name: "FavPanel",
-		props: { scrollRoot: {} },
-		emits: [
-			"enter",
-			"view",
-			"unstar"
-		],
-		setup(__props, { emit: __emit }) {
-			const emit = __emit;
-			const fav = inject("g115ctrl").favorites;
-			const fs = fav.state;
-			const keyword = ref("");
-			const kind = ref("all");
+	var _hoisted_5$13 = ["aria-checked", "onClick"];
+	var DrawerFilter_default = defineComponent({
+		__name: "DrawerFilter",
+		props: mergeModels({ placeholder: {} }, {
+			"keyword": { required: true },
+			"keywordModifiers": {},
+			"kind": { required: true },
+			"kindModifiers": {}
+		}),
+		emits: ["update:keyword", "update:kind"],
+		setup(__props) {
+			const keyword = useModel(__props, "keyword");
+			const kind = useModel(__props, "kind");
 			const kinds = [
 				{
 					id: "all",
@@ -11000,6 +10746,419 @@
 					label: "视频"
 				}
 			];
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("div", _hoisted_1$18, [createBaseVNode("div", _hoisted_2$16, [withDirectives(createBaseVNode("input", {
+					"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => keyword.value = $event),
+					type: "search",
+					class: "inp",
+					placeholder: __props.placeholder,
+					"aria-label": __props.placeholder,
+					maxlength: "100"
+				}, null, 8, _hoisted_3$16), [[vModelText, keyword.value]]), keyword.value ? (openBlock(), createElementBlock("button", {
+					key: 0,
+					class: "icon-button",
+					title: "清除搜索",
+					"aria-label": "清除搜索",
+					onClick: _cache[1] || (_cache[1] = ($event) => keyword.value = "")
+				}, [createVNode(Icon_default, { name: "x" })])) : createCommentVNode("", true)]), createBaseVNode("div", _hoisted_4$15, [(openBlock(), createElementBlock(Fragment, null, renderList(kinds, (k) => {
+					return createBaseVNode("button", {
+						key: k.id,
+						role: "radio",
+						"aria-checked": kind.value === k.id,
+						class: normalizeClass({ on: kind.value === k.id }),
+						onClick: ($event) => kind.value = k.id
+					}, toDisplayString(k.label), 11, _hoisted_5$13);
+				}), 64))])]);
+			};
+		}
+	});
+	var pools = new Map();
+	function onceVisible(el, root, margin, cb) {
+		if (typeof IntersectionObserver === "undefined") {
+			cb();
+			return () => {};
+		}
+		let byMargin = pools.get(root);
+		if (!byMargin) pools.set(root, byMargin = new Map());
+		let shared = byMargin.get(margin);
+		if (!shared) {
+			const callbacks = new Map();
+			shared = {
+				io: new IntersectionObserver((entries) => {
+					for (const e of entries) {
+						if (!e.isIntersecting) continue;
+						const fn = callbacks.get(e.target);
+						release(e.target);
+						fn?.();
+					}
+				}, {
+					root,
+					rootMargin: margin
+				}),
+				callbacks
+			};
+			byMargin.set(margin, shared);
+		}
+		const s = shared;
+		s.callbacks.set(el, cb);
+		s.io.observe(el);
+		function release(target) {
+			if (!s.callbacks.delete(target)) return;
+			s.io.unobserve(target);
+			if (s.callbacks.size) return;
+			s.io.disconnect();
+			byMargin.delete(margin);
+			if (!byMargin.size) pools.delete(root);
+		}
+		return () => release(el);
+	}
+	var _hoisted_1$17 = ["src"];
+	var FolderThumb_default = defineComponent({
+		__name: "FolderThumb",
+		props: { item: {} },
+		setup(__props) {
+			const props = __props;
+			const ctrl = inject("g115ctrl");
+			const url = ref(props.item.kind === "image" ? ctrl.thumbs.peek(props.item.sha1)?.url ?? "" : "");
+			const second = computed(() => coverTime(props.item.duration ?? 0, ctrl.settings.cover));
+			let loading = false;
+			let alive = true;
+			onMounted(() => {
+				if (url.value) return;
+				loading = true;
+				(props.item.kind === "video" ? ctrl.frames.frame(props.item, second.value, { priority: -10 }) : ctrl.thumbs.load(props.item, 480, { priority: -10 })).then((v) => {
+					if (alive) url.value = v.url;
+				}, () => {}).finally(() => loading = false);
+			});
+			onBeforeUnmount(() => {
+				alive = false;
+				if (!loading) return;
+				if (props.item.kind === "video") ctrl.frames.cancel(props.item, second.value);
+				else ctrl.thumbs.cancel(props.item, 480);
+			});
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("span", { class: normalizeClass(["g115-fthumb", { vid: __props.item.kind === "video" }]) }, [url.value ? (openBlock(), createElementBlock("img", {
+					key: 0,
+					src: url.value,
+					alt: "",
+					decoding: "async"
+				}, null, 8, _hoisted_1$17)) : createCommentVNode("", true)], 2);
+			};
+		}
+	});
+	var _hoisted_1$16 = ["title"];
+	var _hoisted_2$15 = { class: "fav-head" };
+	var _hoisted_3$15 = { class: "fic" };
+	var _hoisted_4$14 = { class: "fmeta" };
+	var _hoisted_5$12 = { class: "fn" };
+	var _hoisted_6$10 = { class: "fp" };
+	var _hoisted_7$9 = {
+		key: 0,
+		class: "fav-thumbs"
+	};
+	var _hoisted_8$9 = {
+		key: 1,
+		class: "g115-fav-img"
+	};
+	var _hoisted_9$8 = ["src"];
+	var _hoisted_10$6 = {
+		key: 2,
+		class: "g115-fav-img vid"
+	};
+	var DrawerItem_default = defineComponent({
+		__name: "DrawerItem",
+		props: {
+			item: {},
+			scrollRoot: {}
+		},
+		emits: ["open"],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
+			const ctrl = inject("g115ctrl");
+			const el = ref(null);
+			const isFolder = props.item.kind === "folder";
+			const info = ref(isFolder ? ctrl.folderInfo.peek(props.item.id) : void 0);
+			const preview = ref(isFolder ? ctrl.folderInfo.peekPreview(props.item.id) : void 0);
+			let unobserve;
+			let pending = false;
+			function load() {
+				pending = true;
+				const id = props.item.id;
+				Promise.allSettled([ctrl.folderInfo.get(id, (v) => info.value = v).then((v) => info.value = v), ctrl.folderInfo.preview(id, (v) => preview.value = v).then((v) => preview.value = v)]).finally(() => pending = false);
+			}
+			onMounted(() => {
+				if (!isFolder || ctrl.folderInfo.isFresh(props.item.id) || !el.value) return;
+				unobserve = onceVisible(el.value, props.scrollRoot, "120px", load);
+			});
+			onBeforeUnmount(() => {
+				unobserve?.();
+				if (pending) ctrl.folderInfo.cancel(props.item.id);
+			});
+			const kindText = (i) => i.kind === "folder" ? "文件夹" : i.kind === "video" ? "视频" : "图片";
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("div", {
+					ref_key: "el",
+					ref: el,
+					class: "fav-item",
+					role: "button",
+					tabindex: "0",
+					title: __props.item.name,
+					onClick: _cache[0] || (_cache[0] = ($event) => emit("open", __props.item)),
+					onKeydown: _cache[1] || (_cache[1] = withKeys(($event) => emit("open", __props.item), ["enter"]))
+				}, [createBaseVNode("div", _hoisted_2$15, [
+					createBaseVNode("div", _hoisted_3$15, toDisplayString(__props.item.kind === "folder" ? "📁" : __props.item.kind === "video" ? "▶" : "🖼"), 1),
+					createBaseVNode("div", _hoisted_4$14, [createBaseVNode("div", _hoisted_5$12, toDisplayString(__props.item.name), 1), createBaseVNode("div", _hoisted_6$10, [createTextVNode(toDisplayString(kindText(__props.item)), 1), info.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(" · " + toDisplayString(info.value.count) + " 项", 1)], 64)) : createCommentVNode("", true)])]),
+					renderSlot(_ctx.$slots, "default")
+				]), isFolder && preview.value?.length ? (openBlock(), createElementBlock("div", _hoisted_7$9, [(openBlock(true), createElementBlock(Fragment, null, renderList(preview.value, (p) => {
+					return openBlock(), createElementBlock("span", {
+						key: p.id,
+						class: normalizeClass(["ft", { vid: p.kind === "video" }])
+					}, [createVNode(FolderThumb_default, { item: p }, null, 8, ["item"])], 2);
+				}), 128))])) : __props.item.kind === "image" && __props.item.thumb ? (openBlock(), createElementBlock("div", _hoisted_8$9, [createBaseVNode("img", {
+					src: unref(withThumbSize)(__props.item.thumb, 480),
+					alt: "",
+					referrerpolicy: "no-referrer",
+					decoding: "async",
+					loading: "lazy"
+				}, null, 8, _hoisted_9$8)])) : __props.item.kind === "video" ? (openBlock(), createElementBlock("div", _hoisted_10$6, [createVNode(FolderThumb_default, { item: __props.item }, null, 8, ["item"])])) : createCommentVNode("", true)], 40, _hoisted_1$16);
+			};
+		}
+	});
+	var _hoisted_1$15 = ["title"];
+	var _hoisted_2$14 = { class: "g115-coll-meta" };
+	var _hoisted_3$14 = ["title"];
+	var _hoisted_4$13 = ["disabled"];
+	var _hoisted_5$11 = {
+		key: 0,
+		class: "g115-coll-gone",
+		role: "alert"
+	};
+	var _hoisted_6$9 = {
+		key: 0,
+		class: "g115-coll-confirm"
+	};
+	var _hoisted_7$8 = {
+		key: 1,
+		class: "g115-cache-btns"
+	};
+	var _hoisted_8$8 = {
+		key: 0,
+		class: "g115-drawer-empty g115-err"
+	};
+	var _hoisted_9$7 = {
+		key: 1,
+		class: "g115-coll-count"
+	};
+	var _hoisted_10$5 = {
+		key: 3,
+		class: "loading-tip"
+	};
+	var _hoisted_11$4 = {
+		key: 4,
+		class: "g115-drawer-empty g115-err"
+	};
+	var _hoisted_12$4 = {
+		key: 5,
+		class: "g115-drawer-empty"
+	};
+	var _hoisted_13$4 = {
+		key: 6,
+		class: "g115-pick-more"
+	};
+	var AUTO_PAGES = 10;
+	var CollectionPanel_default = defineComponent({
+		__name: "CollectionPanel",
+		props: {
+			rec: {},
+			scrollRoot: {}
+		},
+		emits: [
+			"enter",
+			"openCollection",
+			"view",
+			"play"
+		],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
+			const ctrl = inject("g115ctrl");
+			const feed = ctrl.feed;
+			const fs = feed.state;
+			const status = computed(() => ctrl.collections.state.status[props.rec.cid]);
+			const unavailable = computed(() => status.value?.state === "unavailable");
+			const risk = computed(() => ctrl.browser.state.risk);
+			const unbinding = ref(false);
+			const keyword = ref("");
+			const kind = ref("all");
+			const filtering = computed(() => !!keyword.value.trim() || kind.value !== "all");
+			const shown = computed(() => filterFavorites([...fs.folders, ...fs.media], keyword.value, kind.value));
+			let budget = AUTO_PAGES;
+			watch([keyword, kind], () => {
+				budget = AUTO_PAGES;
+				nextTick(() => fill());
+			});
+			async function load(force = false) {
+				const { sort, order } = ctrl.browser.state.query;
+				const cid = props.rec.cid;
+				unbinding.value = false;
+				try {
+					const st = await ctrl.collections.check(cid);
+					if (cid !== props.rec.cid || st.state === "unavailable") return;
+				} catch (e) {
+					if (e instanceof RiskControlError) ctrl.browser.reportRisk();
+					if (e instanceof RiskControlError || e instanceof CancelledError) return;
+				}
+				await feed.open(cid, sort, order, force);
+				await nextTick();
+				fill();
+			}
+			watch(() => props.rec.cid, () => void load(), { immediate: true });
+			function fill(byScroll = false) {
+				const el = props.scrollRoot;
+				if (!el || fs.cid !== props.rec.cid || !fs.hasMore || fs.loading || fs.error) return;
+				if (el.scrollTop + el.clientHeight * 2 < el.scrollHeight) return;
+				if (!byScroll && filtering.value) {
+					if (budget <= 0) return;
+					budget--;
+				}
+				feed.loadMore().then(() => nextTick()).then(() => fill());
+			}
+			function continueLoading() {
+				budget = AUTO_PAGES;
+				feed.loadMore().then(() => nextTick()).then(() => fill());
+			}
+			const onScroll = () => fill(true);
+			watch(() => props.scrollRoot, (el, old) => {
+				old?.removeEventListener("scroll", onScroll);
+				el?.addEventListener("scroll", onScroll, { passive: true });
+			}, { immediate: true });
+			onBeforeUnmount(() => props.scrollRoot?.removeEventListener("scroll", onScroll));
+			const images = computed(() => shown.value.filter((m) => m.kind === "image" && !!m.thumb));
+			const videos = computed(() => shown.value.filter((m) => m.kind === "video"));
+			async function more(known) {
+				const cid = props.rec.cid;
+				for (let i = 0; i < 20 && fs.cid === cid; i++) {
+					const added = images.value.filter((m) => !known.has(m.id));
+					if (added.length || !fs.hasMore || fs.error) {
+						added.forEach((m) => known.add(m.id));
+						return added;
+					}
+					await feed.loadMore();
+				}
+				return [];
+			}
+			function open(item) {
+				if (item.kind === "folder") return emit("enter", item.id);
+				if (item.kind === "video") return emit("play", item, videos.value);
+				const list = images.value;
+				const known = new Set(list.map((m) => m.id));
+				emit("view", item, list, () => more(known));
+			}
+			const emptyText = computed(() => {
+				if (fs.cid !== props.rec.cid || fs.loading || risk.value) return "";
+				if (!fs.folders.length && !fs.media.length) {
+					if (fs.hasMore) return "";
+					return status.value?.state === "ok" && status.value.count ? "这里没有文件夹、图片或视频" : "空目录";
+				}
+				if (shown.value.length) return "";
+				const base = keyword.value.trim() ? "没有匹配项" : "该分类没有内容";
+				return fs.hasMore ? `已加载的内容里${base}，还有更多未加载` : base;
+			});
+			async function unbind() {
+				const name = props.rec.name;
+				const saved = await ctrl.collections.remove(props.rec.cid);
+				ctrl.toast(saved ? `已解除绑定「${name}」，网盘目录未改动` : "已解除绑定，但保存失败，仅本页保留");
+			}
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock(Fragment, null, [
+					createBaseVNode("h3", { title: __props.rec.name }, toDisplayString(__props.rec.name), 9, _hoisted_1$15),
+					createBaseVNode("div", _hoisted_2$14, [createBaseVNode("small", {
+						class: "g115-coll-path",
+						title: unref(pathText)(__props.rec.path)
+					}, [createTextVNode(toDisplayString(unref(pathText)(__props.rec.path)), 1), status.value?.state === "ok" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(" · " + toDisplayString((status.value.count ?? 0).toLocaleString()) + " 项", 1)], 64)) : createCommentVNode("", true)], 8, _hoisted_3$14), createBaseVNode("button", {
+						class: "btn primary",
+						disabled: unavailable.value,
+						onClick: _cache[0] || (_cache[0] = ($event) => emit("openCollection", __props.rec.cid))
+					}, "进入合集", 8, _hoisted_4$13)]),
+					unavailable.value ? (openBlock(), createElementBlock("div", _hoisted_5$11, [_cache[8] || (_cache[8] = createBaseVNode("p", null, "目标目录不可用（可能已删除，或当前账号无权访问）。", -1)), unbinding.value ? (openBlock(), createElementBlock("div", _hoisted_6$9, [
+						_cache[7] || (_cache[7] = createBaseVNode("small", null, "解除绑定不会删除网盘目录及其中文件", -1)),
+						createBaseVNode("button", {
+							class: "btn danger",
+							onClick: unbind
+						}, "确认解除"),
+						createBaseVNode("button", {
+							class: "btn",
+							onClick: _cache[1] || (_cache[1] = ($event) => unbinding.value = false)
+						}, "取消")
+					])) : (openBlock(), createElementBlock("div", _hoisted_7$8, [createBaseVNode("button", {
+						class: "btn primary",
+						onClick: _cache[2] || (_cache[2] = ($event) => unref(ctrl).collectionUi.rebind(__props.rec.cid))
+					}, "重新选择"), createBaseVNode("button", {
+						class: "btn",
+						onClick: _cache[3] || (_cache[3] = ($event) => unbinding.value = true)
+					}, "解除绑定")]))])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+						risk.value ? (openBlock(), createElementBlock("div", _hoisted_8$8, "115 要求人机验证，已暂停加载。完成验证后在主页面点「继续」。")) : createCommentVNode("", true),
+						createVNode(DrawerFilter_default, {
+							keyword: keyword.value,
+							"onUpdate:keyword": _cache[4] || (_cache[4] = ($event) => keyword.value = $event),
+							kind: kind.value,
+							"onUpdate:kind": _cache[5] || (_cache[5] = ($event) => kind.value = $event),
+							placeholder: "在已加载的内容里搜索名称"
+						}, null, 8, ["keyword", "kind"]),
+						filtering.value && unref(fs).cid === __props.rec.cid ? (openBlock(), createElementBlock("small", _hoisted_9$7, [createTextVNode("匹配 " + toDisplayString(shown.value.length) + " / 已加载 " + toDisplayString(unref(fs).fetched), 1), unref(fs).hasMore ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode("（共 " + toDisplayString(unref(fs).total) + "，还有更多）", 1)], 64)) : createCommentVNode("", true)])) : createCommentVNode("", true),
+						unref(fs).cid === __props.rec.cid ? (openBlock(true), createElementBlock(Fragment, { key: 2 }, renderList(shown.value, (f) => {
+							return openBlock(), createBlock(DrawerItem_default, {
+								key: f.id,
+								item: f,
+								"scroll-root": __props.scrollRoot,
+								onOpen: open
+							}, null, 8, ["item", "scroll-root"]);
+						}), 128)) : createCommentVNode("", true),
+						unref(fs).loading || unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_10$5, [..._cache[9] || (_cache[9] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(fs).error && !risk.value ? (openBlock(), createElementBlock("div", _hoisted_11$4, [createTextVNode("加载失败：" + toDisplayString(unref(fs).error) + " ", 1), createBaseVNode("button", {
+							class: "btn",
+							onClick: _cache[6] || (_cache[6] = ($event) => unref(fs).fetched ? unref(feed).loadMore() : load(true))
+						}, "重试")])) : emptyText.value ? (openBlock(), createElementBlock("div", _hoisted_12$4, toDisplayString(emptyText.value), 1)) : createCommentVNode("", true),
+						filtering.value && unref(fs).cid === __props.rec.cid && unref(fs).hasMore && !unref(fs).loading && !unref(fs).loadingMore && !unref(fs).error ? (openBlock(), createElementBlock("div", _hoisted_13$4, [createTextVNode(" 还有 " + toDisplayString(Math.max(0, unref(fs).total - unref(fs).fetched)) + " 项未加载 ", 1), createBaseVNode("button", {
+							class: "btn",
+							onClick: continueLoading
+						}, "继续加载")])) : createCommentVNode("", true)
+					], 64))
+				], 64);
+			};
+		}
+	});
+	var _hoisted_1$14 = ["onClick"];
+	var _hoisted_2$13 = {
+		key: 0,
+		class: "loading-tip"
+	};
+	var _hoisted_3$13 = {
+		key: 1,
+		class: "g115-drawer-empty g115-err"
+	};
+	var _hoisted_4$12 = {
+		key: 2,
+		class: "g115-drawer-empty"
+	};
+	var _hoisted_5$10 = {
+		key: 3,
+		class: "g115-pick-more"
+	};
+	var FavPanel_default = defineComponent({
+		__name: "FavPanel",
+		props: { scrollRoot: {} },
+		emits: [
+			"enter",
+			"view",
+			"unstar"
+		],
+		setup(__props, { emit: __emit }) {
+			const emit = __emit;
+			const fav = inject("g115ctrl").favorites;
+			const fs = fav.state;
+			const keyword = ref("");
+			const kind = ref("all");
 			const shown = computed(() => filterFavorites(fs.items, keyword.value, kind.value));
 			const filtering = computed(() => !!keyword.value.trim() || kind.value !== "all");
 			fav.load();
@@ -11021,28 +11180,13 @@
 						createTextVNode("已加载 " + toDisplayString(unref(fs).fetched), 1),
 						!unref(fs).complete && unref(fs).loaded ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode("（还有更多）")], 64)) : createCommentVNode("", true)
 					]),
-					createBaseVNode("div", _hoisted_1$14, [createBaseVNode("div", _hoisted_2$13, [withDirectives(createBaseVNode("input", {
-						"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => keyword.value = $event),
-						type: "search",
-						class: "inp",
-						placeholder: "搜索收藏的名称",
-						"aria-label": "搜索收藏",
-						maxlength: "100"
-					}, null, 512), [[vModelText, keyword.value]]), keyword.value ? (openBlock(), createElementBlock("button", {
-						key: 0,
-						class: "icon-button",
-						title: "清除搜索",
-						"aria-label": "清除搜索",
-						onClick: _cache[1] || (_cache[1] = ($event) => keyword.value = "")
-					}, [createVNode(Icon_default, { name: "x" })])) : createCommentVNode("", true)]), createBaseVNode("div", _hoisted_3$13, [(openBlock(), createElementBlock(Fragment, null, renderList(kinds, (k) => {
-						return createBaseVNode("button", {
-							key: k.id,
-							role: "radio",
-							"aria-checked": kind.value === k.id,
-							class: normalizeClass({ on: kind.value === k.id }),
-							onClick: ($event) => kind.value = k.id
-						}, toDisplayString(k.label), 11, _hoisted_4$12);
-					}), 64))])]),
+					createVNode(DrawerFilter_default, {
+						keyword: keyword.value,
+						"onUpdate:keyword": _cache[0] || (_cache[0] = ($event) => keyword.value = $event),
+						kind: kind.value,
+						"onUpdate:kind": _cache[1] || (_cache[1] = ($event) => kind.value = $event),
+						placeholder: "搜索收藏的名称"
+					}, null, 8, ["keyword", "kind"]),
 					(openBlock(true), createElementBlock(Fragment, null, renderList(shown.value, (f) => {
 						return openBlock(), createBlock(DrawerItem_default, {
 							key: f.id,
@@ -11054,15 +11198,15 @@
 								class: "rm",
 								title: "取消星标",
 								onClick: withModifiers(($event) => emit("unstar", f), ["stop"])
-							}, "取消星标", 8, _hoisted_5$10)]),
+							}, "取消星标", 8, _hoisted_1$14)]),
 							_: 2
 						}, 1032, ["item", "scroll-root"]);
 					}), 128)),
-					unref(fs).loading || unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_6$9, [..._cache[5] || (_cache[5] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(fs).error ? (openBlock(), createElementBlock("div", _hoisted_7$8, [createTextVNode("加载失败：" + toDisplayString(unref(fs).error) + " ", 1), createBaseVNode("button", {
+					unref(fs).loading || unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_2$13, [..._cache[5] || (_cache[5] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(fs).error ? (openBlock(), createElementBlock("div", _hoisted_3$13, [createTextVNode("加载失败：" + toDisplayString(unref(fs).error) + " ", 1), createBaseVNode("button", {
 						class: "btn",
 						onClick: _cache[2] || (_cache[2] = ($event) => unref(fs).loaded ? unref(fav).loadMore() : unref(fav).load(true))
-					}, "重试")])) : emptyText.value ? (openBlock(), createElementBlock("div", _hoisted_8$8, toDisplayString(emptyText.value), 1)) : createCommentVNode("", true),
-					unref(fs).loaded && !unref(fs).complete && !unref(fs).loading && !unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_9$7, [createTextVNode(" 还有 " + toDisplayString(Math.max(0, unref(fs).total - unref(fs).fetched)) + " 条收藏未加载 ", 1), createBaseVNode("button", {
+					}, "重试")])) : emptyText.value ? (openBlock(), createElementBlock("div", _hoisted_4$12, toDisplayString(emptyText.value), 1)) : createCommentVNode("", true),
+					unref(fs).loaded && !unref(fs).complete && !unref(fs).loading && !unref(fs).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_5$10, [createTextVNode(" 还有 " + toDisplayString(Math.max(0, unref(fs).total - unref(fs).fetched)) + " 条收藏未加载 ", 1), createBaseVNode("button", {
 						class: "btn",
 						onClick: _cache[3] || (_cache[3] = ($event) => unref(fav).loadMore())
 					}, "继续加载")])) : createCommentVNode("", true)
@@ -29007,9 +29151,13 @@
 					if (!confirmDel.value.busy) confirmDel.value = null;
 				} else if (detail.value) detail.value = null;
 				else if (ui.settingsOpen) ui.settingsOpen = false;
+				else if (railRef.value?.isOpen()) railRef.value.close();
+				else if (dirRef.value?.isOpen()) dirRef.value.close();
 				else if (sel.active) selection.stop();
 				else props.ctrl.close();
 			}
+			const railRef = ref(null);
+			const dirRef = ref(null);
 			const onResize = () => viewportWidth.value = window.innerWidth;
 			const RELATED = [
 				"g115-settings",
@@ -29119,6 +29267,8 @@
 						unref(s).loading || unref(s).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_11, [..._cache[24] || (_cache[24] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(s).capped ? (openBlock(), createElementBlock("div", _hoisted_12, "已到 115 搜索的 10000 条上限，请缩小搜索范围")) : empty.value ? (openBlock(), createElementBlock("div", _hoisted_13, toDisplayString(unref(s).query.keyword || unref(s).query.type ? "没有匹配的媒体" : "此目录为空"), 1)) : createCommentVNode("", true)
 					])], 544)) : createCommentVNode("", true),
 					(openBlock(), createBlock(LeftRail_default, {
+						ref_key: "railRef",
+						ref: railRef,
 						key: unref(s).uid,
 						onEnter: __props.ctrl.enter,
 						onViewFav: openFavorite,
@@ -29128,6 +29278,8 @@
 						onPlay: _cache[8] || (_cache[8] = (i, l) => __props.ctrl.play(i, l))
 					}, null, 8, ["onEnter", "onOpenCollection"])),
 					(openBlock(), createBlock(DirDrawer_default, {
+						ref_key: "dirRef",
+						ref: dirRef,
 						key: unref(s).uid,
 						crumbs: unref(s).crumbs,
 						"current-id": unref(s).cid,
@@ -30523,6 +30675,7 @@
 			folders: [],
 			media: [],
 			total: 0,
+			fetched: 0,
 			hasMore: false,
 			loading: false,
 			loadingMore: false,
@@ -30550,6 +30703,7 @@
 				folders: [],
 				media: [],
 				total: 0,
+				fetched: 0,
 				hasMore: false,
 				loading: false,
 				loadingMore: false,
@@ -30575,6 +30729,7 @@
 					folders: hit.folders,
 					media: hit.media,
 					total: hit.total,
+					fetched: hit.nextOffset,
 					hasMore: hit.hasMore,
 					loading: false,
 					loadingMore: false,
@@ -30589,6 +30744,7 @@
 				folders: [],
 				media: [],
 				total: 0,
+				fetched: 0,
 				hasMore: false,
 				loading: true,
 				loadingMore: false,
@@ -30634,6 +30790,7 @@
 				s.hasMore = page.hasMore;
 				s.error = "";
 				this.nextOffset = page.nextOffset;
+				s.fetched = page.nextOffset;
 				this.save();
 			} catch (e) {
 				if (seq !== this.seq || e instanceof CancelledError) return;
