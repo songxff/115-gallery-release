@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.1.1
+// @version      0.1.2
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -8447,6 +8447,7 @@
 		return [...new Set(Array.from({ length: n }, (_, i) => Math.floor(start + step * i)))];
 	}
 	var STRIP_SPACE = 84;
+	var CONTENT_CACHE = 12;
 	function openViewer(ctrl, images, index, appendTo, more) {
 		const dataSource = images.map(toSlide);
 		const pswp = openSlides(ctrl, dataSource, index, appendTo, true);
@@ -8547,6 +8548,11 @@
 			arrowPrevTitle: "上一张",
 			arrowNextTitle: "下一张",
 			errorMsg: "图片加载失败"
+		});
+		pswp.contentLoader.limit = Math.max(pswp.contentLoader.limit, CONTENT_CACHE);
+		pswp.addFilter("placeholderSrc", (src, content) => {
+			const data = content.data;
+			return ctrl.thumbs.peek(data.g115Item?.sha1)?.url ?? data.msrc ?? data.g115Thumb ?? src;
 		});
 		pswp.on("uiRegister", () => {
 			pswp.ui?.registerElement({
