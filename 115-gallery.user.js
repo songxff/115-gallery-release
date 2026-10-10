@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.3.0
+// @version      0.3.1
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -10391,7 +10391,8 @@
 	var CopyConfirm_default = defineComponent({
 		__name: "CopyConfirm",
 		setup(__props) {
-			const flow = inject("g115ctrl").flow;
+			const ctrl = inject("g115ctrl");
+			const flow = ctrl.flow;
 			const fs = flow.state;
 			const box = ref(null);
 			const primary = ref(null);
@@ -10415,6 +10416,9 @@
 				if (cat === "inTarget") return "已经在目标目录里";
 				return "不能复制到自身或子目录";
 			};
+			async function go(mode) {
+				if (await flow.confirm(mode) && ctrl.selection.state.active) ctrl.selection.stop();
+			}
 			watch(() => fs.stage, async (st) => {
 				if (st !== "confirm") return;
 				await nextTick();
@@ -10467,20 +10471,20 @@
 						}, "取消", 8, _hoisted_11$8), sum.value.warned ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createBaseVNode("button", {
 							class: "btn",
 							disabled: unref(fs).busy || !sum.value.forceMode.length,
-							onClick: _cache[5] || (_cache[5] = ($event) => unref(flow).confirm("force"))
+							onClick: _cache[5] || (_cache[5] = ($event) => go("force"))
 						}, "忽略提醒，全部复制", 8, _hoisted_12$8), createBaseVNode("button", {
 							ref_key: "primary",
 							ref: primary,
 							class: "btn primary",
 							disabled: unref(fs).busy || !sum.value.skipMode.length,
-							onClick: _cache[6] || (_cache[6] = ($event) => unref(flow).confirm("skip"))
+							onClick: _cache[6] || (_cache[6] = ($event) => go("skip"))
 						}, "跳过已存在，复制 " + toDisplayString(sum.value.skipMode.length) + " 项", 9, _hoisted_13$8)], 64)) : (openBlock(), createElementBlock("button", {
 							key: 1,
 							ref_key: "primary",
 							ref: primary,
 							class: "btn primary",
 							disabled: unref(fs).busy || !sum.value.skipMode.length,
-							onClick: _cache[7] || (_cache[7] = ($event) => unref(flow).confirm("skip"))
+							onClick: _cache[7] || (_cache[7] = ($event) => go("skip"))
 						}, "复制 " + toDisplayString(sum.value.skipMode.length) + " 项", 9, _hoisted_14$6))]),
 						!sum.value.skipMode.length && !sum.value.forceMode.length ? (openBlock(), createElementBlock("p", _hoisted_15$6, "没有可以复制的条目。")) : createCommentVNode("", true)
 					], 64)) : createCommentVNode("", true)
@@ -10881,7 +10885,7 @@
 					order: "desc",
 					...folders ? { foldersOnly: true } : { showDir: false }
 				}, s), { lane: LANE$7 });
-				const rows = page.items.filter((i) => i.kind === "folder" === folders);
+				const rows = page.items.filter((i) => i.kind === "folder" === folders && i.parentId === cid);
 				for (const r of rows) {
 					if (known.has(r.id)) return out;
 					out.push(r);
@@ -12595,7 +12599,7 @@
 								onClick: ($event) => toggle(c.cid)
 							}, [createBaseVNode("span", _hoisted_5$9, toDisplayString(c.name), 1), unavailable(c.cid) ? (openBlock(), createElementBlock("span", _hoisted_6$8, "⚠")) : createCommentVNode("", true)], 10, _hoisted_4$11);
 						}), 128))])) : createCommentVNode("", true),
-						queued.value || active.value === "queue" ? (openBlock(), createElementBlock("button", {
+						unref(ctrl).queue.state.entries.length || active.value === "queue" ? (openBlock(), createElementBlock("button", {
 							key: 1,
 							class: normalizeClass(["g115-rail-btn queue", { on: active.value === "queue" }]),
 							"aria-expanded": active.value === "queue",
