@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.1.3
+// @version      0.1.4
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -5465,6 +5465,7 @@
 	var CACHE_TTL = 5184e6;
 	var MEM_MAX = 50;
 	var PAGE_REFRESH_GAP = 6e4;
+	var MAX_RESTARTS = 2;
 	var ROOT = {
 		id: "0",
 		name: "根目录"
@@ -5513,6 +5514,7 @@
 		crumbsOf = new Map();
 		pageRefresh = new Map();
 		verified = "all";
+		restarts = 0;
 		revealing = Promise.resolve();
 		pageSize;
 		now;
@@ -5531,6 +5533,7 @@
 			s.loadingMore = false;
 			const key = this.key();
 			this.verified = "all";
+			this.restarts = 0;
 			if (!opts.force) {
 				let hit = this.memGet(key);
 				if (!this.fresh(hit) && this.deps.persist) {
@@ -5642,7 +5645,8 @@
 						return;
 					}
 					const s = this.state;
-					const merged = mergePage(s.page, toLoaded(res, offset), offset);
+					const fresh = toLoaded(res, offset);
+					const merged = this.limitRestart(s.page, mergePage(s.page, fresh, offset), fresh);
 					const notice = changeNotice(merged);
 					if (notice) s.notice = notice;
 					if (merged.page === s.page) return;
@@ -5657,6 +5661,20 @@
 				p
 			});
 			return p;
+		}
+		limitRestart(prev, merged, fresh) {
+			const page = merged.page;
+			if (page.nextOffset !== 0 || !page.hasMore || prev.nextOffset === 0) return merged;
+			if (++this.restarts <= MAX_RESTARTS) return merged;
+			const nextOffset = Math.max(prev.nextOffset, fresh.nextOffset);
+			return {
+				...merged,
+				page: {
+					...page,
+					nextOffset,
+					hasMore: nextOffset < fresh.total
+				}
+			};
 		}
 		still(seq, key) {
 			return seq === this.seq && key === this.key();
@@ -5739,7 +5757,7 @@
 					return;
 				}
 				const fresh = toLoaded(next, offset);
-				s.page = markRaw(mergePage(s.page, fresh, offset).page);
+				s.page = markRaw(this.limitRestart(s.page, mergePage(s.page, fresh, offset), fresh).page);
 				if (this.verified !== "all") this.verified.add(offset);
 				if ("capped" in next && next.capped) s.capped = true;
 				this.remember(this.key());
@@ -6221,9 +6239,15 @@
 					this.state[item.id] = { kind: "submitted" };
 					this.watch(item);
 				}
-				const after = await this.checkAll(todo, generation);
-				this.assertReady(generation);
-				todo.forEach((item, k) => this.apply(item, after[k]));
+				try {
+					const after = await this.checkAll(todo, generation);
+					this.assertReady(generation);
+					todo.forEach((item, k) => this.apply(item, after[k]));
+				} catch (e) {
+					if (generation !== this.generation) throw e;
+					if (e instanceof RiskControlError) this.deps.onRisk?.();
+					else if (!(e instanceof TranscodePausedError)) throw e;
+				}
 				return result;
 			} catch (e) {
 				if (generation !== this.generation) throw e;
@@ -23405,7 +23429,8 @@
 		}
 	}
 	var LANE$4 = "frames";
-	var RETRY_COOLDOWN_ERRORS = [NotTranscodedError, UnsupportedCodecError];
+	var RETRY_COOLDOWN_ERRORS = [NotTranscodedError];
+	var PERMANENT_ERRORS = [UnsupportedCodecError];
 	var frameKey = (sha1, second) => `${sha1}_${second}`;
 	var FrameService = class {
 		deps;
@@ -23431,7 +23456,7 @@
 				return view;
 			}
 			const failure = this.failed.get(pickCode);
-			if (failure && (this.deps.now ?? Date.now)() - failure.at < 6e4) throw failure.error;
+			if (failure && (failure.permanent || (this.deps.now ?? Date.now)() - failure.at < 6e4)) throw failure.error;
 			if (failure) this.failed.delete(pickCode);
 			this.waiters.set(key, (this.waiters.get(key) ?? 0) + 1);
 			try {
@@ -23454,9 +23479,11 @@
 				});
 				return this.remember(key, result);
 			} catch (e) {
-				if (RETRY_COOLDOWN_ERRORS.some((C) => e instanceof C)) this.failed.set(pickCode, {
+				const permanent = PERMANENT_ERRORS.some((C) => e instanceof C);
+				if (permanent || RETRY_COOLDOWN_ERRORS.some((C) => e instanceof C)) this.failed.set(pickCode, {
 					error: e,
-					at: (this.deps.now ?? Date.now)()
+					at: (this.deps.now ?? Date.now)(),
+					permanent
 				});
 				throw e;
 			} finally {
