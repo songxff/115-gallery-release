@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.3.2
+// @version      0.4.0
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -5071,6 +5071,7 @@
 	var cloudflow_default = ":host{--bg:#f5f5f5;--card:#fff;--line:#e5e7eb;--line-2:#eee;--ink:#333;--ink-2:#666;--ink-3:#999;--blue:#1976d2;--blue-soft:#e3f2fd;--img:#1976d2;--img-soft:#e3f2fd;--vid:#f57c00;--vid-soft:#fff3e0;--gold:gold;--r:8px;--sh:0 2px 8px #0000001a;--sh-h:0 6px 16px #0000002e;--header-h:64px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}.g115-root,.g115-root *{box-sizing:border-box;margin:0;padding:0}.g115-root{background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif}a{color:inherit;text-decoration:none}.header{height:calc(var(--header-h) + var(--safe-t));padding-top:var(--safe-t);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);z-index:1200;background:#ffffffeb;position:fixed;top:0;left:0;right:0}.header-inner{height:100%;padding:0 max(24px,var(--safe-l)) 0 max(24px,var(--safe-r));justify-content:space-between;align-items:center;gap:16px;display:flex}.header-left{flex:1;align-items:center;gap:16px;min-width:0;display:flex}.brand{flex-shrink:0;align-items:center;gap:9px;display:flex}.brand .mark{background:var(--blue);color:#fff;border-radius:8px;place-items:center;width:30px;height:30px;font-size:16px;font-weight:700;display:grid}.brand b{font-size:17px;font-weight:700}.brand b span{color:var(--blue)}.breadcrumb{white-space:nowrap;align-items:center;gap:6px;min-width:0;font-size:14px;display:flex;overflow-x:auto}.breadcrumb .sep{color:var(--ink-3);font-size:12px}.breadcrumb a{color:var(--ink-2);border-radius:4px;padding:4px 8px;transition:all .15s}.breadcrumb a:hover{color:var(--blue);background:var(--blue-soft)}.breadcrumb .current{color:var(--ink);padding:4px 8px;font-weight:600}.header-right{flex-shrink:0;align-items:center;gap:8px;display:flex}.hbtn{border:1px solid var(--line);height:38px;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:8px;align-items:center;gap:6px;padding:0 12px;font-size:13px;transition:all .18s;display:flex}.hbtn:hover{color:var(--ink);border-color:#cfd4da}.hbtn.icon{justify-content:center;width:38px;padding:0;font-size:16px}.seg{border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);color:var(--ink-3);font:inherit;cursor:pointer;background:0 0;height:36px;padding:0 12px;font-size:13px;transition:all .18s}.seg button:last-child{border-right:0}.seg button.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.main{padding:calc(var(--header-h) + var(--safe-t) + 18px) 10px 40px;max-width:1840px;margin:0 auto}.sec-title{color:var(--ink-3);align-items:center;gap:8px;margin:0 2px 12px;font-size:13px;display:flex}.folder-section{margin-bottom:22px}.folder-more{margin:14px auto 0;display:block}.folders{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;display:grid}.folder{border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:#fff;transition:all .2s;overflow:hidden}.folder:hover{box-shadow:var(--sh);transform:translateY(-3px)}.fpreview{background:#e9eaec;grid-template-columns:repeat(4,1fr);gap:2px;display:grid;position:relative}.fpreview img{aspect-ratio:1;object-fit:cover;width:100%;display:block}.fpreview-empty{aspect-ratio:4;color:#b9bdc3;background:#f0f1f3;grid-column:1/-1;place-items:center;font-size:22px;display:grid}.thumb-box{aspect-ratio:1;background:#f0f0f0;width:100%;line-height:0;display:block;position:relative;overflow:hidden}.thumb-box img{object-fit:cover;opacity:0;width:100%;height:100%;transition:opacity .25s;position:absolute;inset:0}.thumb-box.ready img{opacity:1}.thumb-box .thumb-skel{width:100%;height:100%;position:absolute;inset:0}.thumb-skel{background:linear-gradient(90deg,#ececec 25%,#f5f5f5 37%,#ececec 63%) 0 0/400% 100%;animation:1.3s infinite skel}@keyframes skel{0%{background-position:100% 0}to{background-position:-100% 0}}.sprite-strip{background:#000;line-height:0;display:none;position:absolute;inset:0;overflow:hidden}.sprite-strip.on{display:block}.sprite-strip img{max-width:none;height:100%;position:absolute;top:0;left:0}.fpreview .more{color:#fff;background:#0009;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.finfo{justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;display:flex}.finfo .fn{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden}.finfo .fc{color:var(--ink-3);flex-shrink:0;font-size:11px}.gallery-columns{align-items:flex-start;gap:15px;display:flex}.gallery-column{flex-direction:column;flex:1;gap:15px;display:flex}.masonry{width:100%;position:relative}.masonry>.item{position:absolute;top:0;left:0}.spinner{border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;width:40px;height:40px;animation:.8s linear infinite spin;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}.item{border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;background:#fff;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}.item:hover{box-shadow:var(--sh-h);transform:translateY(-5px)}.item .thumb{line-height:0;display:block;position:relative}.item .info{padding:12px}.item .filename{color:var(--ink);word-break:break-all;font-size:13px;line-height:1.4}.item .type{border-radius:4px;margin-top:8px;padding:3px 8px;font-size:11px;font-weight:500;display:inline-block}.type.image{background:var(--img-soft);color:var(--img)}.type.video{background:var(--vid-soft);color:var(--vid)}.dur{color:#fff;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600;position:absolute;bottom:8px;right:8px}.video-overlay{background:#0009;border-radius:50%;justify-content:center;align-items:center;width:60px;height:60px;transition:all .25s;display:flex;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.video-overlay:after{content:\"▶\";color:#fff;margin-left:4px;font-size:24px}.item:hover .video-overlay{background:var(--blue)}.edge-toggle{color:#fff;cursor:pointer;z-index:201;writing-mode:vertical-rl;letter-spacing:2px;border:none;padding:15px 9px;font-size:14px;font-weight:600;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:calc(50% - 30px);box-shadow:0 2px 12px #0003}.edge-toggle.fav{background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:0 8px 8px 0;left:0}.edge-toggle.tree{background:linear-gradient(135deg,#4facfe,#00c6fb);border-radius:8px 0 0 8px;right:0}.drawer{z-index:200;background:#fff;width:340px;height:100vh;padding:20px;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:0;overflow:auto}.drawer.left{left:-360px;box-shadow:2px 0 16px #0000001f}.drawer.right{right:-360px;box-shadow:-2px 0 16px #0000001f}.fav-group.open .edge-toggle.fav{left:340px}.fav-group.open .drawer.left{left:0}.tree-group.open .edge-toggle.tree{right:340px}.tree-group.open .drawer.right{right:0}.drawer h3{margin-bottom:16px;font-size:16px}.fav-item{cursor:pointer;background:#f8f9fa;border-radius:8px;margin-bottom:10px;padding:11px;transition:all .18s}.fav-item:hover{background:#eef0f2}.fav-head{align-items:center;gap:10px;display:flex}.fav-head .fic{color:#e0a800;background:#fff7d6;border-radius:7px;flex-shrink:0;place-items:center;width:30px;height:30px;display:grid}.fav-head .fmeta{flex:1;overflow:hidden}.fav-head .fn{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.fav-head .fp{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.fav-head .rm{color:#fff;cursor:pointer;opacity:0;background:#f44336;border:0;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px;transition:all .18s}.fav-item:hover .rm{opacity:1}.fav-thumbs{grid-template-columns:repeat(4,1fr);gap:4px;margin-top:9px;display:grid}.fav-thumbs .ft{aspect-ratio:1;background:#e9eaec;border-radius:5px;position:relative;overflow:hidden}.fav-thumbs .ft .thumb-box{position:absolute;inset:0}.fav-thumbs .ft.vid:after{content:\"▶\";color:#fff;z-index:2;background:#0000004d;place-items:center;font-size:13px;display:grid;position:absolute;inset:0}.tnode{cursor:pointer;color:var(--ink-2);white-space:nowrap;text-overflow:ellipsis;border-radius:6px;padding:7px 9px;font-size:14px;overflow:hidden}.tnode:hover{color:var(--ink);background:#f0f2f5}.tnode.cur{color:var(--blue);font-weight:600}.l2{padding-left:20px}.l3{padding-left:38px}.modal{z-index:1700;background:#000000f2;display:none;position:fixed;inset:0}.modal.show{justify-content:center;align-items:center;display:flex}.modal .close{color:#f1f1f1;cursor:pointer;z-index:1301;font-size:38px;font-weight:700;line-height:1;position:fixed;top:18px;right:34px}.modal .close:hover{color:#ff5252}.player{width:94vw;max-width:1600px;max-height:90vh;position:relative}.ptitle-top{z-index:6;color:#fff;text-shadow:0 1px 4px #000000e6;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;font-size:14px;position:absolute;top:10px;left:14px;right:60px;overflow:hidden}.hud{z-index:6;color:#fff;pointer-events:none;background:#0000009e;border-radius:10px;padding:10px 18px;font-size:20px;font-weight:600;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.stage{aspect-ratio:16/9;background:#000;border-radius:10px;width:100%;max-height:90vh;position:relative;overflow:hidden}.stage img{object-fit:contain;opacity:.9;width:100%;height:100%}.stage .big{place-items:center;display:grid;position:absolute;inset:0}.stage .big span{color:#111;cursor:pointer;background:#ffffffeb;border-radius:50%;place-items:center;width:76px;height:76px;font-size:28px;display:grid}.pbar{color:#fff;background:linear-gradient(#0000,#000c);padding:14px 16px;position:absolute;bottom:0;left:0;right:0}.pscrub{background:#ffffff4d;border-radius:3px;height:4px;margin-bottom:10px;position:relative}.pscrub i{background:var(--blue);border-radius:3px;width:35%;position:absolute;top:0;bottom:0;left:0}.pctl{align-items:center;gap:14px;font-size:14px;display:flex}.pctl .r{gap:14px;margin-left:auto;display:flex}.pctl span{cursor:pointer;opacity:.92}.ptitle{color:#eee;text-align:center;margin-top:12px;font-size:14px}.modal .imgview{object-fit:contain;touch-action:none;border-radius:8px;max-width:94vw;max-height:90vh}.set-wrap{grid-template-columns:220px 1fr;align-items:start;gap:26px;max-width:1100px;margin:0 auto;display:grid}@media (width<=820px){.set-wrap{grid-template-columns:1fr}.set-nav{display:none}}.set-nav{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;position:sticky;top:84px}.set-nav a{color:var(--ink-2);cursor:pointer;border-radius:8px;padding:9px 12px;font-size:14px;transition:all .15s;display:block}.set-nav a:hover{color:var(--ink);background:#f5f7f9}.set-nav a.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.set-title{margin-bottom:4px;font-size:26px;font-weight:700}.set-sub{color:var(--ink-3);margin-bottom:22px;font-size:14px}.panel{border:1px solid var(--line);background:#fff;border-radius:12px;margin-bottom:18px;padding:22px}.panel h3{align-items:center;gap:9px;margin-bottom:4px;font-size:17px;font-weight:600;display:flex}.panel .desc{color:var(--ink-3);margin-bottom:18px;font-size:13px}.row{border-bottom:1px solid var(--line-2);justify-content:space-between;align-items:center;gap:16px;padding:13px 0;display:flex}.row:last-child{border:0}.row .lab b{font-size:14px;font-weight:500;display:block}.row .lab small{color:var(--ink-3);font-size:12px}.valctl{align-items:center;gap:14px;display:flex}.val{color:var(--blue);white-space:nowrap;font-size:14px;font-weight:600}.toggle{cursor:pointer;background:#d4d7dc;border-radius:999px;flex-shrink:0;width:46px;height:26px;transition:all .25s;position:relative}.toggle.on{background:var(--blue)}.toggle i{background:#fff;border-radius:50%;width:22px;height:22px;transition:all .25s;position:absolute;top:2px;left:2px;box-shadow:0 1px 3px #0000004d}.toggle.on i{left:22px}.slider{background:#e3e6ea;border-radius:4px;width:150px;height:6px;position:relative}.slider i{background:var(--blue);border-radius:4px;position:absolute;top:0;bottom:0;left:0}.slider i:after{content:\"\";border:1px solid var(--line);background:#fff;border-radius:50%;width:16px;height:16px;position:absolute;top:50%;right:-7px;transform:translateY(-50%);box-shadow:0 1px 4px #00000059}.inp{border:1px solid var(--line);font:inherit;width:240px;color:var(--ink);border-radius:8px;outline:none;padding:9px 12px;font-size:13px}.inp:focus{border-color:var(--blue)}.btn{border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;background:#fff;border-radius:8px;padding:9px 16px;font-size:13px;transition:all .18s}.btn:hover{border-color:#c4c9cf}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:#e53935;border-color:#f3c0bb}.actions{flex-wrap:wrap;gap:10px;margin-top:16px;display:flex}.progbar{background:#e3e6ea;border-radius:6px;height:10px;margin:6px 0 4px;overflow:hidden}.progbar i{background:linear-gradient(90deg,var(--blue),#42a5f5);background-size:200% 100%;border-radius:6px;width:64%;height:100%;animation:2.4s linear infinite flow;display:block}@keyframes flow{to{background-position:200% 0}}.progtext{color:var(--ink-3);margin:6px 0 2px;font-size:12px}.stat-grid{grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;display:grid}.stat{border:1px solid var(--line);background:#f8f9fa;border-radius:10px;padding:15px}.stat b{font-size:25px;font-weight:700;display:block}.stat.ok b{color:#2e9e5b}.stat.pend b{color:#f57c00}.stat.fail b{color:#e53935}.stat.skip b{color:var(--ink-3)}.stat small{color:var(--ink-3);font-size:12px}@media (width<=420px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat small{white-space:nowrap}}.usage{margin:8px 0 16px}.usage .ut{color:var(--ink-2);justify-content:space-between;margin-bottom:6px;font-size:13px;display:flex}.usage .ub{background:#e3e6ea;border-radius:5px;height:9px;overflow:hidden}.usage .ub i{border-radius:5px;height:100%;display:block}.back{color:var(--ink-2);cursor:pointer;align-items:center;gap:6px;margin-bottom:14px;font-size:14px;display:inline-flex}.loading-tip{text-align:center;color:var(--ink-3);padding:60px 20px;font-size:14px}.back:hover{color:var(--blue)}.cache-dot{z-index:3;pointer-events:none;background:#2ecc71;border-radius:50%;width:9px;height:9px;position:absolute;bottom:7px;left:7px;box-shadow:0 0 0 2px #ffffffd9,0 0 6px #2ecc7199}.fav-cur{border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;background:#fff;border-radius:16px;margin-left:10px;padding:5px 12px;font-size:12px;transition:all .2s}.fav-cur:hover{border-color:var(--gold);color:var(--gold)}.fav-cur.on{background:var(--gold,#f0a500);color:#fff;border-color:var(--gold,#f0a500)}.sprite-hover{z-index:500;pointer-events:none;background:#000;border:2px solid #fff;border-radius:8px;position:fixed;overflow:hidden;box-shadow:0 10px 36px #00000073}.sprite-hover img{width:auto;max-width:96vw;height:140px;display:block}.ctx-menu{z-index:600;border:1px solid var(--line);-webkit-user-select:none;user-select:none;background:#fff;border-radius:10px;min-width:176px;padding:6px;font-size:13px;position:fixed;box-shadow:0 12px 34px #00000038}.ctx-item{cursor:pointer;color:var(--ink);white-space:nowrap;border-radius:7px;padding:8px 12px}.ctx-item:hover{background:var(--blue-soft,#e3f2fd)}.ctx-item.danger{color:#e53935}.ctx-item.danger:hover{background:#fdecea}.ctx-sep{background:var(--line-2,#eee);height:1px;margin:5px 8px}.modal-overlay{z-index:550;background:#00000073;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.move-dialog{background:#fff;border-radius:14px;flex-direction:column;width:440px;max-width:92vw;max-height:80vh;padding:22px;display:flex;box-shadow:0 20px 60px #0000004d}.move-dialog h3{margin-bottom:12px;font-size:17px}.move-crumbs{color:var(--ink-2);flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px;display:flex}.move-crumbs a{color:var(--blue);cursor:pointer}.move-crumbs .sep{color:var(--ink-3);margin:0 6px}.move-list{border:1px solid var(--line);border-radius:9px;flex:1;min-height:140px;max-height:46vh;overflow:auto}.move-row{cursor:pointer;border-bottom:1px solid var(--line-2,#f0f0f0);padding:10px 14px}.move-row:hover{background:var(--blue-soft,#e3f2fd)}.move-empty{text-align:center;color:var(--ink-3);padding:24px;font-size:13px}.move-actions{justify-content:flex-end;gap:10px;margin-top:16px;display:flex}.dlg{background:#fff;border-radius:14px;width:380px;max-width:92vw;padding:22px;box-shadow:0 20px 60px #0000004d}.dlg h3{word-break:break-all;margin-bottom:12px;font-size:17px}.dlg-msg{color:var(--ink-2);white-space:pre-line;word-break:break-all;font-size:14px;line-height:1.6}.dlg-input{width:100%;margin-top:2px}.dlg-actions{justify-content:flex-end;gap:10px;margin-top:18px;display:flex}.toaster{left:50%;bottom:max(32px,calc(20px + var(--safe-b)));z-index:400;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;transform:translate(-50%)}.toast{pointer-events:auto;color:#fff;cursor:pointer;background:#212121ed;border-radius:9px;max-width:90vw;padding:11px 22px;font-size:14px;font-weight:500;animation:.22s toast-in;box-shadow:0 8px 24px #00000047}.toast.err{background:#c0392b}@keyframes toast-in{0%{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media (hover:none){.item:hover,.folder:hover{box-shadow:var(--sh);transform:none}.item:active{transform:scale(.98)}.fav-head .rm{opacity:1}.fav-item:active{background:#eef0f2}.hbtn:active,.btn:active,.seg button:active,.fav-cur:active,.ctx-item:active,.move-row:active,.tnode:active,.breadcrumb a:active,.set-nav a:active{filter:brightness(.94)}}@media (width<=768px){.header-inner{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r));gap:8px}.header-left{gap:8px}.brand b{display:none}.brand .mark{width:34px;height:34px;font-size:17px}.header-right{gap:6px}.header-right .seg{display:none}.hbtn.icon{width:44px;height:44px;font-size:19px}.fav-cur{border-radius:10px;flex-shrink:0;place-items:center;width:40px;height:40px;margin-left:2px;padding:0;font-size:19px;display:grid}.fav-cur .lbl{display:none}.breadcrumb{gap:4px;font-size:13px}.breadcrumb a,.breadcrumb .current{padding:6px}.main{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r))}.folders{grid-template-columns:repeat(2,1fr);gap:10px}.gallery-columns,.gallery-column{gap:10px}}.drawer-mask{z-index:199;opacity:0;visibility:hidden;background:#0000006b;transition:opacity .25s,visibility .25s;position:fixed;inset:0}@media (hover:none){.fav-group.open .drawer-mask,.tree-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.drawer{width:min(86vw,320px);padding:18px;padding-bottom:max(18px,var(--safe-b))}.fav-group.open .edge-toggle.fav{left:min(86vw,320px)}.tree-group.open .edge-toggle.tree{right:min(86vw,320px)}.edge-toggle{padding:18px 11px;font-size:15px}.modal .close{top:calc(8px + var(--safe-t));right:calc(10px + var(--safe-r));background:#00000073;border-radius:50%;place-items:center;width:44px;height:44px;font-size:30px;display:grid}.player{width:100vw;max-width:100vw}.ptitle-top{top:calc(10px + var(--safe-t));left:14px;right:64px}.hud{padding:9px 16px;font-size:18px}.ctx-menu{min-width:200px;padding:6px}.ctx-item{padding:12px 14px}.ctx-sep{margin:5px 10px}.move-dialog{width:94vw;padding:18px;padding-bottom:max(18px,var(--safe-b))}.move-row{padding:13px 14px}}.prog-block{margin-top:16px}.prog-head{align-items:center;gap:12px;display:flex}.prog-title{white-space:nowrap;font-weight:600}.prog-pct{text-align:right;color:#2e9e5b;min-width:44px}.progress-track{background:#eef0f2;border-radius:4px;flex:1;height:8px;overflow:hidden}.progress-fill{background:linear-gradient(90deg,#4caf7d,#2e9e5b);border-radius:4px;height:100%;transition:width .4s}.log-modal{color:#d7dae0;background:#1b1e24;border-radius:12px;flex-direction:column;width:min(860px,92vw);max-height:80vh;display:flex;overflow:hidden}.log-head{border-bottom:1px solid #2c313a;align-items:center;gap:12px;padding:12px 16px;display:flex}.log-head b{margin-right:auto;font-size:15px}.log-filter{color:#9aa3af;cursor:pointer;align-items:center;gap:5px;font-size:13px;display:flex}.log-body{padding:10px 14px;font:12px/1.7 ui-monospace,Consolas,monospace;overflow:auto}.log-line{white-space:pre-wrap;word-break:break-all;gap:10px;padding:1px 0;display:flex}.log-line.log-err{background:#e539351f}.log-ts{color:#6b7482;flex-shrink:0}.log-lv{color:#9aa3af;flex-shrink:0;width:60px}.log-lv.lv-error,.log-lv.lv-critical{color:#ff6b66;font-weight:700}.log-lv.lv-warning{color:#f5a623}.log-empty{color:#6b7482;text-align:center;padding:20px}button,input,select{font-family:inherit}button:disabled{cursor:not-allowed;opacity:.55}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.brand,.back,.text-button{color:inherit;font:inherit;text-align:left;background:0 0;border:0}.text-button{cursor:pointer}.toggle{border:0}.icon-button{border:1px solid var(--line);width:36px;height:36px;color:var(--ink);cursor:pointer;background:#fff;border-radius:6px;flex:0 0 36px;justify-content:center;align-items:center;padding:0;display:inline-flex}.icon-button.active{background:var(--blue-soft);color:var(--blue)}.icon-button.danger{color:#c62828}.media-toolbar{border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:12px;display:flex}.media-search{border:1px solid var(--line);background:#fff;border-radius:6px;flex:1;align-items:center;min-width:180px;max-width:380px;display:flex}.media-search input{background:0 0;border:0;width:100%;min-width:0;padding:9px 10px;font-size:13px}.media-search .icon-button{border:0}.media-toolbar select{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:0;max-width:100%;height:36px;padding:0 8px;font-size:13px}.selection-tools{flex-wrap:wrap;align-items:center;gap:12px;width:100%;padding-top:4px;font-size:13px;display:flex}.selection-tools label{cursor:pointer;align-items:center;gap:6px;display:flex}.selection-tools input{width:17px;height:17px}.operation-feedback,.sync-error{color:#8b3029;overflow-wrap:anywhere;border-bottom:1px solid #ebc6c2;margin:0 0 16px;padding:14px 0;font-size:13px}.operation-feedback ul{max-height:160px;margin:8px 0 0;padding-left:18px;overflow:auto}.operation-feedback li{margin-top:4px}.operation-feedback .actions{margin-top:10px}.item.selected{outline:2px solid var(--blue);outline-offset:1px}.card-open{z-index:1;cursor:pointer;background:0 0;border:0;width:100%;height:100%;position:absolute;inset:0}.card-open:focus-visible{outline-offset:-3px}.media-select{z-index:5;cursor:pointer;width:20px;height:20px;accent-color:var(--blue);position:absolute;top:10px;left:10px}.pinned-mark{z-index:2;color:#bf7200;pointer-events:none;background:#fff;border-radius:4px;padding:4px;position:absolute;top:8px;right:8px}.thumb-status{color:var(--ink-2);z-index:2;pointer-events:none;text-align:center;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.thumb-status.unavailable{background:#eceff1}.thumb-status .icon-button{pointer-events:auto;flex-basis:32px;width:32px;height:32px}.drawer{z-index:1400;height:100dvh;padding-top:max(20px,var(--safe-t))}.drawer[aria-hidden=true]{visibility:hidden}.drawer-mask{z-index:1399}.edge-toggle{z-index:1401;letter-spacing:0}.drawer-close{position:absolute;top:10px;right:12px}.drawer h3{padding-right:36px}.fav-head .fmeta .fn,.fav-head .fmeta .fp{display:block}.fav-item:focus-within .rm{opacity:1}.tnode{text-align:left;background:0 0;border:0;width:100%;display:block}.ctx-menu{z-index:1600;overscroll-behavior:contain;border-radius:8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}.ctx-item{width:100%;font:inherit;text-align:left;white-space:normal;overflow-wrap:anywhere;background:0 0;border:0;display:block}.modal-overlay{z-index:1500;padding:8px}.move-dialog,.dlg{border-radius:8px;max-height:calc(100dvh - 16px);overflow:auto}.move-list{flex-shrink:1;min-height:80px}.move-row{border:0;border-bottom:1px solid var(--line);text-align:left;background:#fff;width:100%;font-size:14px;display:block}.move-crumbs .text-button{color:var(--blue)}.move-actions,.dlg-actions{flex-wrap:wrap;flex-shrink:0}.toaster{z-index:2000}.log-head{flex-wrap:wrap}.log-modal{border-radius:8px;max-height:calc(100dvh - 24px)}.image-viewer{padding:64px 16px 20px;overflow:hidden}.image-toolbar{z-index:4;color:#fff;background:#000000bf;align-items:center;gap:8px;padding:10px 16px;display:flex;position:absolute;top:0;left:0;right:0}.image-title{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:14px;overflow:hidden}.image-toolbar .icon-button,.image-nav{color:#fff;background:#222;border-color:#555}.image-toolbar output{text-align:center;font-variant-numeric:tabular-nums;width:44px;font-size:12px}.image-viewer .imgview{transform-origin:50%;border-radius:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px)}.image-loading{z-index:1;position:absolute}.image-error,.viewer-status{color:#fff}.image-error{z-index:3;align-items:center;gap:12px;display:flex}.image-error .btn{align-items:center;gap:6px;display:inline-flex}.image-nav{z-index:3;position:absolute;top:50%}.image-nav.previous{left:12px}.image-nav.next{right:12px}.viewer-status .close{background:#222;border:0;font-size:20px}.viewer-status .close svg{width:22px}@media (width<=600px){.media-search{flex-basis:100%;max-width:none}.media-toolbar{gap:6px}.media-toolbar select{flex:1;padding:0 5px;font-size:12px}.icon-button{flex-basis:40px;width:40px;height:40px}.media-toolbar select{height:40px}.image-toolbar{gap:4px;padding:8px}.image-title{pointer-events:none;text-align:center;position:absolute;top:58px;left:12px;right:12px}.image-toolbar{justify-content:flex-end}.image-viewer{padding-top:84px}.image-viewer .imgview{max-height:calc(100dvh - 130px)}.image-nav.previous{left:6px}.image-nav.next{right:6px}}@media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}";
 	var gallery_default = ".g115-root{z-index:2147483000;background:var(--bg);position:fixed;inset:0;overflow:hidden}.g115-root .header{position:absolute}.g115-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:absolute;inset:0;overflow:auto}.g115-root .main{min-height:100%}.g115-root .folder{color:inherit;display:block}.masonry>.g115-cell{will-change:transform;position:absolute;top:0;left:0}.masonry>.g115-cell>.item{position:relative}.g115-scroll.g115-scrolling .item,.g115-scroll.g115-scrolling .folder{pointer-events:none}.g115-icon{display:block}.g115-video-box{aspect-ratio:16/9;background:linear-gradient(135deg,#2b2f36,#16181c)}.g115-badge{color:#ffd27a;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:8px;left:8px}.g115-launcher{z-index:2147482999;background:var(--blue);color:#fff;width:48px;height:48px;box-shadow:var(--sh-h);cursor:pointer;border:0;border-radius:50%;place-items:center;transition:transform .18s;display:grid;position:fixed;bottom:96px;right:24px}.g115-launcher:hover{transform:scale(1.08)}.g115-settings{top:calc(var(--header-h) + 8px);z-index:1300;border:1px solid var(--line);background:#fff;border-radius:12px;width:320px;max-width:calc(100vw - 32px);padding:6px 18px;position:absolute;right:24px;box-shadow:0 12px 34px #00000038}.g115-settings .row{cursor:pointer}.g115-settings .row:last-child{cursor:default}.g115-settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue)}.pswp__g115-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000c;flex:1;align-self:center;min-width:0;padding:0 16px;font-size:14px;overflow:hidden}.pswp__button.pswp__g115-original{color:#fff;width:auto;padding:0 14px;font-size:13px;font-weight:600}.pswp__button.pswp__g115-original[disabled]{opacity:.4;cursor:default}.g115-video-box img{object-fit:cover}.g115-skel-dark{background:linear-gradient(90deg,#24272d 25%,#2f333a 37%,#24272d 63%) 0 0/400% 100%;animation:1.3s infinite skel}.g115-cover-note{color:#c9ced6;text-align:center;z-index:2;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.g115-cover-retry{pointer-events:auto;z-index:3;color:#fff;cursor:pointer;background:#222;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px;position:relative}.fpreview{position:relative}.g115-video-badge{color:#fff;background:#f57c00eb;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.g115-cover-ctl{flex-shrink:0;align-items:center;gap:6px;display:flex}.g115-cover-ctl select{border:1px solid var(--line);background:#fff;border-radius:6px;height:32px;padding:0 6px;font-size:13px}.g115-cover-ctl .inp{width:72px;padding:6px 8px}.g115-root .card-open{pointer-events:none}.g115-star{z-index:4;color:#fff;cursor:pointer;opacity:0;background:#00000073;border:0;border-radius:50%;width:28px;height:28px;font-size:15px;line-height:28px;transition:opacity .15s;position:absolute;top:8px;right:8px}.item:hover .g115-star,.g115-star.on,.g115-star:focus-visible{opacity:1}.g115-star.on{color:var(--gold);background:#0000008c}@media (hover:none){.g115-star{opacity:1}}.g115-hover-bar{z-index:3;pointer-events:none;gap:3px;display:flex;position:absolute;bottom:4px;left:6px;right:6px}.g115-hover-bar i{background:#ffffff59;border-radius:2px;flex:1;height:3px}.g115-hover-bar i.ok{background:#fff9}.g115-hover-bar i.on{background:var(--blue)}.g115-fthumb{aspect-ratio:1;background:#e9eaec;display:block;position:relative;overflow:hidden}.g115-fthumb img{object-fit:cover;width:100%;height:100%;position:absolute;inset:0}.g115-fthumb.vid:after{content:\"▶\";color:#fff;text-shadow:0 0 3px #000;font-size:9px;position:absolute;bottom:2px;right:3px}.g115-video-badge{inset:6px auto auto 6px}.g115-drawer-empty{color:var(--ink-3);padding:20px 4px;font-size:13px}.g115-root .drawer .tnode{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.g115-detail{grid-template-columns:auto 1fr;gap:6px 14px;margin:4px 0 0;font-size:13px;display:grid}.g115-detail dt{color:var(--ink-3)}.g115-detail dd{word-break:break-all;color:var(--ink);margin:0}.g115-settings{max-height:calc(100dvh - var(--header-h) - 24px);overflow:auto}.g115-cache-row{flex-wrap:wrap}.g115-cache-row .lab small{display:block}.g115-cache-btns{flex-wrap:wrap;gap:8px;display:flex}.g115-settings{width:400px}.g115-err{color:#c62828}.g115-player{z-index:1800;background:#000;position:absolute;inset:0}.g115-player-frame{background:#000;border:0;width:100%;height:100%;position:absolute;inset:0}.g115-player-spin{margin:-20px 0 0 -20px;position:absolute;top:50%;left:50%}.g115-player-hud{z-index:2}.g115-player-close{z-index:3;color:#fff;cursor:pointer;opacity:.75;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;display:grid;position:absolute;top:10px;right:14px}.g115-player-close:hover{opacity:1;background:#c82828d9}.folder{position:relative}.folder:hover .g115-star,.folder .g115-star.on{opacity:1}.fav-cur{flex-shrink:0}.g115-tree{flex-direction:column;gap:1px;max-height:calc(100dvh - 90px);margin:0 -6px;padding:0 6px;display:flex;overflow:auto}.g115-tree-row{align-items:center;min-width:0;display:flex}.g115-tree-twisty{width:22px;height:30px;color:var(--ink-3);cursor:pointer;background:0 0;border:0;border-radius:4px;flex-shrink:0;place-items:center;font-size:12px;display:grid}.g115-tree-twisty:hover:not(:disabled){color:var(--ink);background:#f0f2f5}.g115-tree-twisty.leaf{cursor:default}.g115-tree-row .tnode{flex:1;min-width:0;padding-left:4px}.g115-tree-star{color:var(--gold,#f0a500)}.g115-tree-spin{border:2px solid #ccd;border-top-color:var(--blue);border-radius:50%;width:10px;height:10px;animation:.7s linear infinite g115spin}@keyframes g115spin{to{transform:rotate(360deg)}}.g115-root .drawer.left{overflow:auto}.g115-fav-img{aspect-ratio:16/9;background:#e9eaec;border-radius:6px;margin-top:9px;position:relative;overflow:hidden}.g115-fav-img img{object-fit:cover;width:100%;height:100%;display:block}.g115-fav-img .g115-fthumb{aspect-ratio:auto;position:absolute;inset:0}.g115-lite-video{background:#000;outline:none;width:100%;height:100%;position:absolute;inset:0}.g115-lite-bar{z-index:3;opacity:0;pointer-events:none;align-items:center;gap:8px;transition:opacity .2s;display:flex;position:absolute;top:10px;left:14px;right:70px}.g115-lite:hover .g115-lite-bar,.g115-lite-bar:focus-within{opacity:1}.g115-lite-bar>*{pointer-events:auto}.g115-lite-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000000e6;min-width:0;font-size:14px;overflow:hidden}.g115-lite-nav{color:#fff;cursor:pointer;background:#0000008c;border:0;border-radius:50%;flex-shrink:0;width:40px;height:40px;font-size:24px;line-height:1}.g115-lite-nav:hover:not(:disabled){background:#ffffff40}.g115-lite-nav:disabled{opacity:.3;cursor:default}.g115-lite-error{z-index:3;color:#fff;text-align:center;background:#141414eb;border-radius:10px;max-width:min(90vw,460px);padding:18px 22px;font-size:14px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.g115-lite-error .actions{flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;display:flex}@media (hover:none){.g115-lite-bar{opacity:1}}.g115-root .g115-notice{color:var(--ink-3);margin:-4px 2px 10px;font-size:12px}.g115-root .g115-fade-enter-active,.g115-root .g115-fade-leave-active{transition:opacity .4s}.g115-root .g115-fade-enter-from,.g115-root .g115-fade-leave-to{opacity:0}.g115-settings .row.g115-stack{cursor:default;flex-direction:column;align-items:stretch;gap:8px}.g115-settings .g115-stack>small{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-seg{gap:18px;font-size:13px;display:flex}.g115-seg label{cursor:pointer;align-items:center;gap:6px;display:inline-flex}.g115-seg label.off{opacity:.5;cursor:not-allowed}.g115-seg input{accent-color:var(--blue);margin:0}.g115-kv{color:var(--ink-2);justify-content:space-between;align-items:center;gap:10px;font-size:13px;display:flex}.g115-kv-val{align-items:center;gap:6px;min-width:0;display:inline-flex}.g115-kv-val em{color:var(--ink);text-overflow:ellipsis;white-space:nowrap;max-width:180px;font-style:normal;overflow:hidden}.g115-kv .inp{width:84px;padding:6px 8px}.g115-kv .btn{padding:4px 12px;font-size:12px}.g115-warn{color:#b45309}.g115-settings{overflow-x:hidden}.g115-root .item .filename{white-space:nowrap;text-overflow:ellipsis;word-break:normal;overflow:hidden}.g115-root .item .thumb{container-type:inline-size}.g115-root .video-overlay{width:clamp(22px,22cqw,60px);height:clamp(22px,22cqw,60px)}.g115-root .video-overlay:after{margin-left:clamp(1px,1.5cqw,4px);font-size:clamp(9px,8.8cqw,24px)}.g115-root .item .dur{padding:1px clamp(3px,2.6cqw,7px);font-size:clamp(9px,4.6cqw,11px);bottom:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}.g115-root .item .g115-star{width:clamp(20px,12cqw,28px);height:clamp(20px,12cqw,28px);font-size:clamp(11px,6.5cqw,15px);line-height:clamp(20px,12cqw,28px);top:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}@container (width<=110px){.g115-root .video-overlay{width:18px;height:18px;top:auto;bottom:4px;left:4px;transform:none}.g115-root .video-overlay:after{margin-left:2px;font-size:9px}}.g115-launcher-icon,.g115-root .brand .mark{place-items:center;line-height:0;display:grid}.pswp__g115-strip{z-index:20;opacity:0;pointer-events:none;justify-content:center;gap:6px;padding:0 12px;transition:opacity .25s;display:flex;position:absolute;bottom:10px;left:0;right:0;overflow:hidden}.pswp--ui-visible .pswp__g115-strip{opacity:1;pointer-events:auto}.pswp__g115-strip-item{cursor:pointer;opacity:.55;background:#222;border:2px solid #0000;border-radius:6px;flex:none;width:60px;height:60px;padding:0;transition:opacity .15s,border-color .15s;overflow:hidden}.pswp__g115-strip-item:hover{opacity:.9}.pswp__g115-strip-item.on{opacity:1;border-color:#fff}.pswp__g115-strip-item img{object-fit:cover;width:100%;height:100%;display:block}@media (width<=600px){.pswp__g115-strip-item{width:44px;height:44px}}.g115-pl{z-index:4;pointer-events:none;position:absolute;top:0;bottom:0;right:0}.g115-pl>*{pointer-events:auto}.g115-pl-edge{width:24px;position:absolute;top:0;bottom:0;right:0}.g115-pl-toggle{color:#fff;cursor:pointer;opacity:0;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;transition:opacity .2s,right .25s;display:grid;position:absolute;top:50%;right:10px;transform:translateY(-50%)}.g115-lite:hover .g115-pl-toggle,.g115-pl-toggle:focus-visible{opacity:.85}.g115-pl.open .g115-pl-toggle{opacity:0;pointer-events:none}@media (hover:none){.g115-pl-toggle{opacity:.85}}.g115-pl-panel{color:#eee;background:#121214f0;flex-direction:column;width:300px;max-width:86vw;transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;position:absolute;top:0;bottom:0;right:0;transform:translate(100%)}.g115-pl.open .g115-pl-panel{transform:none}.g115-pl-head{justify-content:space-between;align-items:center;gap:8px;margin-top:52px;padding:14px 14px 10px 16px;font-size:14px;display:flex}.g115-pl-pin{color:#ccc;cursor:pointer;background:0 0;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px}.g115-pl-pin.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-pl-list{overscroll-behavior:contain;flex-direction:column;flex:1;gap:6px;padding:0 10px 14px;display:flex;overflow:auto}.g115-pl-item{color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:8px;align-items:center;gap:10px;min-width:0;padding:5px;display:flex}.g115-pl-item:hover{background:#ffffff14}.g115-pl-item.on{background:#1976d259}.g115-pl-cover{aspect-ratio:16/9;background:#2a2c31;border-radius:5px;flex:0 0 112px;position:relative;overflow:hidden}.g115-pl-cover .g115-fthumb{aspect-ratio:auto;background:#2a2c31;position:absolute;inset:0}.g115-pl-cover .g115-fthumb.vid:after{display:none}.g115-pl-note{color:#999;place-items:center;font-size:11px;display:grid;position:absolute;inset:0}.g115-pl-dur{color:#fff;background:#000000b3;border-radius:3px;padding:0 4px;font-size:10px;position:absolute;bottom:3px;right:3px}.g115-pl-name{-webkit-line-clamp:2;word-break:break-all;-webkit-box-orient:vertical;flex:1;min-width:0;font-size:12px;line-height:1.4;display:-webkit-box;overflow:hidden}.g115-pl-more{place-items:center;padding:10px;display:grid}.g115-pl-more .spinner{width:24px;height:24px}.g115-lite.g115-pinned .g115-lite-video{width:auto;right:300px}.g115-lite.g115-pinned .g115-player-close{right:314px}@media (width<=600px){.g115-lite.g115-pinned .g115-lite-video{width:100%;right:0}}.g115-root .hbtn.g115-select-btn{font-size:13px}.g115-root .hbtn.g115-select-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-check{z-index:5;color:#0000;text-align:center;pointer-events:none;background:#00000059;border:2px solid #fff;border-radius:50%;width:24px;height:24px;font-size:14px;font-weight:700;line-height:20px;position:absolute;top:8px;left:8px;box-shadow:0 1px 4px #0006}.g115-check.on{background:var(--blue);color:#fff}.g115-root .item.g115-picked .thumb,.g115-root .folder.g115-picked .fpreview{outline:3px solid var(--blue);outline-offset:-3px}.g115-root .item.g115-picked,.g115-root .folder.g115-picked{box-shadow:0 0 0 2px var(--blue)}.g115-selbar{z-index:1350;border:1px solid var(--line);background:#fff;border-radius:12px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:10px 14px;display:flex;position:absolute;bottom:20px;left:50%;transform:translate(-50%);box-shadow:0 10px 30px #00000038}.g115-selbar-count{color:var(--ink-2);font-size:14px}.g115-selbar-count b{color:var(--blue)}.g115-selbar-tip{color:var(--ink-3);font-size:12px}.g115-selbar .btn{padding:6px 14px}.g115-selbar .btn:disabled{opacity:.45;cursor:default}.g115-root .btn.danger:not(:disabled):hover{color:#fff;background:#e53935;border-color:#e53935}.g115-del-sum{color:var(--ink-2);margin:6px 0 0;font-size:14px}.g115-del-warn{color:#b45309;margin:8px 0 0;font-size:13px}.g115-del-list{background:#f6f7f9;border-radius:8px;max-height:200px;margin:12px 0 0;padding:8px 10px;font-size:13px;list-style:none;overflow:auto}.g115-del-list li{white-space:nowrap;text-overflow:ellipsis;line-height:1.7;overflow:hidden}.g115-del-list li.more{color:var(--ink-3)}@media (width<=600px){.g115-selbar-tip{display:none}}.fpreview:has(.g115-check) .g115-video-badge{top:38px}";
 	var collections_default = ".g115-rail{z-index:1401;max-height:calc(100dvh - var(--header-h) - 32px);flex-direction:column;gap:6px;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%)}.g115-rail-group.open .g115-rail{left:340px}.g115-rail-btn{color:#fff;cursor:pointer;writing-mode:vertical-rl;font:inherit;letter-spacing:1px;border:0;border-radius:0 8px 8px 0;flex-shrink:0;padding:12px 9px;font-size:14px;font-weight:600;transition:filter .15s,padding .15s;box-shadow:0 2px 12px #0003}.g115-rail-btn.fav{background:linear-gradient(135deg,#f093fb,#f5576c);padding:15px 9px}.g115-rail-btn.coll{background:linear-gradient(135deg,#43cea2,#2f80b5)}.g115-rail-btn:hover,.g115-rail-btn.on{filter:brightness(1.08);padding-left:12px}.g115-rail-btn.cur{box-shadow:inset 3px 0 #fffffff2,0 2px 12px #0003}.g115-rail-btn.bad{background:linear-gradient(135deg,#9e9e9e,#6d6d6d)}.g115-rail-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.g115-rail-colls{overscroll-behavior:contain;scrollbar-width:none;flex-direction:column;gap:6px;min-height:0;padding-right:6px;display:flex;overflow-y:auto}.g115-rail-colls::-webkit-scrollbar{display:none}.g115-rail-name{text-overflow:ellipsis;white-space:nowrap;max-height:7.5em;display:inline-block;overflow:hidden}.g115-rail-warn{margin-top:4px;font-size:12px;display:inline-block}.g115-rail-group.open .drawer.left{left:0}@media (hover:none){.g115-rail-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.g115-rail-group.open .g115-rail{left:min(86vw,320px)}.g115-rail-btn{padding:14px 10px}.g115-rail-name{max-height:6em}}.g115-crumb-cur{cursor:pointer;font:inherit;color:inherit;background:0 0;border:0;border-radius:6px;margin:-2px -4px;padding:2px 4px}.g115-crumb-cur:hover,.g115-crumb-cur:focus-visible{background:#f0f2f5}.g115-settings{width:460px;padding:0 18px 6px}.g115-tabs{z-index:1;border-bottom:1px solid var(--line);scrollbar-width:none;background:#fff;gap:2px;margin:0 -18px;padding:8px 12px 0;display:flex;position:sticky;top:0;overflow-x:auto}.g115-tabs::-webkit-scrollbar{display:none}.g115-tab{font:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-bottom:2px solid #0000;flex-shrink:0;margin-bottom:-1px;padding:8px 10px;font-size:13px}.g115-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}.g115-settings .seg button{padding:4px 10px}.g115-coll-set{padding:12px 0}.g115-coll-head b{font-size:14px;font-weight:600;display:block}.g115-coll-head small,.g115-coll-tip{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-coll-warn{color:#8a4b00;background:#fff4e5;border-radius:8px;margin:8px 0;padding:8px 10px;font-size:12px}.g115-coll-list{flex-direction:column;gap:6px;margin:10px 0;display:flex}.g115-coll-row{border:1px solid var(--line-2);background:#fff;border-radius:8px;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;transition:box-shadow .2s,border-color .2s;display:flex}.g115-coll-row.flash{border-color:var(--blue);box-shadow:0 0 0 3px #1976d226}.g115-coll-row.dragging{opacity:.55}.g115-coll-row.drop-before{box-shadow:inset 0 3px 0 var(--blue)}.g115-coll-row.drop-after{box-shadow:inset 0 -3px 0 var(--blue)}.g115-coll-grip{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;color:var(--ink-3);padding:0 4px;font-size:18px}.g115-coll-main{flex-direction:column;flex:1;min-width:120px;display:flex}.g115-coll-name{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.g115-coll-path{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.g115-coll-btns,.g115-coll-confirm{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.g115-coll-btns .btn,.g115-coll-confirm .btn{padding:4px 10px;font-size:12px}.g115-coll-confirm small{color:var(--ink-2);flex-basis:100%;font-size:12px}.g115-coll-rename.inp{width:100%;padding:4px 8px}.g115-coll-add{margin:4px 0 6px}.g115-picker{flex-direction:column;width:480px;max-height:min(680px,100dvh - 16px);display:flex;position:relative}.g115-picker h3{padding-right:36px}.g115-pick-crumbs{flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;font-size:13px;display:flex}.g115-pick-crumbs .sep{color:var(--ink-3)}.g115-pick-crumbs .text-button{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:2px;font-size:13px}.g115-pick-list{border:1px solid var(--line-2);overscroll-behavior:contain;border-radius:8px;flex:1;min-height:200px;max-height:50vh;padding:4px;overflow:auto}.g115-pick-row{cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink);background:0 0;border:0;border-radius:6px;align-items:center;gap:8px;padding:8px 10px;font-size:14px;display:flex}.g115-pick-row:hover,.g115-pick-row:focus-visible{background:#f2f4f7}.g115-pick-name{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.g115-pick-badge{color:#a15c00;background:#fff4e0;border-radius:4px;flex-shrink:0;padding:1px 6px;font-size:11px}.g115-pick-go{color:var(--ink-3)}.g115-pick-new{flex-wrap:wrap;align-items:center;gap:6px;padding:6px;display:flex}.g115-pick-new .inp{flex:1;width:auto;min-width:140px;padding:6px 8px}.g115-pick-new small{flex-basis:100%}.g115-pick-more{color:var(--ink-3);justify-content:space-between;align-items:center;gap:8px;padding:10px 4px;font-size:12px;display:flex}.g115-pick-foot{flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;display:flex}.g115-pick-reason{color:var(--ink-3);text-align:right;flex:1;font-size:12px}.g115-pick-foot>.btn.primary{margin-left:auto}.g115-pick-reason+.btn.primary{margin-left:0}.g115-bind{width:420px}.g115-bind-field{color:var(--ink-2);flex-direction:column;gap:6px;font-size:13px;display:flex}.g115-bind-path{color:var(--ink);word-break:break-all;margin:10px 0 0;font-size:13px}.g115-bind-note{color:var(--ink-3);margin:8px 0 0;font-size:12px}.g115-fav-tools{flex-direction:column;gap:8px;margin:-6px 0 12px;display:flex}.g115-fav-search{align-items:center;display:flex;position:relative}.g115-fav-search .inp{width:100%;padding:7px 34px 7px 10px}.g115-fav-search .icon-button{position:absolute;right:2px}.g115-fav-kinds{gap:4px;display:flex}.g115-fav-kinds button{border:1px solid var(--line);font:inherit;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:14px;flex:1;padding:4px 0;font-size:12px}.g115-fav-kinds button.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-coll-meta{align-items:center;gap:10px;margin:-8px 0 12px;display:flex}.g115-coll-meta .g115-coll-path{flex:1;min-width:0}.g115-coll-meta .btn{flex-shrink:0;padding:5px 12px;font-size:12px}.g115-coll-gone{color:#8a1c1c;background:#fff4f4;border-radius:8px;flex-direction:column;gap:10px;padding:12px;font-size:13px;display:flex}.g115-coll-gone p{margin:0}.g115-coll-count{color:var(--ink-3);margin:-4px 0 10px;font-size:12px;display:block}.g115-rail-btn.queue{background:linear-gradient(135deg,#f7b733,#fc4a1a)}.g115-rail-count{writing-mode:horizontal-tb;text-align:center;background:#ffffff47;border-radius:9px;min-width:18px;margin-top:6px;padding:2px 0;font-size:12px;display:inline-block}.g115-coll-sec{border-top:1px solid var(--line-2);margin-top:18px;padding-top:12px}.g115-pick-quick{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-pick-quick-lab{color:var(--ink-3);font-size:12px}.g115-pick-chip{border:1px solid var(--line);max-width:150px;font:inherit;cursor:pointer;white-space:nowrap;text-overflow:ellipsis;color:var(--ink);background:#fff;border-radius:14px;padding:3px 10px;font-size:12px;overflow:hidden}.g115-pick-chip.coll{color:#14735a;background:#ecfaf5;border-color:#43cea2}.g115-pick-chip:hover,.g115-pick-chip:focus-visible{filter:brightness(.96)}.g115-copy-dlg{width:460px}.g115-copy-dlg .g115-bind-path small{color:var(--ink-3);margin-left:6px}.g115-copy-sum{color:var(--ink);margin:12px 0 0;font-size:14px;line-height:1.6}.g115-copy-more{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:6px 0 0;font-size:13px}.g115-copy-dlg .dlg-actions{flex-wrap:wrap}.g115-inline-spin{vertical-align:-2px;border-width:2px;width:14px;height:14px;margin-right:6px;display:inline-block}.g115-tasks{right:16px;bottom:max(16px,var(--safe-b));z-index:1450;border:1px solid var(--line);background:#fff;border-radius:12px;flex-direction:column;width:360px;max-width:calc(100vw - 32px);max-height:min(60vh,520px);display:flex;position:absolute;overflow:hidden;box-shadow:0 12px 34px #00000038}.g115-tasks-head{cursor:pointer;font:inherit;color:var(--ink);background:#f6f7f9;border:0;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;font-size:13px;display:flex}.g115-tasks-head span{color:var(--ink-3);font-size:12px}.g115-tasks-err{padding:6px 14px 0;display:block}.g115-tasks-list{overscroll-behavior:contain;padding:4px 10px 10px;overflow:auto}.g115-task{border-bottom:1px solid var(--line-2);padding:10px 4px}.g115-task:last-child{border-bottom:0}.g115-task-title{white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:600;overflow:hidden}.g115-task-bar{background:#eceff1;border-radius:2px;height:4px;margin:7px 0;overflow:hidden}.g115-task-bar i{background:var(--blue);height:100%;transition:width .3s;display:block}.g115-task.done .g115-task-bar i{background:#2e7d32}.g115-task.attention .g115-task-bar i,.g115-task.stopped .g115-task-bar i{background:#e65100}.g115-task-msg{color:var(--ink-2);font-size:12px;line-height:1.5}.g115-task-chips{flex-wrap:wrap;gap:4px;margin-top:6px;display:flex}.g115-task-chips span{color:var(--ink-2);background:#f1f3f5;border-radius:4px;padding:1px 6px;font-size:11px}.g115-task-chips .r-ok{color:#2e7d32;background:#e8f5e9}.g115-task-chips .r-missing,.g115-task-chips .r-failed{color:#c62828;background:#fdecea}.g115-task-chips .r-checking,.g115-task-chips .r-unknown{color:#a15c00;background:#fff4e5}.g115-task-btns{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.g115-task-btns .btn{padding:3px 10px;font-size:12px}.g115-task-detail{max-height:160px;margin-top:8px}.g115-tasks.collapsed{max-height:none}.g115-selbar~.g115-tasks{bottom:76px}.g115-queue-tools,.g115-queue-go{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-queue-tools .btn,.g115-queue-go .btn{padding:4px 10px;font-size:12px}.g115-queue-all{color:var(--ink-2);cursor:pointer;align-items:center;gap:4px;margin-right:auto;font-size:12px;display:inline-flex}.g115-queue-row{cursor:pointer;background:#f8f9fa;border-radius:8px;align-items:center;gap:8px;margin-bottom:6px;padding:6px;display:flex}.g115-queue-row:hover{background:#eef0f2}.g115-queue-row.on{background:#e3f2fd}.g115-queue-row.done{cursor:default;opacity:.8}.g115-queue-row input{accent-color:var(--blue);margin:0}.g115-queue-thumb{width:44px;height:44px;color:var(--ink-3);background:#e9eaec;border-radius:6px;flex-shrink:0;place-items:center;font-size:18px;display:grid;overflow:hidden}.g115-queue-thumb img{object-fit:cover;width:100%;height:100%}.g115-queue-meta{flex-direction:column;flex:1;min-width:0;display:flex}.g115-queue-meta .fn{white-space:nowrap;text-overflow:ellipsis;font-size:13px;overflow:hidden}.g115-queue-meta small{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:11px;overflow:hidden}.g115-queue-meta em{color:#b45309;font-style:normal}.g115-queue-row .rm{color:var(--ink-2);cursor:pointer;border:0;border:1px solid var(--line);background:#fff;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px}.g115-queue-done-head{justify-content:space-between;align-items:center;margin:16px 0 8px;font-size:13px;display:flex}.g115-queue-done-head .btn{padding:3px 10px;font-size:12px}.g115-rail-group .drawer.left{left:-340px}@media (width<=768px){.g115-rail-group .drawer.left{left:calc(-1*min(86vw,320px))}}";
+	var drawers_default = "@media (width>=769px){.g115-rail-group .drawer.left{width:var(--g115-dw,340px);left:calc(-1 * var(--g115-dw,340px))}.g115-rail-group.open .drawer.left{left:0}.g115-rail-group.open .g115-rail{left:var(--g115-dw,340px)}.tree-group .drawer.right{width:var(--g115-dw,340px);right:calc(-1 * var(--g115-dw,340px) - 20px)}.tree-group.open .drawer.right{right:0}.tree-group.open .edge-toggle.tree{right:var(--g115-dw,340px)}.g115-resize{z-index:1402;cursor:ew-resize;touch-action:none;background:0 0;width:8px;transition:background .15s;position:fixed;top:0;bottom:0}.g115-resize:hover,.g115-resize:active{background:#1976d240}.g115-resize.left{left:calc(var(--g115-dw,340px) - 4px)}.g115-resize.right{right:calc(var(--g115-dw,340px) - 4px)}}@media (width<=768px),(hover:none){.g115-resize{display:none}}.g115-rail-group .drawer.left{font-size:var(--g115-fs,14px)}.g115-rail-group .fav-head .fn{font-size:1em}.g115-rail-group .fav-head .fp{font-size:.857em}.g115-rail-group .fav-head .fic{width:2.143em;height:2.143em}.g115-rail-group .fav-head .rm{font-size:.786em}.g115-rail-group .g115-queue-meta .fn{font-size:.929em}.g115-rail-group .g115-queue-meta small{font-size:.786em}.g115-rail-group .g115-queue-thumb{width:3.143em;height:3.143em}.g115-rail-group .drawer h3{font-size:1.143em}.tree-group .g115-tree{font-size:var(--g115-fs,14px)}.tree-group .g115-tree .tnode{padding:.5em .643em .5em .286em;font-size:1em}.tree-group .g115-tree-twisty{width:1.833em;height:2.5em;font-size:.857em}.tree-group .g115-tree-spin{width:.833em;height:.833em}.g115-set-sub{border-top:1px solid var(--line-2);color:var(--ink-2);margin:18px 0 4px;padding-top:12px;font-size:13px;font-weight:600}";
 	var photoswipe_default = "/*! PhotoSwipe main CSS by Dmytro Semenov | photoswipe.com */\n.pswp{--pswp-bg:#000;--pswp-placeholder-bg:#222;--pswp-root-z-index:100000;--pswp-preloader-color:#4f4f4f66;--pswp-preloader-color-secondary:#ffffffe6;--pswp-icon-color:#fff;--pswp-icon-color-secondary:#4f4f4f;--pswp-icon-stroke-color:#4f4f4f;--pswp-icon-stroke-width:2px;--pswp-error-text-color:var(--pswp-icon-color);width:100%;height:100%;z-index:var(--pswp-root-z-index);touch-action:none;opacity:.003;contain:layout style size;-webkit-tap-highlight-color:#0000;outline:0;display:none;position:fixed;top:0;left:0}.pswp:focus{outline:0}.pswp *{box-sizing:border-box}.pswp img{max-width:none}.pswp--open{display:block}.pswp,.pswp__bg{will-change:opacity;transform:translateZ(0)}.pswp__bg{opacity:.005;background:var(--pswp-bg)}.pswp,.pswp__scroll-wrap{overflow:hidden}.pswp__scroll-wrap,.pswp__bg,.pswp__container,.pswp__item,.pswp__content,.pswp__img,.pswp__zoom-wrap{width:100%;height:100%;position:absolute;top:0;left:0}.pswp__img,.pswp__zoom-wrap{width:auto;height:auto}.pswp--click-to-zoom.pswp--zoom-allowed .pswp__img{cursor:-webkit-zoom-in;cursor:-moz-zoom-in;cursor:zoom-in}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img{cursor:move;cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img:active{cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img,.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img:active,.pswp__img{cursor:-webkit-zoom-out;cursor:-moz-zoom-out;cursor:zoom-out}.pswp__container,.pswp__img,.pswp__button,.pswp__counter{-webkit-user-select:none;user-select:none}.pswp__item{z-index:1;overflow:hidden}.pswp__hidden{display:none!important}.pswp__content{pointer-events:none}.pswp__content>*{pointer-events:auto}.pswp__error-msg-container{display:grid}.pswp__error-msg{color:var(--pswp-error-text-color);margin:auto;font-size:1em;line-height:1}.pswp .pswp__hide-on-close{opacity:.005;will-change:opacity;transition:opacity var(--pswp-transition-duration) cubic-bezier(.4, 0, .22, 1);z-index:10;pointer-events:none}.pswp--ui-visible .pswp__hide-on-close{opacity:1;pointer-events:auto}.pswp__button{cursor:pointer;width:50px;height:60px;box-shadow:none;opacity:.85;-webkit-appearance:none;-webkit-touch-callout:none;background:0 0;border:0;margin:0;padding:0;display:block;position:relative;overflow:hidden}.pswp__button:hover,.pswp__button:active,.pswp__button:focus{box-shadow:none;opacity:1;background:0 0;border:0;padding:0;transition:none}.pswp__button:disabled{opacity:.3;cursor:auto}.pswp__icn{fill:var(--pswp-icon-color);color:var(--pswp-icon-color-secondary);pointer-events:none;width:32px;height:32px;position:absolute;top:14px;left:9px;overflow:hidden}.pswp__icn-shadow{stroke:var(--pswp-icon-stroke-color);stroke-width:var(--pswp-icon-stroke-width);fill:none}.pswp__icn:focus{outline:0}div.pswp__img--placeholder,.pswp__img--with-bg{background:var(--pswp-placeholder-bg)}.pswp__top-bar{z-index:10;flex-direction:row;justify-content:flex-end;width:100%;height:60px;display:flex;position:absolute;top:0;left:0;pointer-events:none!important}.pswp__top-bar>*{pointer-events:auto;will-change:opacity}.pswp__button--close{margin-right:6px}.pswp__button--arrow{width:75px;height:100px;margin-top:-50px;position:absolute;top:50%}.pswp__button--arrow:disabled{cursor:default;display:none}.pswp__button--arrow .pswp__icn{background:0 0;border-radius:0;width:60px;height:60px;margin-top:-30px;top:50%}.pswp--one-slide .pswp__button--arrow{display:none}.pswp--touch .pswp__button--arrow{visibility:hidden}.pswp--has_mouse .pswp__button--arrow{visibility:visible}.pswp__button--arrow--prev{left:0;right:auto}.pswp__button--arrow--next{right:0}.pswp__button--arrow--next .pswp__icn{left:auto;right:14px;transform:scaleX(-1)}.pswp__button--zoom{display:none}.pswp--zoom-allowed .pswp__button--zoom{display:block}.pswp--zoomed-in .pswp__zoom-icn-bar-v{display:none}.pswp__preloader{width:50px;height:60px;margin-right:auto;position:relative;overflow:hidden}.pswp__preloader .pswp__icn{opacity:0;transition:opacity .2s linear;animation:.6s linear infinite pswp-clockwise}.pswp__preloader--active .pswp__icn{opacity:.85}@keyframes pswp-clockwise{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.pswp__counter{margin-top:15px;height:30px;color:var(--pswp-icon-color);text-shadow:1px 1px 3px var(--pswp-icon-color-secondary);opacity:.85;margin-inline-start:20px;font-size:14px;line-height:30px}.pswp--one-slide .pswp__counter{display:none}";
 	var VIDEO_EXT = new Set([
 		"ts",
@@ -10015,6 +10016,8 @@
 		});
 		generation = 0;
 		loading = null;
+		revision = 0;
+		commitHook = null;
 		constructor(deps) {
 			this.deps = deps;
 			if (deps.channel) deps.channel.onmessage = (e) => {
@@ -10150,13 +10153,39 @@
 			};
 			return status;
 		}
+		onCommit(fn) {
+			this.commitHook = fn;
+		}
+		async applySynced(uid, items) {
+			if (uid !== this.state.uid) return;
+			const generation = this.generation;
+			await this.deps.store.putCollections(uid, items);
+			if (generation !== this.generation) return;
+			Object.assign(this.state, {
+				items: markRaw(items),
+				loaded: true,
+				localOnly: false,
+				error: ""
+			});
+			try {
+				this.deps.channel?.postMessage({
+					type: "collections",
+					uid
+				});
+			} catch {}
+		}
 		async commit(items) {
 			const uid = this.state.uid;
 			const generation = this.generation;
+			const prev = this.state.items;
 			this.state.items = markRaw(items);
+			this.revision++;
 			try {
 				await this.deps.store.putCollections(uid, items);
 				if (generation !== this.generation) return false;
+				try {
+					this.commitHook?.(uid, prev, items);
+				} catch {}
 				this.state.localOnly = false;
 				this.state.error = "";
 				try {
@@ -11191,6 +11220,193 @@
 			};
 		}
 	});
+	var DRAWER_WIDTH = {
+		min: 280,
+		max: 800,
+		def: 340
+	};
+	var DRAWER_FONT = {
+		min: 12,
+		max: 24,
+		def: 14
+	};
+	var DEFAULTS = {
+		thumbnailSize: "M",
+		showFilename: true,
+		showTags: true,
+		mobileOptimize: true,
+		cover: { ...DEFAULT_COVER },
+		frameCacheMB: 500,
+		folderCacheGB: 20,
+		cacheLocation: "browser",
+		player: "lite",
+		viewerStrip: true,
+		playlistPinned: false,
+		seekSeconds: 10,
+		cloudSync: true,
+		drawerTrigger: "hover",
+		treeWidth: DRAWER_WIDTH.def,
+		treeFont: DRAWER_FONT.def,
+		railWidth: DRAWER_WIDTH.def,
+		railFont: DRAWER_FONT.def,
+		rememberPosition: false
+	};
+	var KEY$2 = "g115.settings";
+	var BOOLEANS = [
+		"showFilename",
+		"showTags",
+		"mobileOptimize",
+		"viewerStrip",
+		"playlistPinned",
+		"cloudSync",
+		"rememberPosition"
+	];
+	var SIZES$1 = [
+		"XS",
+		"S",
+		"M",
+		"L"
+	];
+	var PLAYERS = [
+		"lite",
+		"master",
+		"official"
+	];
+	function parseSettings(value) {
+		if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+		const data = value;
+		const result = {};
+		for (const key of BOOLEANS) if (typeof data[key] === "boolean") result[key] = data[key];
+		if (SIZES$1.includes(data.thumbnailSize)) result.thumbnailSize = data.thumbnailSize;
+		if (PLAYERS.includes(data.player)) result.player = data.player;
+		if (data.cacheLocation === "browser" || data.cacheLocation === "folder") result.cacheLocation = data.cacheLocation;
+		if (data.drawerTrigger === "hover" || data.drawerTrigger === "click") result.drawerTrigger = data.drawerTrigger;
+		for (const key of ["treeWidth", "railWidth"]) {
+			const v = data[key];
+			if (typeof v === "number" && Number.isFinite(v)) result[key] = Math.min(DRAWER_WIDTH.max, Math.max(DRAWER_WIDTH.min, Math.round(v)));
+		}
+		for (const key of ["treeFont", "railFont"]) {
+			const v = data[key];
+			if (typeof v === "number" && Number.isFinite(v)) result[key] = Math.min(DRAWER_FONT.max, Math.max(DRAWER_FONT.min, Math.round(v)));
+		}
+		const cover = parseCover(data.cover);
+		if (cover) result.cover = cover;
+		if (typeof data.frameCacheMB === "number" && Number.isFinite(data.frameCacheMB)) result.frameCacheMB = Math.min(5e3, Math.max(50, Math.round(data.frameCacheMB)));
+		if (typeof data.seekSeconds === "number" && Number.isFinite(data.seekSeconds)) result.seekSeconds = Math.min(600, Math.max(1, Math.round(data.seekSeconds)));
+		if (typeof data.folderCacheGB === "number" && Number.isFinite(data.folderCacheGB)) result.folderCacheGB = Math.min(1e3, Math.max(1, Math.round(data.folderCacheGB)));
+		return result;
+	}
+	function parseCover(value) {
+		if (!value || typeof value !== "object") return void 0;
+		const { mode, value: v } = value;
+		if (mode !== "percent" && mode !== "seconds" || typeof v !== "number" || !Number.isFinite(v)) return void 0;
+		return {
+			mode,
+			value: Math.min(mode === "percent" ? 100 : 86400, Math.max(0, Math.round(v)))
+		};
+	}
+	function loadSettings(kv) {
+		try {
+			return {
+				...DEFAULTS,
+				cover: { ...DEFAULTS.cover },
+				...parseSettings(kv.get(KEY$2, {}))
+			};
+		} catch {
+			return {
+				...DEFAULTS,
+				cover: { ...DEFAULTS.cover }
+			};
+		}
+	}
+	function saveSettings(kv, settings) {
+		try {
+			kv.set(KEY$2, {
+				...settings,
+				cover: { ...settings.cover }
+			});
+		} catch {}
+	}
+	function gmKV() {
+		if (typeof GM_getValue === "function" && typeof GM_setValue === "function") return {
+			get: (k, d) => GM_getValue(k, d),
+			set: (k, v) => GM_setValue(k, v)
+		};
+		return {
+			get: (k, d) => {
+				const raw = localStorage.getItem(k);
+				return raw === null ? d : JSON.parse(raw);
+			},
+			set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+		};
+	}
+	function sanitizeSettings(s) {
+		const parsed = parseSettings(s);
+		const cover = parsed.cover ?? (s.cover?.mode === "seconds" ? {
+			mode: "seconds",
+			value: 30
+		} : { ...DEFAULTS.cover });
+		return {
+			...DEFAULTS,
+			...parsed,
+			cover
+		};
+	}
+	var DrawerResize_default = defineComponent({
+		__name: "DrawerResize",
+		props: {
+			side: {},
+			width: {}
+		},
+		emits: ["update:width", "drag"],
+		setup(__props, { emit: __emit }) {
+			const props = __props;
+			const emit = __emit;
+			const el = ref(null);
+			let start = null;
+			const clamp = (w) => Math.min(DRAWER_WIDTH.max, Math.max(DRAWER_WIDTH.min, Math.round(w)));
+			function down(e) {
+				if (e.button !== 0 || !el.value) return;
+				e.preventDefault();
+				const shown = el.value.getBoundingClientRect().width;
+				const css = el.value.offsetWidth;
+				start = {
+					x: e.clientX,
+					w: props.width,
+					scale: shown > 0 && css > 0 ? shown / css : 1
+				};
+				el.value.setPointerCapture(e.pointerId);
+				emit("drag", true);
+			}
+			function move(e) {
+				if (!start) return;
+				const dx = (e.clientX - start.x) / start.scale;
+				emit("update:width", clamp(props.side === "left" ? start.w + dx : start.w - dx));
+			}
+			function up(e) {
+				if (!start) return;
+				start = null;
+				el.value?.releasePointerCapture?.(e.pointerId);
+				emit("drag", false);
+			}
+			return (_ctx, _cache) => {
+				return openBlock(), createElementBlock("div", {
+					ref_key: "el",
+					ref: el,
+					class: normalizeClass(["g115-resize", __props.side]),
+					role: "separator",
+					"aria-orientation": "vertical",
+					"aria-label": "拖动调整抽屉宽度",
+					title: "拖动调整宽度，双击恢复默认",
+					onPointerdown: down,
+					onPointermove: move,
+					onPointerup: up,
+					onPointercancel: up,
+					onDblclick: _cache[0] || (_cache[0] = ($event) => emit("update:width", unref(DRAWER_WIDTH).def))
+				}, null, 34);
+			};
+		}
+	});
 	var _hoisted_1$22 = ["width", "height"];
 	var _hoisted_2$20 = ["d"];
 	var PATHS = {
@@ -11289,20 +11505,45 @@
 		setup(__props, { expose: __expose, emit: __emit }) {
 			const props = __props;
 			const emit = __emit;
-			const tree = inject("g115ctrl").tree;
+			const ctrl = inject("g115ctrl");
+			const tree = ctrl.tree;
 			const open = ref(false);
 			const list = ref(null);
 			const rows = computed(() => tree.rows());
 			let timer;
+			const hoverMode = () => ctrl.settings.drawerTrigger === "hover" && !isTouchPrimary();
+			let pinned = false;
+			let dragging = false;
 			const enter = () => {
-				if (isTouchPrimary()) return;
+				if (!hoverMode()) return;
 				clearTimeout(timer);
+				if (!open.value) pinned = false;
 				open.value = true;
 			};
 			const leave = () => {
-				if (isTouchPrimary()) return;
+				if (!hoverMode() || pinned || dragging) return;
 				timer = setTimeout(() => open.value = false, 160);
 			};
+			function clickToggle() {
+				clearTimeout(timer);
+				if (hoverMode() && open.value && !pinned) {
+					pinned = true;
+					return;
+				}
+				open.value = !open.value;
+				pinned = open.value;
+			}
+			function onDrag(on) {
+				dragging = on;
+				if (on) {
+					clearTimeout(timer);
+					pinned = true;
+				}
+			}
+			const sizeVars = computed(() => ({
+				"--g115-dw": `${ctrl.settings.treeWidth}px`,
+				"--g115-fs": `${ctrl.settings.treeFont}px`
+			}));
 			const group = ref(null);
 			const onOutside = (e) => {
 				if (open.value && group.value && !e.composedPath().includes(group.value)) open.value = false;
@@ -11332,17 +11573,18 @@
 					ref_key: "group",
 					ref: group,
 					class: normalizeClass(["tree-group", { open: open.value }]),
+					style: normalizeStyle(sizeVars.value),
 					onMouseenter: enter,
 					onMouseleave: leave
 				}, [
 					createBaseVNode("button", {
 						class: "edge-toggle tree",
 						"aria-expanded": open.value,
-						onClick: _cache[0] || (_cache[0] = ($event) => open.value = true)
+						onClick: clickToggle
 					}, "目录", 8, _hoisted_1$21),
 					createBaseVNode("div", {
 						class: "drawer-mask",
-						onClick: _cache[1] || (_cache[1] = ($event) => open.value = false)
+						onClick: _cache[0] || (_cache[0] = ($event) => open.value = false)
 					}),
 					createBaseVNode("div", {
 						class: "drawer right",
@@ -11356,7 +11598,7 @@
 							title: "关闭目录",
 							"aria-label": "关闭目录",
 							tabindex: open.value ? 0 : -1,
-							onClick: _cache[2] || (_cache[2] = ($event) => open.value = false)
+							onClick: _cache[1] || (_cache[1] = ($event) => open.value = false)
 						}, [createVNode(Icon_default, { name: "x" })], 8, _hoisted_3$19),
 						open.value ? (openBlock(), createElementBlock("div", {
 							key: 0,
@@ -11370,7 +11612,7 @@
 								class: "g115-tree-row",
 								role: "treeitem",
 								"aria-expanded": r.leaf ? void 0 : r.expanded,
-								style: normalizeStyle({ paddingLeft: `${r.depth * 14}px` })
+								style: normalizeStyle({ paddingLeft: `${r.depth}em` })
 							}, [createBaseVNode("button", {
 								class: normalizeClass(["g115-tree-twisty", { leaf: r.leaf }]),
 								disabled: r.leaf,
@@ -11382,8 +11624,15 @@
 								onClick: ($event) => go(r.node.id)
 							}, [createTextVNode(toDisplayString(r.node.id === "0" ? "🏠" : r.expanded ? "📂" : "📁") + " " + toDisplayString(r.node.name), 1), r.node.starred ? (openBlock(), createElementBlock("span", _hoisted_8$12, " ★")) : createCommentVNode("", true)], 10, _hoisted_7$12)], 12, _hoisted_4$18);
 						}), 128)), unref(tree).state.error ? (openBlock(), createElementBlock("div", _hoisted_9$12, "加载失败：" + toDisplayString(unref(tree).state.error), 1)) : createCommentVNode("", true)], 512)) : createCommentVNode("", true)
-					], 8, _hoisted_2$19)
-				], 34);
+					], 8, _hoisted_2$19),
+					open.value ? (openBlock(), createBlock(DrawerResize_default, {
+						key: 0,
+						side: "right",
+						width: unref(ctrl).settings.treeWidth,
+						"onUpdate:width": _cache[2] || (_cache[2] = (w) => unref(ctrl).settings.treeWidth = w),
+						onDrag
+					}, null, 8, ["width"])) : createCommentVNode("", true)
+				], 38);
 			};
 		}
 	});
@@ -12473,6 +12722,7 @@
 		"title",
 		"aria-label",
 		"aria-expanded",
+		"onMouseenter",
 		"onClick"
 	];
 	var _hoisted_5$9 = { class: "g115-rail-name" };
@@ -12489,6 +12739,7 @@
 		"aria-hidden"
 	];
 	var _hoisted_10$5 = ["tabindex"];
+	var HOVER_DELAY = 150;
 	var LeftRail_default = defineComponent({
 		__name: "LeftRail",
 		emits: [
@@ -12521,18 +12772,41 @@
 			const group = ref(null);
 			let timer;
 			let byClick = false;
+			let hoverTimer;
+			const hoverMode = () => ctrl.settings.drawerTrigger === "hover" && !isTouchPrimary();
 			function toggle(id) {
 				clearTimeout(timer);
-				active.value = id === "fav" ? "fav" : active.value === id ? "" : id;
+				clearTimeout(hoverTimer);
+				if (hoverMode() && active.value === id && !byClick) {
+					byClick = true;
+					return;
+				}
+				active.value = active.value === id ? "" : id;
 				byClick = !!active.value;
 				if (active.value && drawer.value) drawer.value.scrollTop = 0;
 			}
-			function hoverFav() {
-				if (isTouchPrimary()) return;
+			function hover(id) {
+				if (!hoverMode()) return;
 				clearTimeout(timer);
-				if (active.value) return;
-				active.value = "fav";
-				byClick = false;
+				clearTimeout(hoverTimer);
+				if (active.value === id) return;
+				hoverTimer = setTimeout(() => {
+					if (active.value === id) return;
+					active.value = id;
+					byClick = false;
+					if (drawer.value) drawer.value.scrollTop = 0;
+				}, HOVER_DELAY);
+			}
+			function unhover() {
+				clearTimeout(hoverTimer);
+			}
+			let dragging = false;
+			function onDrag(on) {
+				dragging = on;
+				if (on) {
+					clearTimeout(timer);
+					byClick = true;
+				}
 			}
 			function keep() {
 				clearTimeout(timer);
@@ -12542,7 +12816,8 @@
 				return !!ctrl.ui.player || !!root?.querySelector?.(".pswp--open, .g115-layer, .ctx-menu");
 			}
 			function leave() {
-				if (isTouchPrimary() || byClick) return;
+				clearTimeout(hoverTimer);
+				if (!hoverMode() || byClick || dragging) return;
 				timer = setTimeout(() => {
 					if (!busy()) active.value = "";
 				}, 160);
@@ -12557,6 +12832,7 @@
 			window.addEventListener("pointerdown", onOutside, true);
 			onBeforeUnmount(() => {
 				clearTimeout(timer);
+				clearTimeout(hoverTimer);
 				window.removeEventListener("pointerdown", onOutside, true);
 			});
 			function closeIfTouch() {
@@ -12570,6 +12846,10 @@
 				active.value = "";
 				emit("openCollection", cid);
 			}
+			const sizeVars = computed(() => ({
+				"--g115-dw": `${ctrl.settings.railWidth}px`,
+				"--g115-fs": `${ctrl.settings.railFont}px`
+			}));
 			const unavailable = (cid) => cs.status[cid]?.state === "unavailable";
 			__expose({
 				close: () => active.value = "",
@@ -12580,6 +12860,7 @@
 					ref_key: "group",
 					ref: group,
 					class: normalizeClass(["g115-rail-group", { open: !!active.value }]),
+					style: normalizeStyle(sizeVars.value),
 					onMouseenter: keep,
 					onMouseleave: leave
 				}, [
@@ -12587,8 +12868,9 @@
 						createBaseVNode("button", {
 							class: normalizeClass(["g115-rail-btn fav", { on: active.value === "fav" }]),
 							"aria-expanded": active.value === "fav",
-							onMouseenter: hoverFav,
-							onClick: _cache[0] || (_cache[0] = ($event) => toggle("fav"))
+							onMouseenter: _cache[0] || (_cache[0] = ($event) => hover("fav")),
+							onMouseleave: unhover,
+							onClick: _cache[1] || (_cache[1] = ($event) => toggle("fav"))
 						}, "收藏", 42, _hoisted_2$12),
 						unref(cs).items.length ? (openBlock(), createElementBlock("div", _hoisted_3$12, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(cs).items, (c) => {
 							return openBlock(), createElementBlock("button", {
@@ -12601,20 +12883,24 @@
 								title: unavailable(c.cid) ? `${c.name}（目标目录不可用）` : c.name,
 								"aria-label": `合集：${c.name}`,
 								"aria-expanded": active.value === c.cid,
+								onMouseenter: ($event) => hover(c.cid),
+								onMouseleave: unhover,
 								onClick: ($event) => toggle(c.cid)
-							}, [createBaseVNode("span", _hoisted_5$9, toDisplayString(c.name), 1), unavailable(c.cid) ? (openBlock(), createElementBlock("span", _hoisted_6$8, "⚠")) : createCommentVNode("", true)], 10, _hoisted_4$11);
+							}, [createBaseVNode("span", _hoisted_5$9, toDisplayString(c.name), 1), unavailable(c.cid) ? (openBlock(), createElementBlock("span", _hoisted_6$8, "⚠")) : createCommentVNode("", true)], 42, _hoisted_4$11);
 						}), 128))])) : createCommentVNode("", true),
 						unref(ctrl).queue.state.entries.length || active.value === "queue" ? (openBlock(), createElementBlock("button", {
 							key: 1,
 							class: normalizeClass(["g115-rail-btn queue", { on: active.value === "queue" }]),
 							"aria-expanded": active.value === "queue",
 							"aria-label": `待复制清单：${queued.value} 项`,
-							onClick: _cache[1] || (_cache[1] = ($event) => toggle("queue"))
-						}, [_cache[8] || (_cache[8] = createTextVNode("待复制", -1)), createBaseVNode("span", _hoisted_8$7, toDisplayString(queued.value), 1)], 10, _hoisted_7$7)) : createCommentVNode("", true)
+							onMouseenter: _cache[2] || (_cache[2] = ($event) => hover("queue")),
+							onMouseleave: unhover,
+							onClick: _cache[3] || (_cache[3] = ($event) => toggle("queue"))
+						}, [_cache[11] || (_cache[11] = createTextVNode("待复制", -1)), createBaseVNode("span", _hoisted_8$7, toDisplayString(queued.value), 1)], 42, _hoisted_7$7)) : createCommentVNode("", true)
 					]),
 					createBaseVNode("div", {
 						class: "drawer-mask",
-						onClick: _cache[2] || (_cache[2] = ($event) => active.value = "")
+						onClick: _cache[4] || (_cache[4] = ($event) => active.value = "")
 					}),
 					createBaseVNode("div", {
 						ref_key: "drawer",
@@ -12628,26 +12914,390 @@
 						title: "关闭",
 						"aria-label": "关闭抽屉",
 						tabindex: active.value ? 0 : -1,
-						onClick: _cache[3] || (_cache[3] = ($event) => active.value = "")
+						onClick: _cache[5] || (_cache[5] = ($event) => active.value = "")
 					}, [createVNode(Icon_default, { name: "x" })], 8, _hoisted_10$5), active.value === "queue" ? (openBlock(), createBlock(QueuePanel_default, { key: 0 })) : active.value === "fav" ? (openBlock(), createBlock(FavPanel_default, {
 						key: 1,
 						"scroll-root": drawer.value,
 						onEnter: enter,
-						onView: _cache[4] || (_cache[4] = (i, l) => emit("viewFav", i, l)),
-						onUnstar: _cache[5] || (_cache[5] = (i) => emit("unstar", i))
+						onView: _cache[6] || (_cache[6] = (i, l) => emit("viewFav", i, l)),
+						onUnstar: _cache[7] || (_cache[7] = (i) => emit("unstar", i))
 					}, null, 8, ["scroll-root"])) : activeRec.value ? (openBlock(), createBlock(CollectionPanel_default, {
 						key: activeRec.value.cid,
 						rec: activeRec.value,
 						"scroll-root": drawer.value,
 						onEnter: enter,
 						onOpenCollection: openCollection,
-						onView: _cache[6] || (_cache[6] = (i, l, m) => emit("view", i, l, m)),
-						onPlay: _cache[7] || (_cache[7] = (i, l) => emit("play", i, l))
-					}, null, 8, ["rec", "scroll-root"])) : createCommentVNode("", true)], 8, _hoisted_9$7)
-				], 34);
+						onView: _cache[8] || (_cache[8] = (i, l, m) => emit("view", i, l, m)),
+						onPlay: _cache[9] || (_cache[9] = (i, l) => emit("play", i, l))
+					}, null, 8, ["rec", "scroll-root"])) : createCommentVNode("", true)], 8, _hoisted_9$7),
+					active.value ? (openBlock(), createBlock(DrawerResize_default, {
+						key: 0,
+						side: "left",
+						width: unref(ctrl).settings.railWidth,
+						"onUpdate:width": _cache[10] || (_cache[10] = (w) => unref(ctrl).settings.railWidth = w),
+						onDrag
+					}, null, 8, ["width"])) : createCommentVNode("", true)
+				], 38);
 			};
 		}
 	});
+	var emptyMeta = () => ({
+		at: {},
+		deleted: {},
+		orderAt: 0
+	});
+	var stamp = (s, r) => s.at[r.cid] ?? r.addedAt ?? 0;
+	function mergeKind(local, remote, now) {
+		const deleted = {};
+		for (const src of [local.deleted, remote.deleted]) for (const [cid, t] of Object.entries(src)) if (t > (deleted[cid] ?? 0)) deleted[cid] = t;
+		const best = new Map();
+		for (const side of [local, remote]) for (const rec of side.items) {
+			const at = stamp(side, rec);
+			const cur = best.get(rec.cid);
+			if (!cur || at > cur.at) best.set(rec.cid, {
+				rec,
+				at
+			});
+		}
+		for (const [cid, { at }] of best) if ((deleted[cid] ?? -1) >= at) best.delete(cid);
+		else delete deleted[cid];
+		for (const [cid, t] of Object.entries(deleted)) if (now - t > 15552e6) delete deleted[cid];
+		const [first, second] = remote.orderAt > local.orderAt ? [remote, local] : [local, remote];
+		const order = [];
+		const seen = new Set();
+		for (const side of [first, second]) for (const r of side.items) if (best.has(r.cid) && !seen.has(r.cid)) {
+			seen.add(r.cid);
+			order.push(r.cid);
+		}
+		const items = order.map((cid) => best.get(cid).rec);
+		const at = {};
+		for (const cid of order) at[cid] = best.get(cid).at;
+		return {
+			items,
+			at,
+			deleted,
+			orderAt: Math.max(local.orderAt, remote.orderAt)
+		};
+	}
+	function recordChange(meta, prev, next, now) {
+		const at = { ...meta.at };
+		const deleted = { ...meta.deleted };
+		const before = new Map(prev.map((r) => [r.cid, JSON.stringify(r)]));
+		const nextIds = new Set(next.map((r) => r.cid));
+		for (const r of next) {
+			if (before.get(r.cid) !== JSON.stringify(r)) at[r.cid] = now;
+			delete deleted[r.cid];
+		}
+		for (const cid of before.keys()) if (!nextIds.has(cid)) {
+			deleted[cid] = now;
+			delete at[cid];
+		}
+		return {
+			at,
+			deleted,
+			orderAt: prev.length === next.length && prev.every((r, i) => r.cid === next[i].cid) ? meta.orderAt : now
+		};
+	}
+	function sameState(a, b) {
+		return JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+	}
+	function canon(s) {
+		const sortObj = (o) => Object.fromEntries(Object.entries(o).sort(([x], [y]) => x < y ? -1 : 1));
+		return {
+			items: s.items,
+			at: sortObj(s.at),
+			deleted: sortObj(s.deleted),
+			orderAt: s.orderAt
+		};
+	}
+	function parseDoc(text, uid) {
+		let raw;
+		try {
+			raw = JSON.parse(text);
+		} catch {
+			throw new Error("云端配置文件不是有效的 JSON");
+		}
+		const d = raw;
+		if (!d || d.app !== "115-gallery" || d.version !== 1) throw new Error("云端配置文件格式不对");
+		if (d.uid && String(d.uid) !== uid) throw new Error("云端配置文件属于另一个账号");
+		return {
+			app: "115-gallery",
+			version: 1,
+			uid,
+			savedAt: Number(d.savedAt) || 0,
+			collections: parseKind(d.collections, isCollection$1),
+			targets: parseKind(d.targets, isTarget)
+		};
+	}
+	function parseKind(v, ok) {
+		const s = v ?? {};
+		const nums = (o) => {
+			const out = {};
+			if (o && typeof o === "object") {
+				for (const [k, n] of Object.entries(o)) if (Number.isFinite(Number(n))) out[k] = Number(n);
+			}
+			return out;
+		};
+		const items = Array.isArray(s.items) ? s.items.filter(ok) : [];
+		return {
+			items: items.filter((r, i) => items.findIndex((x) => x.cid === r.cid) === i),
+			at: nums(s.at),
+			deleted: nums(s.deleted),
+			orderAt: Number(s.orderAt) || 0
+		};
+	}
+	function isCollection$1(v) {
+		const r = v;
+		return !!r && typeof r.cid === "string" && !!r.cid && r.cid !== "0" && typeof r.name === "string" && Array.isArray(r.path) && typeof r.folderName === "string" && Number.isFinite(r.addedAt);
+	}
+	function isTarget(v) {
+		const r = v;
+		return !!r && typeof r.cid === "string" && !!r.cid && Array.isArray(r.path) && Number.isFinite(r.addedAt);
+	}
+	var SYNC_DIR = ["box", "115-gallery配置"];
+	var SYNC_FILE = "g115-sync.json";
+	var SYNC_DIR_TEXT = `/${SYNC_DIR.join("/")}/${SYNC_FILE}`;
+	var PUSH_DELAY = 2e3;
+	var Retry = class extends Error {};
+	var CloudSync = class {
+		deps;
+		state = reactive({
+			status: "idle",
+			lastSync: 0,
+			error: ""
+		});
+		timer;
+		running = null;
+		again = false;
+		uid = "";
+		lastAttempt = 0;
+		constructor(deps) {
+			this.deps = deps;
+			if (!deps.enabled()) this.state.status = "off";
+		}
+		setAccount(uid) {
+			if (uid === this.uid) return;
+			this.uid = uid;
+			clearTimeout(this.timer);
+			Object.assign(this.state, {
+				status: this.deps.enabled() ? "idle" : "off",
+				lastSync: 0,
+				error: ""
+			});
+			if (uid) this.deps.store.getSyncMeta(uid).then((m) => {
+				if (this.uid === uid && m?.lastSync && !this.state.lastSync) this.state.lastSync = m.lastSync;
+			}).catch(() => {});
+		}
+		onToggle() {
+			if (!this.deps.enabled()) {
+				clearTimeout(this.timer);
+				if (this.state.status !== "syncing") this.state.status = "off";
+				return;
+			}
+			if (this.state.status === "off") this.state.status = "idle";
+			this.sync();
+		}
+		recordLocal(kind, uid, prev, next) {
+			const now = this.now();
+			this.locked(uid, async () => {
+				const meta = await this.deps.store.getSyncMeta(uid) ?? emptyRow();
+				meta[kind] = recordChange(meta[kind] ?? emptyMeta(), prev, next, now);
+				await this.deps.store.putSyncMeta(uid, meta);
+			}).catch(() => {}).finally(() => this.schedule(PUSH_DELAY));
+		}
+		onFocus() {
+			if (this.now() - this.lastAttempt >= 6e4) this.sync();
+		}
+		schedule(ms) {
+			clearTimeout(this.timer);
+			this.timer = setTimeout(() => void this.sync(), ms);
+		}
+		sync() {
+			clearTimeout(this.timer);
+			if (this.running) {
+				this.again = true;
+				return this.running;
+			}
+			this.running = this.loop().finally(() => this.running = null);
+			return this.running;
+		}
+		async loop() {
+			do {
+				this.again = false;
+				await this.once();
+			} while (this.again);
+		}
+		async once() {
+			const { uid, confirmed } = this.deps.account();
+			if (!this.deps.enabled()) {
+				this.state.status = "off";
+				return;
+			}
+			if (!uid || !confirmed || uid !== this.uid) return;
+			this.lastAttempt = this.now();
+			this.state.status = "syncing";
+			try {
+				await this.locked(uid, () => this.run(uid));
+				if (this.uid !== uid) return;
+				Object.assign(this.state, {
+					status: "ok",
+					error: "",
+					lastSync: this.now()
+				});
+			} catch (e) {
+				if (this.uid !== uid) return;
+				if (e instanceof Retry) {
+					this.state.status = "idle";
+					this.schedule(PUSH_DELAY);
+					return;
+				}
+				if (e instanceof RiskControlError) this.deps.onRisk();
+				Object.assign(this.state, {
+					status: "error",
+					error: e instanceof Error ? e.message : String(e)
+				});
+			}
+		}
+		async run(uid) {
+			const revC = this.deps.collections.revision;
+			const revT = this.deps.targets.revision;
+			const now = this.now();
+			let dir = await this.findDir(uid, false);
+			const files = dir ? await this.listFiles(dir) : [];
+			let remote = null;
+			if (files[0]) {
+				if (!files[0].pickCode) throw new ApiError("云端配置文件缺少 pickcode");
+				remote = parseDoc(await this.deps.readText(files[0].pickCode), uid);
+			}
+			const meta = await this.deps.store.getSyncMeta(uid) ?? emptyRow();
+			const localC = {
+				...meta.collections ?? emptyMeta(),
+				items: await this.deps.store.getCollections(uid)
+			};
+			const localT = {
+				...meta.targets ?? emptyMeta(),
+				items: await this.deps.store.getTargets(uid)
+			};
+			const mergedC = mergeKind(localC, remote?.collections ?? {
+				...emptyMeta(),
+				items: []
+			}, now);
+			const mergedT = mergeKind(localT, remote?.targets ?? {
+				...emptyMeta(),
+				items: []
+			}, now);
+			if (revC !== this.deps.collections.revision || revT !== this.deps.targets.revision || this.uid !== uid) throw new Retry();
+			if (JSON.stringify(mergedC.items) !== JSON.stringify(localC.items)) await this.deps.collections.applySynced(uid, mergedC.items);
+			if (JSON.stringify(mergedT.items) !== JSON.stringify(localT.items)) await this.deps.targets.applySynced(uid, mergedT.items);
+			const changed = !remote || !sameState(mergedC, remote.collections) || !sameState(mergedT, remote.targets);
+			const empty = !mergedC.items.length && !mergedT.items.length && !hasTombstones(mergedC) && !hasTombstones(mergedT);
+			let stale = files.slice(1);
+			if (changed && !(empty && !remote)) {
+				if (!dir) dir = await this.findDir(uid, true);
+				if (!dir) throw new ApiError("无法创建配置目录");
+				const doc = {
+					app: "115-gallery",
+					version: 1,
+					uid,
+					savedAt: now,
+					collections: mergedC,
+					targets: mergedT
+				};
+				const up = await this.deps.upload(dir, SYNC_FILE, JSON.stringify(doc));
+				stale = files.filter((f) => f.id !== up.id);
+			}
+			if (dir && stale.length) await deleteFiles(this.deps.postForm, dir, stale.map((f) => f.id)).catch((e) => {
+				if (e instanceof RiskControlError) throw e;
+			});
+			await this.deps.store.putSyncMeta(uid, {
+				collections: metaOf(mergedC),
+				targets: metaOf(mergedT),
+				lastSync: now
+			});
+		}
+		async listFiles(dir) {
+			const out = [];
+			let offset = 0;
+			for (let i = 0; i < 20; i++) {
+				const page = await listPage(this.deps.fetchJson, {
+					cid: dir,
+					offset,
+					limit: 200,
+					sort: "time",
+					order: "desc"
+				});
+				out.push(...page.items.filter((it) => it.kind !== "folder" && it.name === "g115-sync.json"));
+				if (!page.hasMore) break;
+				offset = page.nextOffset;
+			}
+			return out.sort((a, b) => (b.mtime ?? 0) - (a.mtime ?? 0) || cmpId(b.id, a.id));
+		}
+		async findDir(uid, create) {
+			const cached = this.deps.dirCache?.get(uid) ?? "";
+			if (cached && await this.verifyDir(cached)) return cached;
+			let parent = "0";
+			for (const name of SYNC_DIR) {
+				let id = await this.findChild(parent, name);
+				if (!id) {
+					if (!create) return "";
+					id = (await createFolder(this.deps.postForm, parent, name)).id;
+				}
+				parent = id;
+			}
+			this.deps.dirCache?.set(uid, parent);
+			return parent;
+		}
+		async verifyDir(cid) {
+			try {
+				const page = await listPage(this.deps.fetchJson, {
+					cid,
+					offset: 0,
+					limit: 1,
+					foldersOnly: true
+				});
+				const names = (page.path ?? []).filter((p) => p.id !== "0").map((p) => p.name);
+				return page.path?.[page.path.length - 1]?.id === cid && names.join("/") === SYNC_DIR.join("/");
+			} catch (e) {
+				if (e instanceof RiskControlError) throw e;
+				return false;
+			}
+		}
+		async findChild(parent, name) {
+			let offset = 0;
+			for (let i = 0; i < 50; i++) {
+				const page = await listPage(this.deps.fetchJson, {
+					cid: parent,
+					offset,
+					limit: 200,
+					foldersOnly: true
+				});
+				const hit = page.items.find((it) => it.kind === "folder" && it.name === name);
+				if (hit) return hit.id;
+				if (!page.hasMore) return "";
+				offset = page.nextOffset;
+			}
+			return "";
+		}
+		locked(uid, fn) {
+			const locks = this.deps.locks;
+			return locks ? locks.request(`g115-sync-${uid}`, fn) : fn();
+		}
+		now() {
+			return (this.deps.now ?? Date.now)();
+		}
+	};
+	var emptyRow = () => ({
+		collections: emptyMeta(),
+		targets: emptyMeta(),
+		lastSync: 0
+	});
+	var metaOf = (s) => ({
+		at: s.at,
+		deleted: s.deleted,
+		orderAt: s.orderAt
+	});
+	var hasTombstones = (s) => Object.keys(s.deleted).length > 0;
+	var cmpId = (a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0);
 	var NOT_CONFIRMED = "正在核对 115 账号，稍后再试";
 	var CollectionUi = class {
 		deps;
@@ -12877,18 +13527,24 @@
 	var _hoisted_24$2 = { class: "g115-coll-btns" };
 	var _hoisted_25$2 = ["onClick"];
 	var _hoisted_26$2 = ["disabled"];
-	var _hoisted_27$2 = { class: "g115-coll-row" };
-	var _hoisted_28$2 = { class: "g115-coll-main" };
-	var _hoisted_29$2 = { class: "g115-coll-name" };
-	var _hoisted_30$2 = {
+	var _hoisted_27$2 = { class: "g115-coll-head g115-coll-sec" };
+	var _hoisted_28$2 = { class: "g115-coll-row" };
+	var _hoisted_29$2 = { class: "g115-coll-main" };
+	var _hoisted_30$2 = { class: "g115-coll-name" };
+	var _hoisted_31$2 = { class: "g115-coll-btns" };
+	var _hoisted_32$2 = ["disabled"];
+	var _hoisted_33$1 = { class: "g115-coll-row" };
+	var _hoisted_34$1 = { class: "g115-coll-main" };
+	var _hoisted_35$1 = { class: "g115-coll-name" };
+	var _hoisted_36$1 = {
 		key: 0,
 		class: "g115-coll-confirm"
 	};
-	var _hoisted_31$2 = {
+	var _hoisted_37$1 = {
 		key: 1,
 		class: "g115-coll-btns"
 	};
-	var _hoisted_32$2 = ["disabled"];
+	var _hoisted_38$1 = ["disabled"];
 	var CollectionSettings_default = defineComponent({
 		__name: "CollectionSettings",
 		setup(__props) {
@@ -12999,6 +13655,18 @@
 				const ok = await ctrl.queue.clearPending();
 				ctrl.toast(ok ? "已清空待复制清单（源文件不受影响）" : "已清空，但保存失败，仅本页生效");
 			}
+			const sync = ctrl.cloudSync.state;
+			const two = (n) => String(n).padStart(2, "0");
+			function timeText(ms) {
+				const d = new Date(ms);
+				return `${d.getMonth() + 1}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
+			}
+			function syncText() {
+				if (!ctrl.settings.cloudSync) return "已关闭：合集只保存在这个浏览器里";
+				if (sync.status === "syncing") return "同步中…";
+				if (sync.status === "error") return `同步失败：${sync.error}`;
+				return sync.lastSync ? `上次同步 ${timeText(sync.lastSync)}` : "还没有同步过";
+			}
 			function statusText(cid) {
 				const st = cs.status[cid];
 				if (!st) return "";
@@ -13008,7 +13676,7 @@
 			}
 			return (_ctx, _cache) => {
 				return openBlock(), createElementBlock("div", _hoisted_1$12, [
-					_cache[7] || (_cache[7] = createBaseVNode("div", { class: "g115-coll-head" }, [createBaseVNode("b", null, "合集"), createBaseVNode("small", null, "左侧按钮的顺序同这里；合集里删除文件会真正删除（进回收站）")], -1)),
+					_cache[10] || (_cache[10] = createBaseVNode("div", { class: "g115-coll-head" }, [createBaseVNode("b", null, "合集"), createBaseVNode("small", null, "左侧按钮的顺序同这里；合集里删除文件会真正删除（进回收站）")], -1)),
 					unref(cs).error ? (openBlock(), createElementBlock("div", _hoisted_2$11, toDisplayString(unref(cs).error), 1)) : createCommentVNode("", true),
 					createBaseVNode("div", {
 						ref_key: "list",
@@ -13054,7 +13722,7 @@
 								title: unref(pathText)(c.path)
 							}, [createTextVNode(toDisplayString(unref(pathText)(c.path)), 1), statusText(c.cid) ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(" · " + toDisplayString(statusText(c.cid)), 1)], 64)) : createCommentVNode("", true)], 8, _hoisted_9$6))]),
 							unbinding.value === c.cid ? (openBlock(), createElementBlock("div", _hoisted_10$4, [
-								_cache[5] || (_cache[5] = createBaseVNode("small", null, "解除绑定不会删除网盘目录及其中文件", -1)),
+								_cache[7] || (_cache[7] = createBaseVNode("small", null, "解除绑定不会删除网盘目录及其中文件", -1)),
 								createBaseVNode("button", {
 									class: "btn danger",
 									onClick: ($event) => unbind(c.cid)
@@ -13087,8 +13755,8 @@
 						onClick: add
 					}, "+ 添加合集", 8, _hoisted_17$2),
 					!unref(ctrl).browser.state.confirmed ? (openBlock(), createElementBlock("small", _hoisted_18$2, toDisplayString(unref(NOT_CONFIRMED)), 1)) : createCommentVNode("", true),
-					_cache[8] || (_cache[8] = createBaseVNode("small", { class: "g115-coll-tip" }, "也可以在文件夹右键菜单、或点顶部路径里的当前目录名，选「设为合集…」。", -1)),
-					_cache[9] || (_cache[9] = createBaseVNode("div", { class: "g115-coll-head g115-coll-sec" }, [createBaseVNode("b", null, "其他常用复制目标"), createBaseVNode("small", null, "「复制到…」时显示在选择器顶部（合集自动在前）。只是快捷入口，不改网盘")], -1)),
+					_cache[11] || (_cache[11] = createBaseVNode("small", { class: "g115-coll-tip" }, "也可以在文件夹右键菜单、或点顶部路径里的当前目录名，选「设为合集…」。", -1)),
+					_cache[12] || (_cache[12] = createBaseVNode("div", { class: "g115-coll-head g115-coll-sec" }, [createBaseVNode("b", null, "其他常用复制目标"), createBaseVNode("small", null, "「复制到…」时显示在选择器顶部（合集自动在前）。只是快捷入口，不改网盘")], -1)),
 					unref(ts).error ? (openBlock(), createElementBlock("div", _hoisted_19$2, toDisplayString(unref(ts).error), 1)) : createCommentVNode("", true),
 					createBaseVNode("div", _hoisted_20$2, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(ts).items, (t) => {
 						return openBlock(), createElementBlock("div", {
@@ -13107,25 +13775,35 @@
 						disabled: !unref(ctrl).browser.state.confirmed,
 						onClick: addTarget
 					}, "+ 添加目标", 8, _hoisted_26$2),
-					_cache[10] || (_cache[10] = createBaseVNode("div", { class: "g115-coll-head g115-coll-sec" }, [createBaseVNode("b", null, "待复制清单"), createBaseVNode("small", null, "在不同目录挑出图片、视频、文件夹，最后一起复制；刷新后保留，上限 1000 条")], -1)),
-					createBaseVNode("div", _hoisted_27$2, [createBaseVNode("div", _hoisted_28$2, [createBaseVNode("b", _hoisted_29$2, toDisplayString(queuePending()) + " 项待处理", 1)]), confirmQueueClear.value ? (openBlock(), createElementBlock("div", _hoisted_30$2, [
-						_cache[6] || (_cache[6] = createBaseVNode("small", null, "只清空清单，不删除源文件", -1)),
+					createBaseVNode("div", _hoisted_27$2, [_cache[8] || (_cache[8] = createBaseVNode("b", null, "云端同步", -1)), createBaseVNode("small", null, "合集和常用目标保存在网盘 " + toDisplayString(unref(SYNC_DIR_TEXT)) + "，换设备、换浏览器自动同步；设置不同步。每次保存会把旧的配置文件移到回收站", 1)]),
+					createBaseVNode("div", _hoisted_28$2, [createBaseVNode("div", _hoisted_29$2, [createBaseVNode("b", _hoisted_30$2, toDisplayString(unref(ctrl).settings.cloudSync ? "已开启" : "已关闭"), 1), createBaseVNode("small", { class: normalizeClass({ "g115-err": unref(ctrl).settings.cloudSync && unref(sync).status === "error" }) }, toDisplayString(syncText()), 3)]), createBaseVNode("div", _hoisted_31$2, [unref(ctrl).settings.cloudSync ? (openBlock(), createElementBlock("button", {
+						key: 0,
+						class: "btn",
+						disabled: unref(sync).status === "syncing" || !unref(ctrl).browser.state.confirmed,
+						onClick: _cache[3] || (_cache[3] = ($event) => unref(ctrl).cloudSync.sync())
+					}, "立即同步", 8, _hoisted_32$2)) : createCommentVNode("", true), createBaseVNode("button", {
+						class: "btn",
+						onClick: _cache[4] || (_cache[4] = ($event) => unref(ctrl).settings.cloudSync = !unref(ctrl).settings.cloudSync)
+					}, toDisplayString(unref(ctrl).settings.cloudSync ? "关闭" : "开启"), 1)])]),
+					_cache[13] || (_cache[13] = createBaseVNode("div", { class: "g115-coll-head g115-coll-sec" }, [createBaseVNode("b", null, "待复制清单"), createBaseVNode("small", null, "在不同目录挑出图片、视频、文件夹，最后一起复制；刷新后保留，上限 1000 条")], -1)),
+					createBaseVNode("div", _hoisted_33$1, [createBaseVNode("div", _hoisted_34$1, [createBaseVNode("b", _hoisted_35$1, toDisplayString(queuePending()) + " 项待处理", 1)]), confirmQueueClear.value ? (openBlock(), createElementBlock("div", _hoisted_36$1, [
+						_cache[9] || (_cache[9] = createBaseVNode("small", null, "只清空清单，不删除源文件", -1)),
 						createBaseVNode("button", {
 							class: "btn danger",
 							onClick: clearQueue
 						}, "确认清空"),
 						createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[3] || (_cache[3] = ($event) => confirmQueueClear.value = false)
+							onClick: _cache[5] || (_cache[5] = ($event) => confirmQueueClear.value = false)
 						}, "取消")
-					])) : (openBlock(), createElementBlock("div", _hoisted_31$2, [createBaseVNode("button", {
+					])) : (openBlock(), createElementBlock("div", _hoisted_37$1, [createBaseVNode("button", {
 						class: "btn",
 						onClick: openQueue
 					}, "打开清单"), createBaseVNode("button", {
 						class: "btn",
 						disabled: !queuePending(),
-						onClick: _cache[4] || (_cache[4] = ($event) => confirmQueueClear.value = true)
-					}, "清空", 8, _hoisted_32$2)]))])
+						onClick: _cache[6] || (_cache[6] = ($event) => confirmQueueClear.value = true)
+					}, "清空", 8, _hoisted_38$1)]))])
 				]);
 			};
 		}
@@ -13153,73 +13831,88 @@
 	var _hoisted_9$5 = { class: "row" };
 	var _hoisted_10$3 = { class: "row" };
 	var _hoisted_11$2 = { class: "row" };
-	var _hoisted_12$2 = {
+	var _hoisted_12$2 = { class: "row" };
+	var _hoisted_13$2 = { class: "lab" };
+	var _hoisted_14$1 = { class: "g115-cover-ctl" };
+	var _hoisted_15$1 = { class: "row" };
+	var _hoisted_16$1 = { class: "seg" };
+	var _hoisted_17$1 = { class: "row" };
+	var _hoisted_18$1 = { class: "lab" };
+	var _hoisted_19$1 = { class: "g115-cover-ctl" };
+	var _hoisted_20$1 = ["min", "max"];
+	var _hoisted_21$1 = ["min", "max"];
+	var _hoisted_22$1 = { class: "row" };
+	var _hoisted_23$1 = { class: "lab" };
+	var _hoisted_24$1 = { class: "g115-cover-ctl" };
+	var _hoisted_25$1 = ["min", "max"];
+	var _hoisted_26$1 = ["min", "max"];
+	var _hoisted_27$1 = {
 		key: 1,
 		role: "tabpanel",
 		class: "g115-tabpanel"
 	};
-	var _hoisted_13$2 = { class: "row" };
-	var _hoisted_14$1 = { class: "lab" };
-	var _hoisted_15$1 = { class: "g115-cover-ctl" };
-	var _hoisted_16$1 = ["max"];
-	var _hoisted_17$1 = { class: "row" };
-	var _hoisted_18$1 = { class: "lab" };
-	var _hoisted_19$1 = { key: 0 };
-	var _hoisted_20$1 = { key: 1 };
-	var _hoisted_21$1 = { key: 2 };
-	var _hoisted_22$1 = { class: "g115-cover-ctl" };
-	var _hoisted_23$1 = { class: "row" };
-	var _hoisted_24$1 = { class: "g115-cover-ctl" };
-	var _hoisted_25$1 = { class: "row" };
-	var _hoisted_26$1 = {
+	var _hoisted_28$1 = { class: "row" };
+	var _hoisted_29$1 = { class: "lab" };
+	var _hoisted_30$1 = { class: "g115-cover-ctl" };
+	var _hoisted_31$1 = ["max"];
+	var _hoisted_32$1 = { class: "row" };
+	var _hoisted_33 = { class: "lab" };
+	var _hoisted_34 = { key: 0 };
+	var _hoisted_35 = { key: 1 };
+	var _hoisted_36 = { key: 2 };
+	var _hoisted_37 = { class: "g115-cover-ctl" };
+	var _hoisted_38 = { class: "row" };
+	var _hoisted_39 = { class: "g115-cover-ctl" };
+	var _hoisted_40 = { class: "row" };
+	var _hoisted_41 = {
 		key: 2,
 		role: "tabpanel",
 		class: "g115-tabpanel"
 	};
-	var _hoisted_27$1 = {
+	var _hoisted_42 = {
 		key: 3,
 		role: "tabpanel",
 		class: "g115-tabpanel"
 	};
-	var _hoisted_28$1 = { class: "row g115-stack" };
-	var _hoisted_29$1 = {
+	var _hoisted_43 = { class: "row g115-stack" };
+	var _hoisted_44 = {
 		class: "g115-seg",
 		role: "radiogroup",
 		"aria-label": "图片缓存位置"
 	};
-	var _hoisted_30$1 = ["checked"];
-	var _hoisted_31$1 = ["disabled", "checked"];
-	var _hoisted_32$1 = { class: "g115-kv" };
-	var _hoisted_33 = { class: "g115-kv-val" };
-	var _hoisted_34 = {
+	var _hoisted_45 = ["checked"];
+	var _hoisted_46 = ["disabled", "checked"];
+	var _hoisted_47 = { class: "g115-kv" };
+	var _hoisted_48 = { class: "g115-kv-val" };
+	var _hoisted_49 = {
 		key: 0,
 		class: "g115-kv g115-warn"
 	};
-	var _hoisted_35 = { class: "g115-kv" };
-	var _hoisted_36 = { class: "g115-kv-val" };
-	var _hoisted_37 = { key: 1 };
-	var _hoisted_38 = { class: "g115-kv" };
-	var _hoisted_39 = { class: "g115-kv-val" };
-	var _hoisted_40 = { key: 0 };
-	var _hoisted_41 = {
+	var _hoisted_50 = { class: "g115-kv" };
+	var _hoisted_51 = { class: "g115-kv-val" };
+	var _hoisted_52 = { key: 1 };
+	var _hoisted_53 = { class: "g115-kv" };
+	var _hoisted_54 = { class: "g115-kv-val" };
+	var _hoisted_55 = { key: 0 };
+	var _hoisted_56 = {
 		key: 2,
 		class: "g115-err"
 	};
-	var _hoisted_42 = { class: "g115-kv" };
-	var _hoisted_43 = {
+	var _hoisted_57 = { class: "g115-kv" };
+	var _hoisted_58 = {
 		key: 0,
 		class: "g115-kv-val"
 	};
-	var _hoisted_44 = {
+	var _hoisted_59 = {
 		key: 1,
 		class: "g115-kv-val"
 	};
-	var _hoisted_45 = { key: 3 };
-	var _hoisted_46 = { class: "g115-cache-btns" };
-	var _hoisted_47 = { class: "row g115-stack" };
-	var _hoisted_48 = { key: 0 };
-	var _hoisted_49 = { key: 1 };
-	var _hoisted_50 = { class: "g115-cache-btns" };
+	var _hoisted_60 = { key: 3 };
+	var _hoisted_61 = { class: "g115-cache-btns" };
+	var _hoisted_62 = { class: "row g115-stack" };
+	var _hoisted_63 = { key: 0 };
+	var _hoisted_64 = { key: 1 };
+	var _hoisted_65 = { class: "g115-cache-btns" };
 	var SettingsPanel_default = defineComponent({
 		__name: "SettingsPanel",
 		setup(__props) {
@@ -13249,6 +13942,20 @@
 				"M",
 				"L"
 			];
+			function resetDrawers() {
+				Object.assign(settings, {
+					treeWidth: DRAWER_WIDTH.def,
+					treeFont: DRAWER_FONT.def,
+					railWidth: DRAWER_WIDTH.def,
+					railFont: DRAWER_FONT.def
+				});
+			}
+			const savedPositions = ref(ctrl.positions.count());
+			function clearPositions() {
+				ctrl.positions.clearAll();
+				savedPositions.value = 0;
+				ctrl.toast("已清空记住的阅读位置");
+			}
 			const cacheStats = ref(null);
 			const storageText = ref("");
 			const confirming = ref("");
@@ -13293,44 +14000,141 @@
 						onClick: ($event) => unref(ui).settingsTab = t.id
 					}, toDisplayString(t.label), 11, _hoisted_3$10);
 				}), 64))]), unref(ui).settingsTab === "view" ? (openBlock(), createElementBlock("div", _hoisted_4$9, [
-					createBaseVNode("div", _hoisted_5$7, [_cache[19] || (_cache[19] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_6$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
+					createBaseVNode("div", _hoisted_5$7, [_cache[26] || (_cache[26] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_6$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
 						return createBaseVNode("button", {
 							key: sz,
 							class: normalizeClass({ active: unref(settings).thumbnailSize === sz }),
 							onClick: ($event) => unref(settings).thumbnailSize = sz
 						}, toDisplayString(sz), 11, _hoisted_7$5);
 					}), 64))])]),
-					createBaseVNode("label", _hoisted_8$5, [_cache[20] || (_cache[20] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_8$5, [_cache[27] || (_cache[27] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => unref(settings).showFilename = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showFilename]])]),
-					createBaseVNode("label", _hoisted_9$5, [_cache[21] || (_cache[21] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_9$5, [_cache[28] || (_cache[28] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => unref(settings).showTags = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showTags]])]),
-					createBaseVNode("label", _hoisted_10$3, [_cache[22] || (_cache[22] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_10$3, [_cache[29] || (_cache[29] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => unref(settings).mobileOptimize = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).mobileOptimize]])]),
-					createBaseVNode("label", _hoisted_11$2, [_cache[23] || (_cache[23] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_11$2, [_cache[30] || (_cache[30] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => unref(settings).viewerStrip = $event),
 						type: "checkbox"
-					}, null, 512), [[vModelCheckbox, unref(settings).viewerStrip]])])
-				])) : unref(ui).settingsTab === "video" ? (openBlock(), createElementBlock("div", _hoisted_12$2, [
-					createBaseVNode("div", _hoisted_13$2, [createBaseVNode("span", _hoisted_14$1, [_cache[24] || (_cache[24] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_15$1, [
-						withDirectives(createBaseVNode("select", {
-							"onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => unref(settings).cover.mode = $event),
-							"aria-label": "封面取帧方式",
-							onChange: _cache[5] || (_cache[5] = ($event) => unref(settings).cover.value = unref(settings).cover.mode === "percent" ? 25 : 30)
-						}, [..._cache[25] || (_cache[25] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
+					}, null, 512), [[vModelCheckbox, unref(settings).viewerStrip]])]),
+					createBaseVNode("div", _hoisted_12$2, [createBaseVNode("span", _hoisted_13$2, [_cache[31] || (_cache[31] = createBaseVNode("b", null, "记住阅读位置", -1)), createBaseVNode("small", null, "开启后下次打开同一目录回到上次看到的位置；关闭时只在本次打开期间返回上级保留位置" + toDisplayString(savedPositions.value ? `（已记住 ${savedPositions.value} 个目录）` : ""), 1)]), createBaseVNode("span", _hoisted_14$1, [savedPositions.value ? (openBlock(), createElementBlock("button", {
+						key: 0,
+						class: "btn",
+						onClick: clearPositions
+					}, "清空")) : createCommentVNode("", true), withDirectives(createBaseVNode("input", {
+						"onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => unref(settings).rememberPosition = $event),
+						type: "checkbox",
+						"aria-label": "记住阅读位置"
+					}, null, 512), [[vModelCheckbox, unref(settings).rememberPosition]])])]),
+					_cache[39] || (_cache[39] = createBaseVNode("h4", { class: "g115-set-sub" }, "两侧抽屉", -1)),
+					createBaseVNode("div", _hoisted_15$1, [_cache[32] || (_cache[32] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "弹出方式"), createBaseVNode("small", null, "收藏、合集、待复制、目录按钮统一；悬停时点一下按钮可钉住不收起。触屏总是点击")], -1)), createBaseVNode("div", _hoisted_16$1, [createBaseVNode("button", {
+						class: normalizeClass({ active: unref(settings).drawerTrigger === "hover" }),
+						onClick: _cache[5] || (_cache[5] = ($event) => unref(settings).drawerTrigger = "hover")
+					}, "鼠标悬停", 2), createBaseVNode("button", {
+						class: normalizeClass({ active: unref(settings).drawerTrigger === "click" }),
+						onClick: _cache[6] || (_cache[6] = ($event) => unref(settings).drawerTrigger = "click")
+					}, "点击", 2)])]),
+					createBaseVNode("div", _hoisted_17$1, [createBaseVNode("span", _hoisted_18$1, [_cache[33] || (_cache[33] = createBaseVNode("b", null, "左侧抽屉（收藏 / 合集）", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_19$1, [
 						withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => unref(settings).cover.value = $event),
+							"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => unref(settings).railWidth = $event),
+							class: "inp",
+							type: "number",
+							min: unref(DRAWER_WIDTH).min,
+							max: unref(DRAWER_WIDTH).max,
+							step: "10",
+							"aria-label": "左侧抽屉宽度"
+						}, null, 8, _hoisted_20$1), [[
+							vModelText,
+							unref(settings).railWidth,
+							void 0,
+							{
+								lazy: true,
+								number: true
+							}
+						]]),
+						_cache[34] || (_cache[34] = createBaseVNode("span", null, "px", -1)),
+						withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => unref(settings).railFont = $event),
+							class: "inp",
+							type: "number",
+							min: unref(DRAWER_FONT).min,
+							max: unref(DRAWER_FONT).max,
+							step: "1",
+							"aria-label": "左侧列表字号"
+						}, null, 8, _hoisted_21$1), [[
+							vModelText,
+							unref(settings).railFont,
+							void 0,
+							{
+								lazy: true,
+								number: true
+							}
+						]]),
+						_cache[35] || (_cache[35] = createBaseVNode("span", null, "字号", -1))
+					])]),
+					createBaseVNode("div", _hoisted_22$1, [createBaseVNode("span", _hoisted_23$1, [_cache[36] || (_cache[36] = createBaseVNode("b", null, "右侧目录树", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_24$1, [
+						withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => unref(settings).treeWidth = $event),
+							class: "inp",
+							type: "number",
+							min: unref(DRAWER_WIDTH).min,
+							max: unref(DRAWER_WIDTH).max,
+							step: "10",
+							"aria-label": "目录树宽度"
+						}, null, 8, _hoisted_25$1), [[
+							vModelText,
+							unref(settings).treeWidth,
+							void 0,
+							{
+								lazy: true,
+								number: true
+							}
+						]]),
+						_cache[37] || (_cache[37] = createBaseVNode("span", null, "px", -1)),
+						withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => unref(settings).treeFont = $event),
+							class: "inp",
+							type: "number",
+							min: unref(DRAWER_FONT).min,
+							max: unref(DRAWER_FONT).max,
+							step: "1",
+							"aria-label": "目录树字号"
+						}, null, 8, _hoisted_26$1), [[
+							vModelText,
+							unref(settings).treeFont,
+							void 0,
+							{
+								lazy: true,
+								number: true
+							}
+						]]),
+						_cache[38] || (_cache[38] = createBaseVNode("span", null, "字号", -1))
+					])]),
+					createBaseVNode("div", { class: "g115-cache-btns" }, [createBaseVNode("button", {
+						class: "btn",
+						onClick: resetDrawers
+					}, "恢复默认大小")])
+				])) : unref(ui).settingsTab === "video" ? (openBlock(), createElementBlock("div", _hoisted_27$1, [
+					createBaseVNode("div", _hoisted_28$1, [createBaseVNode("span", _hoisted_29$1, [_cache[40] || (_cache[40] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_30$1, [
+						withDirectives(createBaseVNode("select", {
+							"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => unref(settings).cover.mode = $event),
+							"aria-label": "封面取帧方式",
+							onChange: _cache[12] || (_cache[12] = ($event) => unref(settings).cover.value = unref(settings).cover.mode === "percent" ? 25 : 30)
+						}, [..._cache[41] || (_cache[41] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
+						withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => unref(settings).cover.value = $event),
 							class: "inp",
 							type: "number",
 							min: "0",
 							max: unref(settings).cover.mode === "percent" ? 100 : 86400,
 							"aria-label": "封面取帧数值"
-						}, null, 8, _hoisted_16$1), [[
+						}, null, 8, _hoisted_31$1), [[
 							vModelText,
 							unref(settings).cover.value,
 							void 0,
@@ -13341,16 +14145,16 @@
 						]]),
 						createBaseVNode("span", null, toDisplayString(unref(settings).cover.mode === "percent" ? "%" : "秒"), 1)
 					])]),
-					createBaseVNode("div", _hoisted_17$1, [createBaseVNode("span", _hoisted_18$1, [_cache[26] || (_cache[26] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_19$1, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_20$1, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_21$1, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_22$1, [withDirectives(createBaseVNode("select", {
-						"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => unref(settings).player = $event),
+					createBaseVNode("div", _hoisted_32$1, [createBaseVNode("span", _hoisted_33, [_cache[42] || (_cache[42] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_34, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_35, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_36, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_37, [withDirectives(createBaseVNode("select", {
+						"onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => unref(settings).player = $event),
 						"aria-label": "视频播放器"
-					}, [..._cache[27] || (_cache[27] = [
+					}, [..._cache[43] || (_cache[43] = [
 						createBaseVNode("option", { value: "lite" }, "自带播放器", -1),
 						createBaseVNode("option", { value: "master" }, "115Master", -1),
 						createBaseVNode("option", { value: "official" }, "官方播放页", -1)
 					])], 512), [[vModelSelect, unref(settings).player]])])]),
-					createBaseVNode("div", _hoisted_23$1, [_cache[29] || (_cache[29] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_24$1, [withDirectives(createBaseVNode("input", {
-						"onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => unref(settings).seekSeconds = $event),
+					createBaseVNode("div", _hoisted_38, [_cache[45] || (_cache[45] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("input", {
+						"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => unref(settings).seekSeconds = $event),
 						class: "inp",
 						type: "number",
 						min: "1",
@@ -13365,36 +14169,36 @@
 							lazy: true,
 							number: true
 						}
-					]]), _cache[28] || (_cache[28] = createBaseVNode("span", null, "秒", -1))])]),
-					createBaseVNode("label", _hoisted_25$1, [_cache[30] || (_cache[30] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
-						"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => unref(settings).playlistPinned = $event),
+					]]), _cache[44] || (_cache[44] = createBaseVNode("span", null, "秒", -1))])]),
+					createBaseVNode("label", _hoisted_40, [_cache[46] || (_cache[46] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
+						"onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => unref(settings).playlistPinned = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).playlistPinned]])])
-				])) : unref(ui).settingsTab === "collections" ? (openBlock(), createElementBlock("div", _hoisted_26$1, [createVNode(CollectionSettings_default)])) : (openBlock(), createElementBlock("div", _hoisted_27$1, [createBaseVNode("div", _hoisted_28$1, [
-					_cache[41] || (_cache[41] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
-					createBaseVNode("div", _hoisted_29$1, [createBaseVNode("label", null, [createBaseVNode("input", {
+				])) : unref(ui).settingsTab === "collections" ? (openBlock(), createElementBlock("div", _hoisted_41, [createVNode(CollectionSettings_default)])) : (openBlock(), createElementBlock("div", _hoisted_42, [createBaseVNode("div", _hoisted_43, [
+					_cache[57] || (_cache[57] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
+					createBaseVNode("div", _hoisted_44, [createBaseVNode("label", null, [createBaseVNode("input", {
 						type: "radio",
 						name: "g115-loc",
 						checked: unref(settings).cacheLocation === "browser",
-						onChange: _cache[10] || (_cache[10] = ($event) => chooseLocation("browser"))
-					}, null, 40, _hoisted_30$1), _cache[31] || (_cache[31] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
+						onChange: _cache[17] || (_cache[17] = ($event) => chooseLocation("browser"))
+					}, null, 40, _hoisted_45), _cache[47] || (_cache[47] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
 						type: "radio",
 						name: "g115-loc",
 						disabled: !unref(fc).supported,
 						checked: unref(settings).cacheLocation === "folder",
-						onChange: _cache[11] || (_cache[11] = ($event) => chooseLocation("folder"))
-					}, null, 40, _hoisted_31$1), _cache[32] || (_cache[32] = createTextVNode("本地文件夹", -1))], 2)]),
+						onChange: _cache[18] || (_cache[18] = ($event) => chooseLocation("folder"))
+					}, null, 40, _hoisted_46), _cache[48] || (_cache[48] = createTextVNode("本地文件夹", -1))], 2)]),
 					unref(settings).cacheLocation === "folder" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-						createBaseVNode("div", _hoisted_32$1, [_cache[33] || (_cache[33] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_33, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
+						createBaseVNode("div", _hoisted_47, [_cache[49] || (_cache[49] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_48, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[12] || (_cache[12] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
+							onClick: _cache[19] || (_cache[19] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
 						}, toDisplayString(unref(fc).name ? "更换" : "选择"), 1)])]),
-						unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_34, [_cache[34] || (_cache[34] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
+						unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_49, [_cache[50] || (_cache[50] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
 							class: "btn primary",
-							onClick: _cache[13] || (_cache[13] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
+							onClick: _cache[20] || (_cache[20] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
 						}, "授权")])) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_35, [_cache[36] || (_cache[36] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_36, [withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => unref(settings).folderCacheGB = $event),
+						createBaseVNode("div", _hoisted_50, [_cache[52] || (_cache[52] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_51, [withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => unref(settings).folderCacheGB = $event),
 							class: "inp",
 							type: "number",
 							min: "1",
@@ -13409,12 +14213,12 @@
 								lazy: true,
 								number: true
 							}
-						]]), _cache[35] || (_cache[35] = createTextVNode("GB", -1))])]),
-						_cache[37] || (_cache[37] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
-						unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_37, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
+						]]), _cache[51] || (_cache[51] = createTextVNode("GB", -1))])]),
+						_cache[53] || (_cache[53] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
+						unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_52, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
 					], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-						createBaseVNode("div", _hoisted_38, [_cache[39] || (_cache[39] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("input", {
-							"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => unref(settings).frameCacheMB = $event),
+						createBaseVNode("div", _hoisted_53, [_cache[55] || (_cache[55] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_54, [withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[22] || (_cache[22] = ($event) => unref(settings).frameCacheMB = $event),
 							class: "inp",
 							type: "number",
 							min: "50",
@@ -13429,27 +14233,27 @@
 								lazy: true,
 								number: true
 							}
-						]]), _cache[38] || (_cache[38] = createTextVNode("MB", -1))])]),
+						]]), _cache[54] || (_cache[54] = createTextVNode("MB", -1))])]),
 						createBaseVNode("small", null, "换浏览器不共享" + toDisplayString(unref(fc).persisted ? "；已开启持久存储，磁盘紧张时浏览器不会自动清理" : ""), 1),
-						!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_40, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
+						!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_55, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
 					], 64)),
-					unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_41, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_42, [_cache[40] || (_cache[40] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_43, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_44, "读取中…"))]),
-					cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_45, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_46, [createBaseVNode("button", {
+					unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_56, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_57, [_cache[56] || (_cache[56] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_58, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_59, "读取中…"))]),
+					cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_60, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_61, [createBaseVNode("button", {
 						class: "btn",
-						onClick: _cache[16] || (_cache[16] = ($event) => clearCache("thumbs"))
+						onClick: _cache[23] || (_cache[23] = ($event) => clearCache("thumbs"))
 					}, toDisplayString(confirming.value === "thumbs" ? "确认清空缩略图" : "清空缩略图"), 1), createBaseVNode("button", {
 						class: "btn",
-						onClick: _cache[17] || (_cache[17] = ($event) => clearCache("frames"))
+						onClick: _cache[24] || (_cache[24] = ($event) => clearCache("frames"))
 					}, toDisplayString(confirming.value === "frames" ? "确认清空帧图" : "清空帧图"), 1)])
-				]), createBaseVNode("div", _hoisted_47, [
-					_cache[42] || (_cache[42] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
-					cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_48, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
-					storageText.value ? (openBlock(), createElementBlock("small", _hoisted_49, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_50, [createBaseVNode("button", {
+				]), createBaseVNode("div", _hoisted_62, [
+					_cache[58] || (_cache[58] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
+					cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_63, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
+					storageText.value ? (openBlock(), createElementBlock("small", _hoisted_64, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_65, [createBaseVNode("button", {
 						class: "btn danger",
-						onClick: _cache[18] || (_cache[18] = ($event) => clearCache("all"))
+						onClick: _cache[25] || (_cache[25] = ($event) => clearCache("all"))
 					}, toDisplayString(confirming.value === "all" ? "确认清空全部缓存" : "清空全部缓存"), 1)])
 				])]))]);
 			};
@@ -29284,7 +30088,7 @@
 		}
 	};
 	var LANE$4 = "thumb";
-	var SIZES$1 = [
+	var SIZES = [
 		480,
 		800,
 		1440
@@ -29301,8 +30105,8 @@
 		return size;
 	};
 	function lookupOrder(size) {
-		const want = SIZES$1.includes(size) ? size : 480;
-		return [...SIZES$1.filter((s) => s >= want), ...SIZES$1.filter((s) => s < want).reverse()];
+		const want = SIZES.includes(size) ? size : 480;
+		return [...SIZES.filter((s) => s >= want), ...SIZES.filter((s) => s < want).reverse()];
 	}
 	var ThumbService = class {
 		deps;
@@ -29409,7 +30213,7 @@
 					};
 					this.deps.onDims?.(sha1, dims);
 					await this.deps.store.put(id, f);
-					for (const s of SIZES$1) if (s < size) this.deps.store.delete(thumbKey(sha1, s)).catch(() => {});
+					for (const s of SIZES) if (s < size) this.deps.store.delete(thumbKey(sha1, s)).catch(() => {});
 					if (++this.puts % 50 === 0) this.deps.store.prune().catch(() => {});
 					return f;
 				}, {
@@ -30277,8 +31081,19 @@
 			});
 			let restoredKey = "";
 			let saveTimer;
+			const sessionPositions = new Map();
+			function readPosition(key) {
+				return sessionPositions.get(key) ?? (props.ctrl.settings.rememberPosition ? props.ctrl.positions.read(key) : null);
+			}
+			function savePosition(key, pos) {
+				sessionPositions.set(key, pos);
+				if (props.ctrl.settings.rememberPosition) props.ctrl.positions.save(key, pos);
+			}
 			watch(() => ui.open, (open) => {
-				if (!open) restoredKey = "";
+				if (!open) {
+					restoredKey = "";
+					sessionPositions.clear();
+				}
 			});
 			watch(() => [
 				s.uid,
@@ -30291,7 +31106,7 @@
 				const key = browser.positionKey();
 				if (restoredKey === key) return;
 				restoredKey = key;
-				const pos = props.ctrl.positions.read(key);
+				const pos = readPosition(key);
 				if (!pos) {
 					scrollEl.value?.scrollTo({ top: 0 });
 					return;
@@ -30307,7 +31122,7 @@
 				saveTimer = setTimeout(() => {
 					const key = browser.positionKey();
 					if (s.loading || restoredKey !== key || !scrollEl.value) return;
-					props.ctrl.positions.save(key, {
+					savePosition(key, {
 						scroll: Math.round(scrollEl.value.scrollTop),
 						items: s.page.media.length
 					});
@@ -31716,7 +32531,7 @@
 	};
 	var DB = "g115-handles";
 	var STORE$1 = "handles";
-	var KEY$2 = "frames-dir";
+	var KEY$1 = "frames-dir";
 	function openHandles() {
 		return new Promise((resolve) => {
 			try {
@@ -31740,9 +32555,9 @@
 		}));
 	}
 	var browserHandleStore = {
-		loadHandle: () => run("readonly", (st) => st.get(KEY$2)),
-		saveHandle: async (h) => void await run("readwrite", (st) => st.put(h, KEY$2)),
-		clearHandle: async () => void await run("readwrite", (st) => st.delete(KEY$2))
+		loadHandle: () => run("readonly", (st) => st.get(KEY$1)),
+		saveHandle: async (h) => void await run("readwrite", (st) => st.put(h, KEY$1)),
+		clearHandle: async () => void await run("readwrite", (st) => st.delete(KEY$1))
 	};
 	var SwitchableFrameStore = class {
 		idb;
@@ -31855,7 +32670,7 @@
 			return this.db;
 		}
 	};
-	var KEY$1 = "g115.positions";
+	var KEY = "g115.positions";
 	var MAX = 200;
 	var PositionStore = class {
 		kv;
@@ -31881,9 +32696,17 @@
 			delete data[key];
 			this.write(data);
 		}
+		count() {
+			return Object.keys(this.all()).length;
+		}
+		clearAll() {
+			try {
+				this.kv.set(KEY, {});
+			} catch {}
+		}
 		all() {
 			try {
-				const v = this.kv.get(KEY$1, {});
+				const v = this.kv.get(KEY, {});
 				return v && typeof v === "object" && !Array.isArray(v) ? { ...v } : {};
 			} catch {
 				return {};
@@ -31892,7 +32715,7 @@
 		write(data) {
 			const recent = Object.entries(data).sort(([, a], [, b]) => b.saved - a.saved).slice(0, MAX);
 			try {
-				this.kv.set(KEY$1, Object.fromEntries(recent));
+				this.kv.set(KEY, Object.fromEntries(recent));
 			} catch {}
 		}
 	};
@@ -31907,6 +32730,7 @@
 	var QUEUE = "queue";
 	var TASKS = "tasks";
 	var MARKS = "marks";
+	var SYNC = "sync";
 	function req(r) {
 		return new Promise((resolve, reject) => {
 			r.onsuccess = () => resolve(r.result);
@@ -31970,6 +32794,15 @@
 			tx.objectStore(MARKS).put(at, `${uid}|${cid}`);
 			await done(tx);
 		}
+		async getSyncMeta(uid) {
+			const row = await req((await this.db()).transaction(SYNC, "readonly").objectStore(SYNC).get(uid));
+			return row && typeof row === "object" ? row : null;
+		}
+		async putSyncMeta(uid, row) {
+			const tx = (await this.db()).transaction(SYNC, "readwrite");
+			tx.objectStore(SYNC).put(plain(row), uid);
+			await done(tx);
+		}
 		async getList(store, uid) {
 			const row = await req((await this.db()).transaction(store, "readonly").objectStore(store).get(uid));
 			return Array.isArray(row?.items) ? row.items : [];
@@ -31986,13 +32819,14 @@
 			await done(tx);
 		}
 		async db() {
-			this.conn ??= new IdbConn(this.idb, this.dbName, 2, (r) => {
+			this.conn ??= new IdbConn(this.idb, this.dbName, 3, (r) => {
 				const db = r.result;
 				if (!db.objectStoreNames.contains(COLLECTIONS)) db.createObjectStore(COLLECTIONS);
 				if (!db.objectStoreNames.contains(TARGETS)) db.createObjectStore(TARGETS);
 				if (!db.objectStoreNames.contains(QUEUE)) db.createObjectStore(QUEUE).createIndex("uid", "uid");
 				if (!db.objectStoreNames.contains(TASKS)) db.createObjectStore(TASKS).createIndex("uid", "uid");
 				if (!db.objectStoreNames.contains(MARKS)) db.createObjectStore(MARKS);
+				if (!db.objectStoreNames.contains(SYNC)) db.createObjectStore(SYNC);
 			});
 			const db = await this.conn.get();
 			if (!db) throw new StorageError();
@@ -32511,6 +33345,8 @@
 			error: ""
 		});
 		generation = 0;
+		revision = 0;
+		commitHook = null;
 		constructor(deps) {
 			this.deps = deps;
 		}
@@ -32561,13 +33397,38 @@
 		remove(cid) {
 			return this.commit(this.state.items.filter((t) => t.cid !== cid));
 		}
+		onCommit(fn) {
+			this.commitHook = fn;
+		}
+		async applySynced(uid, items) {
+			if (uid !== this.state.uid) return;
+			const generation = this.generation;
+			await this.deps.store.putTargets(uid, items);
+			if (generation !== this.generation) return;
+			Object.assign(this.state, {
+				items: markRaw(items),
+				loaded: true,
+				error: ""
+			});
+			try {
+				this.deps.channel?.postMessage({
+					type: "targets",
+					uid
+				});
+			} catch {}
+		}
 		async commit(items) {
 			const uid = this.state.uid;
 			const generation = this.generation;
+			const prev = this.state.items;
 			this.state.items = markRaw(items);
+			this.revision++;
 			try {
 				await this.deps.store.putTargets(uid, items);
 				if (generation !== this.generation) return false;
+				try {
+					this.commitHook?.(uid, prev, items);
+				} catch {}
 				this.state.error = "";
 				try {
 					this.deps.channel?.postMessage({
@@ -32583,6 +33444,66 @@
 		}
 	};
 	var msg = (e) => e instanceof Error ? e.message : String(e);
+	var INIT_URL = "https://uplb.115.com/3.0/sampleinitupload.php";
+	async function uploadText(cid, name, text, opts = {}) {
+		const f = opts.fetch ?? ((u, i) => fetch(u, i));
+		const ctl = new AbortController();
+		const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? 6e4);
+		try {
+			const initRes = await f(INIT_URL, {
+				method: "POST",
+				credentials: "include",
+				headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+				body: new URLSearchParams({
+					filename: name,
+					target: `U_1_${cid}`
+				}),
+				signal: ctl.signal
+			});
+			if (!initRes.ok) throw new ApiError(`上传初始化失败：HTTP ${initRes.status}`);
+			const init = await initRes.json();
+			if (!init.object || !init.host || !init.policy || !init.signature || !init.accessid || !init.callback) throw new ApiError("上传初始化失败：115 没有返回上传凭证");
+			const form = new FormData();
+			form.append("name", name);
+			form.append("key", init.object);
+			form.append("policy", init.policy);
+			form.append("OSSAccessKeyId", init.accessid);
+			form.append("success_action_status", "200");
+			form.append("callback", init.callback);
+			form.append("signature", init.signature);
+			form.append("file", new File([text], name, { type: "text/plain" }));
+			const res = await f(init.host.replace(/^http:/, "https:"), {
+				method: "POST",
+				body: form,
+				signal: ctl.signal
+			});
+			if (!res.ok) throw new ApiError(`上传失败：HTTP ${res.status}`);
+			const b = await res.json();
+			if (!b.state) throw new ApiError(b.message || "上传失败");
+			const id = String(b.data?.file_id ?? "");
+			const pickCode = String(b.data?.pick_code ?? "");
+			if (!id) throw new ApiError("上传后 115 没有返回文件 id");
+			return {
+				id,
+				pickCode
+			};
+		} catch (e) {
+			if (ctl.signal.aborted) throw new ApiError("上传超时");
+			throw e;
+		} finally {
+			clearTimeout(timer);
+		}
+	}
+	async function readText(fetchJson, pickCode, opts = {}) {
+		const b = await fetchJson(`${WEBAPI}/files/download?pickcode=${encodeURIComponent(pickCode)}`, opts.signal);
+		if (!b?.state || !b.file_url) throw new ApiError(b?.msg || "取不到下载地址", Number(b?.errNo ?? b?.errno) || void 0);
+		const res = await (opts.fetch ?? ((u, i) => fetch(u, i)))(b.file_url, {
+			credentials: "include",
+			signal: opts.signal
+		});
+		if (!res.ok) throw new ApiError(`读取失败：HTTP ${res.status}`);
+		return res.text();
+	}
 	var LANE$2 = "pick";
 	var ROOT = {
 		id: "0",
@@ -33038,110 +33959,6 @@
 			s.children[parent] = folders.map((f) => f.id);
 		}
 	};
-	var DEFAULTS = {
-		thumbnailSize: "M",
-		showFilename: true,
-		showTags: true,
-		mobileOptimize: true,
-		cover: { ...DEFAULT_COVER },
-		frameCacheMB: 500,
-		folderCacheGB: 20,
-		cacheLocation: "browser",
-		player: "lite",
-		viewerStrip: true,
-		playlistPinned: false,
-		seekSeconds: 10
-	};
-	var KEY = "g115.settings";
-	var BOOLEANS = [
-		"showFilename",
-		"showTags",
-		"mobileOptimize",
-		"viewerStrip",
-		"playlistPinned"
-	];
-	var SIZES = [
-		"XS",
-		"S",
-		"M",
-		"L"
-	];
-	var PLAYERS = [
-		"lite",
-		"master",
-		"official"
-	];
-	function parseSettings(value) {
-		if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-		const data = value;
-		const result = {};
-		for (const key of BOOLEANS) if (typeof data[key] === "boolean") result[key] = data[key];
-		if (SIZES.includes(data.thumbnailSize)) result.thumbnailSize = data.thumbnailSize;
-		if (PLAYERS.includes(data.player)) result.player = data.player;
-		if (data.cacheLocation === "browser" || data.cacheLocation === "folder") result.cacheLocation = data.cacheLocation;
-		const cover = parseCover(data.cover);
-		if (cover) result.cover = cover;
-		if (typeof data.frameCacheMB === "number" && Number.isFinite(data.frameCacheMB)) result.frameCacheMB = Math.min(5e3, Math.max(50, Math.round(data.frameCacheMB)));
-		if (typeof data.seekSeconds === "number" && Number.isFinite(data.seekSeconds)) result.seekSeconds = Math.min(600, Math.max(1, Math.round(data.seekSeconds)));
-		if (typeof data.folderCacheGB === "number" && Number.isFinite(data.folderCacheGB)) result.folderCacheGB = Math.min(1e3, Math.max(1, Math.round(data.folderCacheGB)));
-		return result;
-	}
-	function parseCover(value) {
-		if (!value || typeof value !== "object") return void 0;
-		const { mode, value: v } = value;
-		if (mode !== "percent" && mode !== "seconds" || typeof v !== "number" || !Number.isFinite(v)) return void 0;
-		return {
-			mode,
-			value: Math.min(mode === "percent" ? 100 : 86400, Math.max(0, Math.round(v)))
-		};
-	}
-	function loadSettings(kv) {
-		try {
-			return {
-				...DEFAULTS,
-				cover: { ...DEFAULTS.cover },
-				...parseSettings(kv.get(KEY, {}))
-			};
-		} catch {
-			return {
-				...DEFAULTS,
-				cover: { ...DEFAULTS.cover }
-			};
-		}
-	}
-	function saveSettings(kv, settings) {
-		try {
-			kv.set(KEY, {
-				...settings,
-				cover: { ...settings.cover }
-			});
-		} catch {}
-	}
-	function gmKV() {
-		if (typeof GM_getValue === "function" && typeof GM_setValue === "function") return {
-			get: (k, d) => GM_getValue(k, d),
-			set: (k, v) => GM_setValue(k, v)
-		};
-		return {
-			get: (k, d) => {
-				const raw = localStorage.getItem(k);
-				return raw === null ? d : JSON.parse(raw);
-			},
-			set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
-		};
-	}
-	function sanitizeSettings(s) {
-		const parsed = parseSettings(s);
-		const cover = parsed.cover ?? (s.cover?.mode === "seconds" ? {
-			mode: "seconds",
-			value: 30
-		} : { ...DEFAULTS.cover });
-		return {
-			...DEFAULTS,
-			...parsed,
-			cover
-		};
-	}
 	var MB = 1048576;
 	var GB = 1024 * MB;
 	var CacheManager = class {
@@ -33426,6 +34243,7 @@
 				folderInfo.setAccount(uid);
 				collections.setAccount(uid);
 				targets.setAccount(uid);
+				cloudSync.setAccount(uid);
 				queue.setAccount(uid);
 				copyTasks.setAccount(uid);
 				flow.cancel();
@@ -33664,8 +34482,50 @@
 			pinned: (cid) => targets.has(cid),
 			onPinTarget: (cid, path) => void targets.add(cid, path).then((ok) => toast(ok ? "已加入常用复制目标" : "已加入，但保存失败，仅本页保留"))
 		});
+		const SYNC_DIR_KEY = "g115.syncDir";
+		const cloudSync = new CloudSync({
+			fetchJson,
+			postForm,
+			upload: (cid, name, text) => uploadText(cid, name, text),
+			readText: (pickCode) => readText(fetchJson, pickCode),
+			store: userStore,
+			collections,
+			targets,
+			account: () => ({
+				uid: browser.state.uid,
+				confirmed: browser.state.confirmed
+			}),
+			enabled: () => settings.cloudSync,
+			onRisk,
+			dirCache: {
+				get: (uid) => {
+					const all = safeGet(kv, SYNC_DIR_KEY);
+					return all && typeof all === "object" ? String(all[uid] ?? "") : "";
+				},
+				set: (uid, cid) => {
+					const all = safeGet(kv, SYNC_DIR_KEY);
+					safeSet(kv, SYNC_DIR_KEY, {
+						...all && typeof all === "object" ? all : {},
+						[uid]: cid
+					});
+				}
+			},
+			locks: typeof navigator !== "undefined" && navigator.locks ? { request: async (name, cb) => {
+				await navigator.locks.request(name, cb);
+			} } : void 0
+		});
+		collections.onCommit((uid, prev, next) => cloudSync.recordLocal("collections", uid, prev, next));
+		targets.onCommit((uid, prev, next) => cloudSync.recordLocal("targets", uid, prev, next));
+		watch(() => settings.cloudSync, () => cloudSync.onToggle());
+		win.addEventListener("focus", () => {
+			if (ui.open) cloudSync.onFocus();
+		});
+		win.document.addEventListener("visibilitychange", () => {
+			if (ui.open && win.document.visibilityState === "visible") cloudSync.onFocus();
+		});
 		collections.setAccount(browser.state.uid);
 		targets.setAccount(browser.state.uid);
+		cloudSync.setAccount(browser.state.uid);
 		queue.setAccount(browser.state.uid);
 		copyTasks.setAccount(browser.state.uid);
 		loadMarks(browser.state.uid);
@@ -33739,6 +34599,7 @@
 			collections,
 			collectionUi,
 			targets,
+			cloudSync,
 			queue,
 			copyTasks,
 			flow,
@@ -33765,7 +34626,9 @@
 				win.document.documentElement.style.overflow = "hidden";
 				router.openOverlay(cid);
 				browser.open(cid).then(() => {
-					if (ui.open) favorites.load();
+					if (!ui.open) return;
+					favorites.load();
+					cloudSync.sync();
 				});
 			},
 			close() {
@@ -33879,7 +34742,7 @@
 		win.document.documentElement.appendChild(host);
 		const shadow = host.attachShadow({ mode: "open" });
 		const style = win.document.createElement("style");
-		style.textContent = `${cloudflow_default}\n${photoswipe_default}\n${gallery_default}\n${collections_default}`;
+		style.textContent = `${cloudflow_default}\n${photoswipe_default}\n${gallery_default}\n${collections_default}\n${drawers_default}`;
 		shadow.appendChild(style);
 		const container = win.document.createElement("div");
 		shadow.appendChild(container);
