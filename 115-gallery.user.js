@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.4.0
+// @version      0.4.1
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -10629,7 +10629,7 @@
 			this.final = final;
 		}
 	};
-	function sameName(found, source) {
+	function sameName$1(found, source) {
 		return found === source || baseName(found) === source;
 	}
 	var CopyTasks = class {
@@ -10939,7 +10939,7 @@
 				const knownFolders = new Set(task.knownFolders);
 				const [files, folders] = await Promise.all([pending.some((i) => i.src.kind !== "folder") ? this.newest(task.target.cid, false, knownFiles) : Promise.resolve([]), pending.some((i) => i.src.kind === "folder") ? this.newest(task.target.cid, true, knownFolders) : Promise.resolve([])]);
 				const used = new Set();
-				const claim = (it) => files.find((f) => !used.has(f.id) && (it.src.sha1 ? f.sha1?.toUpperCase() === it.src.sha1.toUpperCase() : sameName(f.name, it.src.name)));
+				const claim = (it) => files.find((f) => !used.has(f.id) && (it.src.sha1 ? f.sha1?.toUpperCase() === it.src.sha1.toUpperCase() : sameName$1(f.name, it.src.name)));
 				for (const it of pending.filter((i) => i.src.kind !== "folder")) {
 					const hit = claim(it);
 					if (hit) used.add(hit.id);
@@ -10966,7 +10966,7 @@
 					let dest = it.newId ? folders.find((f) => f.id === it.newId) ?? { id: it.newId } : void 0;
 					if (!dest) {
 						const at = freeFolders.findIndex((f) => f.name === it.src.name);
-						const loose = at >= 0 ? at : freeFolders.findIndex((f) => sameName(f.name, it.src.name));
+						const loose = at >= 0 ? at : freeFolders.findIndex((f) => sameName$1(f.name, it.src.name));
 						if (loose >= 0) dest = freeFolders.splice(loose, 1)[0];
 					}
 					if (!dest) {
@@ -13054,7 +13054,8 @@
 		const r = v;
 		return !!r && typeof r.cid === "string" && !!r.cid && Array.isArray(r.path) && Number.isFinite(r.addedAt);
 	}
-	var SYNC_DIR = ["box", "115-gallery配置"];
+	var SYNC_DIR = ["box", "115-gallery 配置"];
+	var sameName = (a, b) => a.replace(/\s+/g, "") === b.replace(/\s+/g, "");
 	var SYNC_FILE = "g115-sync.json";
 	var SYNC_DIR_TEXT = `/${SYNC_DIR.join("/")}/${SYNC_FILE}`;
 	var PUSH_DELAY = 2e3;
@@ -13256,7 +13257,7 @@
 					foldersOnly: true
 				});
 				const names = (page.path ?? []).filter((p) => p.id !== "0").map((p) => p.name);
-				return page.path?.[page.path.length - 1]?.id === cid && names.join("/") === SYNC_DIR.join("/");
+				return page.path?.[page.path.length - 1]?.id === cid && names.length === SYNC_DIR.length && names.every((n, i) => sameName(n, SYNC_DIR[i]));
 			} catch (e) {
 				if (e instanceof RiskControlError) throw e;
 				return false;
@@ -13271,7 +13272,7 @@
 					limit: 200,
 					foldersOnly: true
 				});
-				const hit = page.items.find((it) => it.kind === "folder" && it.name === name);
+				const hit = page.items.find((it) => it.kind === "folder" && sameName(it.name, name));
 				if (hit) return hit.id;
 				if (!page.hasMore) return "";
 				offset = page.nextOffset;
