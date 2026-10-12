@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.0
+// @version      0.5.1
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -5493,7 +5493,7 @@
 		const mtime = num(raw.te);
 		if (mtime !== void 0) item.mtime = mtime;
 		if (kind === "video") {
-			item.transcoded = num(raw.iv) === 1;
+			item.transcoded = (num(raw.vdi) ?? 0) > 0;
 			const duration = num(raw.play_long);
 			if (duration !== void 0) item.duration = duration;
 			const quality = num(raw.vdi);
@@ -6670,13 +6670,14 @@
 			ok(await post(BATCH_PUSH_URL, { file_ids: fileIds.slice(i, i + 50).join(",") }));
 		}
 	}
+	var isRisk = (b) => [
+		b.code,
+		b.errno,
+		b.msg_code
+	].some((code) => Number(code) === 911);
 	function parseTranscodeStatus(body) {
 		const b = body ?? {};
-		if ([
-			b.code,
-			b.errno,
-			b.msg_code
-		].some((code) => Number(code) === 911)) throw new RiskControlError();
+		if (isRisk(b)) throw new RiskControlError();
 		if (Number(b.result) !== 0) return { kind: "unknown" };
 		const status = Number(b.status);
 		if (status === 1 || status === 3) return {
@@ -6684,10 +6685,12 @@
 			queue: Number(b.count) || 0,
 			seconds: Number(b.time) || 0
 		};
-		if (status === 127) return { kind: "failed" };
-		return { kind: "done" };
+		return { kind: "unknown" };
 	}
-	async function checkTranscode(post, sha1) {
+	async function checkTranscode(fetchJson, post, pickcode, sha1) {
+		const v = await fetchJson(`https://webapi.115.com/files/video?pickcode=${encodeURIComponent(pickcode)}`) ?? {};
+		if (isRisk(v)) throw new RiskControlError();
+		if (Number(v.file_status) === 1) return { kind: "done" };
 		return parseTranscodeStatus(await post(`${CHECK_URL}?sha1=${encodeURIComponent(sha1)}`, { fid: sha1 }));
 	}
 	var transcodable = (i) => i.kind === "video" && i.transcoded === false && !!i.pickCode && !!i.sha1;
@@ -6734,7 +6737,6 @@
 			const list = items.filter(transcodable).filter((i) => this.state[i.id]?.kind !== "pushing");
 			const result = {
 				submitted: 0,
-				failed: 0,
 				done: 0,
 				skipped: items.length - list.length
 			};
@@ -6746,10 +6748,7 @@
 				const todo = [];
 				list.forEach((item, k) => {
 					const status = statuses[k];
-					if (status.kind === "failed") {
-						this.state[item.id] = { kind: "failed" };
-						result.failed++;
-					} else if (status.kind === "done") {
+					if (status.kind === "done") {
 						this.apply(item, status);
 						result.done++;
 					} else todo.push(item);
@@ -6792,9 +6791,6 @@
 			if (s.kind === "queued") {
 				this.state[item.id] = s;
 				this.watch(item);
-			} else if (s.kind === "failed") {
-				this.state[item.id] = { kind: "failed" };
-				this.watching.delete(item.id);
 			} else if (s.kind === "done") {
 				this.state[item.id] = { kind: "done" };
 				this.watching.delete(item.id);
@@ -6809,7 +6805,7 @@
 			for (const i of items) {
 				this.assertReady(generation);
 				try {
-					const status = await checkTranscode(this.deps.postJson, i.sha1);
+					const status = await checkTranscode(this.deps.fetchJson, this.deps.postJson, i.pickCode, i.sha1);
 					this.assertReady(generation);
 					out.push(status);
 				} catch (e) {
@@ -6864,7 +6860,6 @@
 				const min = Math.max(1, Math.round(v.seconds / 60));
 				return v.queue > 0 ? `转码排队中 · 前面 ${v.queue} 个 · 约 ${min} 分钟` : `转码中 · 约 ${min} 分钟`;
 			}
-			case "failed": return "转码失败（115 无法转码此文件）";
 			case "done": return "转码完成";
 			case "submitted": return "已提交转码";
 			case "error": return `提交失败：${v.message}`;
@@ -31653,7 +31648,6 @@
 						return;
 					}
 					const parts = [r.submitted ? `已提交 ${r.submitted} 个` : "没有提交"];
-					if (r.failed) parts.push(`${r.failed} 个 115 无法转码`);
 					if (r.done) parts.push(`${r.done} 个已转好`);
 					props.ctrl.toast(parts.join("，"));
 				} catch (e) {
@@ -34783,6 +34777,7 @@
 		};
 		const transcode = platform.createTranscode?.({ refresh: refreshTranscoded }) ?? new TranscodeService({
 			post: postForm,
+			fetchJson,
 			postJson,
 			refresh: refreshTranscoded,
 			onRisk: () => browser.reportRisk(),
