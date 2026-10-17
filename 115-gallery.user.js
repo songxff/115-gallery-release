@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.2
+// @version      0.5.3
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -13029,8 +13029,6 @@
 			};
 		}
 	});
-	var KEY$2 = "g115.riskLog";
-	var WINDOW = 6e4;
 	var PARAMS = [
 		"cid",
 		"offset",
@@ -13057,9 +13055,12 @@
 			};
 		}
 	}
+	var KEY$2 = "g115.riskLog";
+	var WINDOW = 6e4;
 	var isRisk = (body) => {
 		if (!body || typeof body !== "object") return false;
 		const b = body;
+		if (b.g115 !== void 0) return false;
 		return [
 			b.code,
 			b.errNo,
@@ -14104,39 +14105,47 @@
 		key: 0,
 		class: "g115-kv g115-warn"
 	};
-	var _hoisted_60 = { class: "g115-kv" };
+	var _hoisted_60 = {
+		key: 1,
+		class: "g115-kv g115-warn"
+	};
 	var _hoisted_61 = { class: "g115-kv-val" };
-	var _hoisted_62 = { key: 1 };
-	var _hoisted_63 = { class: "g115-kv" };
-	var _hoisted_64 = { class: "g115-kv-val" };
-	var _hoisted_65 = { key: 0 };
-	var _hoisted_66 = {
+	var _hoisted_62 = { class: "g115-kv" };
+	var _hoisted_63 = { class: "g115-kv-val" };
+	var _hoisted_64 = { key: 2 };
+	var _hoisted_65 = { class: "g115-kv" };
+	var _hoisted_66 = { class: "g115-kv-val" };
+	var _hoisted_67 = { key: 0 };
+	var _hoisted_68 = {
 		key: 2,
 		class: "g115-err"
 	};
-	var _hoisted_67 = { class: "g115-kv" };
-	var _hoisted_68 = {
+	var _hoisted_69 = { class: "g115-kv" };
+	var _hoisted_70 = {
 		key: 0,
 		class: "g115-kv-val"
 	};
-	var _hoisted_69 = {
+	var _hoisted_71 = {
 		key: 1,
 		class: "g115-kv-val"
 	};
-	var _hoisted_70 = { key: 3 };
-	var _hoisted_71 = { class: "g115-cache-btns" };
-	var _hoisted_72 = { class: "row g115-stack" };
-	var _hoisted_73 = { key: 0 };
-	var _hoisted_74 = { key: 1 };
-	var _hoisted_75 = { class: "g115-cache-btns" };
-	var _hoisted_76 = { class: "row g115-stack" };
-	var _hoisted_77 = { class: "lab" };
-	var _hoisted_78 = { key: 0 };
-	var _hoisted_79 = {
+	var _hoisted_72 = { key: 3 };
+	var _hoisted_73 = { class: "g115-cache-btns" };
+	var _hoisted_74 = { class: "row g115-stack" };
+	var _hoisted_75 = { key: 0 };
+	var _hoisted_76 = { key: 1 };
+	var _hoisted_77 = { class: "g115-cache-btns" };
+	var _hoisted_78 = {
+		key: 2,
+		class: "row g115-stack"
+	};
+	var _hoisted_79 = { class: "lab" };
+	var _hoisted_80 = { key: 0 };
+	var _hoisted_81 = {
 		key: 1,
 		class: "g115-risk-list"
 	};
-	var _hoisted_80 = {
+	var _hoisted_82 = {
 		key: 2,
 		class: "g115-cache-btns"
 	};
@@ -14194,6 +14203,7 @@
 				ctrl.toast("已清空记住的阅读位置");
 			}
 			const cacheStats = ref(null);
+			const statsFailed = ref(false);
 			const storageText = ref("");
 			const confirming = ref("");
 			async function loadCacheStats() {
@@ -14201,7 +14211,11 @@
 					serverStats.value = await ctrl.platform.serverCache.stats().catch(() => null);
 					if (serverStats.value) serverLimitGB.value = Math.round(serverStats.value.maxBytes / 1024 ** 3);
 				}
-				cacheStats.value = await ctrl.caches.stats().catch(() => null);
+				statsFailed.value = false;
+				cacheStats.value = await ctrl.caches.stats().catch(() => {
+					statsFailed.value = true;
+					return null;
+				});
 				try {
 					const est = await navigator.storage?.estimate?.();
 					storageText.value = est?.quota ? `${formatSize(est.usage ?? 0)} / ${formatSize(est.quota)}` : "";
@@ -14275,30 +14289,30 @@
 						onClick: ($event) => unref(ui).settingsTab = t.id
 					}, toDisplayString(t.label), 11, _hoisted_3$11);
 				}), 64))]), platformTab.value ? (openBlock(), createElementBlock("div", _hoisted_4$10, [(openBlock(), createBlock(resolveDynamicComponent(platformTab.value.component)))])) : unref(ui).settingsTab === "view" ? (openBlock(), createElementBlock("div", _hoisted_5$9, [
-					createBaseVNode("div", _hoisted_6$7, [_cache[30] || (_cache[30] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_7$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
+					createBaseVNode("div", _hoisted_6$7, [_cache[32] || (_cache[32] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_7$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
 						return createBaseVNode("button", {
 							key: sz,
 							class: normalizeClass({ active: unref(settings).thumbnailSize === sz }),
 							onClick: ($event) => unref(settings).thumbnailSize = sz
 						}, toDisplayString(sz), 11, _hoisted_8$6);
 					}), 64))])]),
-					createBaseVNode("label", _hoisted_9$6, [_cache[31] || (_cache[31] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_9$6, [_cache[33] || (_cache[33] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => unref(settings).showFilename = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showFilename]])]),
-					createBaseVNode("label", _hoisted_10$5, [_cache[32] || (_cache[32] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_10$5, [_cache[34] || (_cache[34] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => unref(settings).showTags = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showTags]])]),
-					createBaseVNode("label", _hoisted_11$3, [_cache[33] || (_cache[33] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_11$3, [_cache[35] || (_cache[35] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => unref(settings).mobileOptimize = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).mobileOptimize]])]),
-					createBaseVNode("label", _hoisted_12$2, [_cache[34] || (_cache[34] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_12$2, [_cache[36] || (_cache[36] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => unref(settings).viewerStrip = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).viewerStrip]])]),
-					createBaseVNode("div", _hoisted_13$2, [createBaseVNode("span", _hoisted_14$2, [_cache[35] || (_cache[35] = createBaseVNode("b", null, "记住阅读位置", -1)), createBaseVNode("small", null, "开启后下次打开同一目录回到上次看到的位置；关闭时只在本次打开期间返回上级保留位置" + toDisplayString(savedPositions.value ? `（已记住 ${savedPositions.value} 个目录）` : ""), 1)]), createBaseVNode("span", _hoisted_15$1, [savedPositions.value ? (openBlock(), createElementBlock("button", {
+					createBaseVNode("div", _hoisted_13$2, [createBaseVNode("span", _hoisted_14$2, [_cache[37] || (_cache[37] = createBaseVNode("b", null, "记住阅读位置", -1)), createBaseVNode("small", null, "开启后下次打开同一目录回到上次看到的位置；关闭时只在本次打开期间返回上级保留位置" + toDisplayString(savedPositions.value ? `（已记住 ${savedPositions.value} 个目录）` : ""), 1)]), createBaseVNode("span", _hoisted_15$1, [savedPositions.value ? (openBlock(), createElementBlock("button", {
 						key: 0,
 						class: "btn",
 						onClick: clearPositions
@@ -14307,15 +14321,15 @@
 						type: "checkbox",
 						"aria-label": "记住阅读位置"
 					}, null, 512), [[vModelCheckbox, unref(settings).rememberPosition]])])]),
-					_cache[43] || (_cache[43] = createBaseVNode("h4", { class: "g115-set-sub" }, "两侧抽屉", -1)),
-					createBaseVNode("div", _hoisted_16$1, [_cache[36] || (_cache[36] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "弹出方式"), createBaseVNode("small", null, "收藏、合集、待复制、目录按钮统一；悬停时点一下按钮可钉住不收起。触屏总是点击")], -1)), createBaseVNode("div", _hoisted_17$1, [createBaseVNode("button", {
+					_cache[45] || (_cache[45] = createBaseVNode("h4", { class: "g115-set-sub" }, "两侧抽屉", -1)),
+					createBaseVNode("div", _hoisted_16$1, [_cache[38] || (_cache[38] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "弹出方式"), createBaseVNode("small", null, "收藏、合集、待复制、目录按钮统一；悬停时点一下按钮可钉住不收起。触屏总是点击")], -1)), createBaseVNode("div", _hoisted_17$1, [createBaseVNode("button", {
 						class: normalizeClass({ active: unref(settings).drawerTrigger === "hover" }),
 						onClick: _cache[5] || (_cache[5] = ($event) => unref(settings).drawerTrigger = "hover")
 					}, "鼠标悬停", 2), createBaseVNode("button", {
 						class: normalizeClass({ active: unref(settings).drawerTrigger === "click" }),
 						onClick: _cache[6] || (_cache[6] = ($event) => unref(settings).drawerTrigger = "click")
 					}, "点击", 2)])]),
-					createBaseVNode("div", _hoisted_18$1, [createBaseVNode("span", _hoisted_19$1, [_cache[37] || (_cache[37] = createBaseVNode("b", null, "左侧抽屉（收藏 / 合集）", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_20$1, [
+					createBaseVNode("div", _hoisted_18$1, [createBaseVNode("span", _hoisted_19$1, [_cache[39] || (_cache[39] = createBaseVNode("b", null, "左侧抽屉（收藏 / 合集）", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_20$1, [
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => unref(settings).railWidth = $event),
 							class: "inp",
@@ -14333,7 +14347,7 @@
 								number: true
 							}
 						]]),
-						_cache[38] || (_cache[38] = createBaseVNode("span", null, "px", -1)),
+						_cache[40] || (_cache[40] = createBaseVNode("span", null, "px", -1)),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => unref(settings).railFont = $event),
 							class: "inp",
@@ -14351,9 +14365,9 @@
 								number: true
 							}
 						]]),
-						_cache[39] || (_cache[39] = createBaseVNode("span", null, "字号", -1))
+						_cache[41] || (_cache[41] = createBaseVNode("span", null, "字号", -1))
 					])]),
-					createBaseVNode("div", _hoisted_23$1, [createBaseVNode("span", _hoisted_24$1, [_cache[40] || (_cache[40] = createBaseVNode("b", null, "右侧目录树", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_25$1, [
+					createBaseVNode("div", _hoisted_23$1, [createBaseVNode("span", _hoisted_24$1, [_cache[42] || (_cache[42] = createBaseVNode("b", null, "右侧目录树", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_25$1, [
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => unref(settings).treeWidth = $event),
 							class: "inp",
@@ -14371,7 +14385,7 @@
 								number: true
 							}
 						]]),
-						_cache[41] || (_cache[41] = createBaseVNode("span", null, "px", -1)),
+						_cache[43] || (_cache[43] = createBaseVNode("span", null, "px", -1)),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => unref(settings).treeFont = $event),
 							class: "inp",
@@ -14389,19 +14403,19 @@
 								number: true
 							}
 						]]),
-						_cache[42] || (_cache[42] = createBaseVNode("span", null, "字号", -1))
+						_cache[44] || (_cache[44] = createBaseVNode("span", null, "字号", -1))
 					])]),
 					createBaseVNode("div", { class: "g115-cache-btns" }, [createBaseVNode("button", {
 						class: "btn",
 						onClick: resetDrawers
 					}, "恢复默认大小")])
 				])) : unref(ui).settingsTab === "video" ? (openBlock(), createElementBlock("div", _hoisted_28$1, [
-					createBaseVNode("div", _hoisted_29$1, [createBaseVNode("span", _hoisted_30$1, [_cache[44] || (_cache[44] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_31$1, [
+					createBaseVNode("div", _hoisted_29$1, [createBaseVNode("span", _hoisted_30$1, [_cache[46] || (_cache[46] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_31$1, [
 						withDirectives(createBaseVNode("select", {
 							"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => unref(settings).cover.mode = $event),
 							"aria-label": "封面取帧方式",
 							onChange: _cache[12] || (_cache[12] = ($event) => unref(settings).cover.value = unref(settings).cover.mode === "percent" ? 25 : 30)
-						}, [..._cache[45] || (_cache[45] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
+						}, [..._cache[47] || (_cache[47] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => unref(settings).cover.value = $event),
 							class: "inp",
@@ -14420,15 +14434,15 @@
 						]]),
 						createBaseVNode("span", null, toDisplayString(unref(settings).cover.mode === "percent" ? "%" : "秒"), 1)
 					])]),
-					rawPlayback ? (openBlock(), createElementBlock("div", _hoisted_33, [..._cache[46] || (_cache[46] = [createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "视频播放器"), createBaseVNode("small", null, "自带播放器：已转码的经服务器转发，未转码的直连原文件；浏览器播不了时可以提交转码或用外部播放器（播放器右上角 ↗）")], -1)])])) : (openBlock(), createElementBlock("div", _hoisted_34, [createBaseVNode("span", _hoisted_35, [_cache[47] || (_cache[47] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_36, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_37, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_38, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("select", {
+					rawPlayback ? (openBlock(), createElementBlock("div", _hoisted_33, [..._cache[48] || (_cache[48] = [createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "视频播放器"), createBaseVNode("small", null, "自带播放器：已转码的经服务器转发，未转码的直连原文件；浏览器播不了时可以提交转码或用外部播放器（播放器右上角 ↗）")], -1)])])) : (openBlock(), createElementBlock("div", _hoisted_34, [createBaseVNode("span", _hoisted_35, [_cache[49] || (_cache[49] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_36, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_37, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_38, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("select", {
 						"onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => unref(settings).player = $event),
 						"aria-label": "视频播放器"
-					}, [..._cache[48] || (_cache[48] = [
+					}, [..._cache[50] || (_cache[50] = [
 						createBaseVNode("option", { value: "lite" }, "自带播放器", -1),
 						createBaseVNode("option", { value: "master" }, "115Master", -1),
 						createBaseVNode("option", { value: "official" }, "官方播放页", -1)
 					])], 512), [[vModelSelect, unref(settings).player]])])])),
-					createBaseVNode("div", _hoisted_40, [_cache[50] || (_cache[50] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_41, [withDirectives(createBaseVNode("input", {
+					createBaseVNode("div", _hoisted_40, [_cache[52] || (_cache[52] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_41, [withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => unref(settings).seekSeconds = $event),
 						class: "inp",
 						type: "number",
@@ -14444,17 +14458,17 @@
 							lazy: true,
 							number: true
 						}
-					]]), _cache[49] || (_cache[49] = createBaseVNode("span", null, "秒", -1))])]),
-					createBaseVNode("label", _hoisted_42, [_cache[51] || (_cache[51] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
+					]]), _cache[51] || (_cache[51] = createBaseVNode("span", null, "秒", -1))])]),
+					createBaseVNode("label", _hoisted_42, [_cache[53] || (_cache[53] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => unref(settings).playlistPinned = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).playlistPinned]])])
 				])) : unref(ui).settingsTab === "collections" ? (openBlock(), createElementBlock("div", _hoisted_43, [createVNode(CollectionSettings_default)])) : (openBlock(), createElementBlock("div", _hoisted_44, [
 					!unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_45, [
-						_cache[55] || (_cache[55] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存（服务器）"), createBaseVNode("small", null, "缩略图和视频帧图存在服务器上，所有设备共用；超出上限后按最久未看的先删")], -1)),
-						createBaseVNode("div", _hoisted_46, [_cache[52] || (_cache[52] = createBaseVNode("span", null, "已用", -1)), serverStats.value ? (openBlock(), createElementBlock("span", _hoisted_47, toDisplayString(unref(formatSize)(serverStats.value.bytes)) + " / " + toDisplayString(unref(formatSize)(serverStats.value.maxBytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_48, "读取中…"))]),
+						_cache[57] || (_cache[57] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存（服务器）"), createBaseVNode("small", null, "缩略图和视频帧图存在服务器上，所有设备共用；超出上限后按最久未看的先删")], -1)),
+						createBaseVNode("div", _hoisted_46, [_cache[54] || (_cache[54] = createBaseVNode("span", null, "已用", -1)), serverStats.value ? (openBlock(), createElementBlock("span", _hoisted_47, toDisplayString(unref(formatSize)(serverStats.value.bytes)) + " / " + toDisplayString(unref(formatSize)(serverStats.value.maxBytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_48, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
 						serverStats.value ? (openBlock(), createElementBlock("small", _hoisted_49, "缩略图 " + toDisplayString(serverStats.value.kinds.thumb.count) + " 张 · " + toDisplayString(unref(formatSize)(serverStats.value.kinds.thumb.bytes)) + "；帧图 " + toDisplayString(serverStats.value.kinds.frame.count) + " 张 · " + toDisplayString(unref(formatSize)(serverStats.value.kinds.frame.bytes)), 1)) : createCommentVNode("", true),
-						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_50, [_cache[54] || (_cache[54] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_51, [withDirectives(createBaseVNode("input", {
+						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_50, [_cache[56] || (_cache[56] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_51, [withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => serverLimitGB.value = $event),
 							class: "inp",
 							type: "number",
@@ -14471,7 +14485,7 @@
 								lazy: true,
 								number: true
 							}
-						]]), _cache[53] || (_cache[53] = createTextVNode("GB", -1))])])) : createCommentVNode("", true),
+						]]), _cache[55] || (_cache[55] = createTextVNode("GB", -1))])])) : createCommentVNode("", true),
 						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_52, [createBaseVNode("button", {
 							class: "btn",
 							onClick: _cache[18] || (_cache[18] = ($event) => clearServer("thumb"))
@@ -14481,30 +14495,37 @@
 						}, toDisplayString(confirming.value === "srv-frame" ? "确认清空（所有设备）" : "清空帧图"), 1)])) : createCommentVNode("", true)
 					])) : createCommentVNode("", true),
 					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_53, [
-						_cache[66] || (_cache[66] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
+						_cache[69] || (_cache[69] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
 						createBaseVNode("div", _hoisted_54, [createBaseVNode("label", null, [createBaseVNode("input", {
 							type: "radio",
 							name: "g115-loc",
 							checked: unref(settings).cacheLocation === "browser",
 							onChange: _cache[20] || (_cache[20] = ($event) => chooseLocation("browser"))
-						}, null, 40, _hoisted_55), _cache[56] || (_cache[56] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
+						}, null, 40, _hoisted_55), _cache[58] || (_cache[58] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
 							type: "radio",
 							name: "g115-loc",
 							disabled: !unref(fc).supported,
 							checked: unref(settings).cacheLocation === "folder",
 							onChange: _cache[21] || (_cache[21] = ($event) => chooseLocation("folder"))
-						}, null, 40, _hoisted_56), _cache[57] || (_cache[57] = createTextVNode("本地文件夹", -1))], 2)]),
+						}, null, 40, _hoisted_56), _cache[59] || (_cache[59] = createTextVNode("本地文件夹", -1))], 2)]),
 						unref(settings).cacheLocation === "folder" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-							createBaseVNode("div", _hoisted_57, [_cache[58] || (_cache[58] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_58, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
+							createBaseVNode("div", _hoisted_57, [_cache[60] || (_cache[60] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_58, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
 								class: "btn",
 								onClick: _cache[22] || (_cache[22] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
 							}, toDisplayString(unref(fc).name ? "更换" : "选择"), 1)])]),
-							unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_59, [_cache[59] || (_cache[59] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
+							unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_59, [_cache[61] || (_cache[61] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
 								class: "btn primary",
 								onClick: _cache[23] || (_cache[23] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
 							}, "授权")])) : createCommentVNode("", true),
-							createBaseVNode("div", _hoisted_60, [_cache[61] || (_cache[61] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_61, [withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[24] || (_cache[24] = ($event) => unref(settings).folderCacheGB = $event),
+							unref(fc).status === "unavailable" ? (openBlock(), createElementBlock("div", _hoisted_60, [_cache[62] || (_cache[62] = createBaseVNode("span", null, "文件夹不可用（可能已被删除或移动），暂存在浏览器内", -1)), createBaseVNode("span", _hoisted_61, [createBaseVNode("button", {
+								class: "btn primary",
+								onClick: _cache[24] || (_cache[24] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
+							}, "重试"), createBaseVNode("button", {
+								class: "btn",
+								onClick: _cache[25] || (_cache[25] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
+							}, "重新选择")])])) : createCommentVNode("", true),
+							createBaseVNode("div", _hoisted_62, [_cache[64] || (_cache[64] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_63, [withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => unref(settings).folderCacheGB = $event),
 								class: "inp",
 								type: "number",
 								min: "1",
@@ -14519,12 +14540,12 @@
 									lazy: true,
 									number: true
 								}
-							]]), _cache[60] || (_cache[60] = createTextVNode("GB", -1))])]),
-							_cache[62] || (_cache[62] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
-							unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_62, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
+							]]), _cache[63] || (_cache[63] = createTextVNode("GB", -1))])]),
+							_cache[65] || (_cache[65] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
+							unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_64, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
 						], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-							createBaseVNode("div", _hoisted_63, [_cache[64] || (_cache[64] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_64, [withDirectives(createBaseVNode("input", {
-								"onUpdate:modelValue": _cache[25] || (_cache[25] = ($event) => unref(settings).frameCacheMB = $event),
+							createBaseVNode("div", _hoisted_65, [_cache[67] || (_cache[67] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_66, [withDirectives(createBaseVNode("input", {
+								"onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => unref(settings).frameCacheMB = $event),
 								class: "inp",
 								type: "number",
 								min: "50",
@@ -14539,33 +14560,33 @@
 									lazy: true,
 									number: true
 								}
-							]]), _cache[63] || (_cache[63] = createTextVNode("MB", -1))])]),
+							]]), _cache[66] || (_cache[66] = createTextVNode("MB", -1))])]),
 							createBaseVNode("small", null, "换浏览器不共享" + toDisplayString(unref(fc).persisted ? "；已开启持久存储，磁盘紧张时浏览器不会自动清理" : ""), 1),
-							!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_65, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
+							!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_67, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
 						], 64)),
-						unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_66, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_67, [_cache[65] || (_cache[65] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_68, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_69, "读取中…"))]),
-						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_70, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_71, [createBaseVNode("button", {
+						unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_68, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
+						createBaseVNode("div", _hoisted_69, [_cache[68] || (_cache[68] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_70, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_71, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
+						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_72, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
+						createBaseVNode("div", _hoisted_73, [createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[26] || (_cache[26] = ($event) => clearCache("thumbs"))
+							onClick: _cache[28] || (_cache[28] = ($event) => clearCache("thumbs"))
 						}, toDisplayString(confirming.value === "thumbs" ? "确认清空缩略图" : "清空缩略图"), 1), createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[27] || (_cache[27] = ($event) => clearCache("frames"))
+							onClick: _cache[29] || (_cache[29] = ($event) => clearCache("frames"))
 						}, toDisplayString(confirming.value === "frames" ? "确认清空帧图" : "清空帧图"), 1)])
 					])) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_72, [
-						_cache[67] || (_cache[67] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
-						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_73, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
-						storageText.value ? (openBlock(), createElementBlock("small", _hoisted_74, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_75, [createBaseVNode("button", {
+					createBaseVNode("div", _hoisted_74, [
+						_cache[70] || (_cache[70] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
+						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_75, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
+						storageText.value ? (openBlock(), createElementBlock("small", _hoisted_76, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
+						createBaseVNode("div", _hoisted_77, [createBaseVNode("button", {
 							class: "btn danger",
-							onClick: _cache[28] || (_cache[28] = ($event) => clearCache("all"))
+							onClick: _cache[30] || (_cache[30] = ($event) => clearCache("all"))
 						}, toDisplayString(confirming.value === "all" ? "确认清空全部缓存" : "清空全部缓存"), 1)])
 					]),
-					createBaseVNode("div", _hoisted_76, [
-						createBaseVNode("span", _hoisted_77, [_cache[68] || (_cache[68] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
-						!risks.value.length ? (openBlock(), createElementBlock("small", _hoisted_78, "还没有记录")) : (openBlock(), createElementBlock("ol", _hoisted_79, [(openBlock(true), createElementBlock(Fragment, null, renderList(risks.value, (r) => {
+					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_78, [
+						createBaseVNode("span", _hoisted_79, [_cache[71] || (_cache[71] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
+						!risks.value.length ? (openBlock(), createElementBlock("small", _hoisted_80, "还没有记录")) : (openBlock(), createElementBlock("ol", _hoisted_81, [(openBlock(true), createElementBlock(Fragment, null, renderList(risks.value, (r) => {
 							return openBlock(), createElementBlock("li", { key: r.at }, [
 								createBaseVNode("b", null, toDisplayString(new Date(r.at).toLocaleString()), 1),
 								createTextVNode(" · " + toDisplayString(r.cat), 1),
@@ -14573,11 +14594,11 @@
 								createBaseVNode("small", null, "1 分钟内：" + toDisplayString(countsText(r.counts)), 1)
 							]);
 						}), 128))])),
-						risks.value.length ? (openBlock(), createElementBlock("div", _hoisted_80, [createBaseVNode("button", {
+						risks.value.length ? (openBlock(), createElementBlock("div", _hoisted_82, [createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[29] || (_cache[29] = ($event) => unref(ctrl).riskLog.clear())
+							onClick: _cache[31] || (_cache[31] = ($event) => unref(ctrl).riskLog.clear())
 						}, "清空记录")])) : createCommentVNode("", true)
-					])
+					])) : createCommentVNode("", true)
 				]))]);
 			};
 		}
@@ -32578,6 +32599,14 @@
 		bmp.close();
 		return size;
 	};
+	var FolderUnavailableError = class extends Error {
+		cause;
+		name = "FolderUnavailableError";
+		constructor(cause) {
+			super(`文件夹不可用：${cause instanceof Error ? cause.message : String(cause)}`);
+			this.cause = cause;
+		}
+	};
 	var isNotFound = (e) => e instanceof DOMException && (e.name === "NotFoundError" || e.name === "TypeMismatchError");
 	function sniffType(bytes) {
 		const b = new Uint8Array(bytes, 0, Math.min(12, bytes.byteLength));
@@ -32642,17 +32671,27 @@
 				return false;
 			}
 		}
+		async probe() {
+			try {
+				await Promise.all([this.sub("frames"), this.sub("thumbs")]);
+				return null;
+			} catch (e) {
+				return e instanceof FolderUnavailableError ? e : new FolderUnavailableError(e);
+			}
+		}
 		setMaxBytes(bytes) {
 			this.maxBytes = Math.max(0, bytes);
 		}
 		async get(key) {
 			if (!SAFE_KEY.test(key)) return void 0;
 			const { kind, name } = fileOf(key);
+			const dir = await this.sub(kind);
 			let file;
 			try {
-				file = await (await (await this.sub(kind)).getFileHandle(name)).getFile();
+				file = await (await dir.getFileHandle(name)).getFile();
 			} catch (e) {
 				if (!isNotFound(e)) throw e;
+				await this.reopen(kind);
 				this.row(key).then((r) => r ? this.dropRow(key) : void 0);
 				return;
 			}
@@ -32687,9 +32726,17 @@
 		async put(key, frame) {
 			if (!SAFE_KEY.test(key)) throw new Error(`非法的缓存键：${key}`);
 			const { kind, name } = fileOf(key);
-			const w = await (await (await this.sub(kind)).getFileHandle(name, { create: true })).createWritable();
-			await w.write(frame.bytes);
-			await w.close();
+			const write = async (dir) => {
+				const w = await (await dir.getFileHandle(name, { create: true })).createWritable();
+				await w.write(frame.bytes);
+				await w.close();
+			};
+			try {
+				await write(await this.sub(kind));
+			} catch (e) {
+				if (!isNotFound(e)) throw e;
+				await write(await this.reopen(kind));
+			}
 			const dims = kind === "frames" ? {
 				w: frame.w,
 				h: frame.h
@@ -32936,10 +32983,17 @@
 		sub(kind) {
 			let p = this.subs.get(kind);
 			if (!p) {
-				p = this.root.getDirectoryHandle(SUBS[kind].dir, { create: true });
+				p = this.root.getDirectoryHandle(SUBS[kind].dir, { create: true }).catch((e) => {
+					this.subs.delete(kind);
+					throw new FolderUnavailableError(e);
+				});
 				this.subs.set(kind, p);
 			}
 			return p;
+		}
+		reopen(kind) {
+			this.subs.delete(kind);
+			return this.sub(kind);
 		}
 		async names(kind) {
 			const dir = await this.sub(kind);
@@ -32971,6 +33025,7 @@
 				error: "",
 				persisted: false
 			});
+			frames.onUnavailable = () => this.unavailable();
 		}
 		async init() {
 			const handle = await this.deps.loadHandle().catch(() => void 0);
@@ -32979,7 +33034,7 @@
 			this.saved = store;
 			this.state.name = store.name;
 			if (!this.enabled()) return;
-			if (await store.hasPermission()) this.use(store);
+			if (await store.hasPermission()) await this.tryUse(store);
 			else this.state.status = "needs-permission";
 		}
 		async useFolder() {
@@ -32992,8 +33047,7 @@
 				this.state.status = "needs-permission";
 				return false;
 			}
-			this.use(store);
-			return true;
+			return this.tryUse(store);
 		}
 		useBrowser() {
 			this.frames.detach();
@@ -33055,6 +33109,21 @@
 				indexName: this.deps.indexName
 			});
 		}
+		async tryUse(store) {
+			if (await store.probe()) {
+				this.frames.detach();
+				this.unavailable();
+				return false;
+			}
+			this.use(store);
+			return true;
+		}
+		unavailable() {
+			Object.assign(this.state, {
+				status: "unavailable",
+				error: ""
+			});
+		}
 		use(store) {
 			this.frames.attach(store);
 			Object.assign(this.state, {
@@ -33098,6 +33167,7 @@
 		idb;
 		dir = null;
 		dirMax;
+		onUnavailable;
 		constructor(idb) {
 			this.idb = idb;
 		}
@@ -33116,22 +33186,22 @@
 			this.dir = null;
 		}
 		get(key) {
-			return this.active().get(key);
+			return this.run((s) => s.get(key));
 		}
 		put(key, frame) {
-			return this.active().put(key, frame);
+			return this.run((s) => s.put(key, frame));
 		}
 		delete(key) {
-			return this.active().delete(key);
+			return this.run((s) => s.delete(key));
 		}
 		prune() {
-			return this.active().prune();
+			return this.run((s) => s.prune());
 		}
 		stats() {
-			return this.active().stats();
+			return this.run((s) => s.stats());
 		}
 		clear(kind) {
-			return this.active().clear(kind);
+			return this.run((s) => s.clear(kind));
 		}
 		setMaxBytes(browserBytes, folderBytes) {
 			this.idb.setMaxBytes(browserBytes);
@@ -33150,8 +33220,20 @@
 			}
 			return copied;
 		}
-		active() {
-			return this.dir ?? this.idb;
+		async run(op) {
+			const dir = this.dir;
+			if (!dir) return op(this.idb);
+			try {
+				return await op(dir);
+			} catch (e) {
+				const broken = e instanceof FolderUnavailableError ? e : await dir.probe();
+				if (!broken) throw e;
+				if (this.dir === dir) {
+					this.dir = null;
+					this.onUnavailable?.(broken);
+				}
+				return op(this.idb);
+			}
 		}
 	};
 	var STORE = "video_cover_cache_v1";
