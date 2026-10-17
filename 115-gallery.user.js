@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.4
+// @version      0.5.5
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -5617,7 +5617,9 @@
 			body: o.body,
 			signal: o.signal ?? AbortSignal.timeout(o.timeout)
 		}).then(async (res) => {
-			const headers = [...res.headers].map(([k, v]) => `${k}: ${v}`).join("\r\n");
+			const lines = [];
+			res.headers.forEach((v, k) => lines.push(`${k}: ${v}`));
+			const headers = lines.join("\r\n");
 			return o.binary ? {
 				status: res.status,
 				headers,
@@ -14868,7 +14870,7 @@
 						}, toDisplayString(confirming.value === "srv-frame" ? "确认清空（所有设备）" : "清空帧图"), 1)])) : createCommentVNode("", true)
 					])) : createCommentVNode("", true),
 					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_53, [
-						_cache[73] || (_cache[73] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
+						_cache[74] || (_cache[74] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
 						createBaseVNode("div", _hoisted_54, [createBaseVNode("label", null, [createBaseVNode("input", {
 							type: "radio",
 							name: "g115-loc",
@@ -14915,9 +14917,10 @@
 								}
 							]]), _cache[67] || (_cache[67] = createTextVNode("GB", -1))])]),
 							_cache[69] || (_cache[69] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
+							_cache[70] || (_cache[70] = createBaseVNode("small", null, "文件夹被删除、移动或改名后读不出来时，会自动改用浏览器内缓存并弹出提示；恢复文件夹后点「重试」，或重新选择一个文件夹", -1)),
 							unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_64, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
 						], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-							createBaseVNode("div", _hoisted_65, [_cache[71] || (_cache[71] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_66, [withDirectives(createBaseVNode("input", {
+							createBaseVNode("div", _hoisted_65, [_cache[72] || (_cache[72] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_66, [withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => unref(settings).frameCacheMB = $event),
 								class: "inp",
 								type: "number",
@@ -14933,12 +14936,12 @@
 									lazy: true,
 									number: true
 								}
-							]]), _cache[70] || (_cache[70] = createTextVNode("MB", -1))])]),
+							]]), _cache[71] || (_cache[71] = createTextVNode("MB", -1))])]),
 							createBaseVNode("small", null, "换浏览器不共享" + toDisplayString(unref(fc).persisted ? "；已开启持久存储，磁盘紧张时浏览器不会自动清理" : ""), 1),
 							!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_67, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
 						], 64)),
 						unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_68, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_69, [_cache[72] || (_cache[72] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_70, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_71, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
+						createBaseVNode("div", _hoisted_69, [_cache[73] || (_cache[73] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_70, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_71, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
 						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_72, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
 						createBaseVNode("div", _hoisted_73, [createBaseVNode("button", {
 							class: "btn",
@@ -14949,7 +14952,7 @@
 						}, toDisplayString(confirming.value === "frames" ? "确认清空帧图" : "清空帧图"), 1)])
 					])) : createCommentVNode("", true),
 					createBaseVNode("div", _hoisted_74, [
-						_cache[74] || (_cache[74] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
+						_cache[75] || (_cache[75] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
 						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_75, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
 						storageText.value ? (openBlock(), createElementBlock("small", _hoisted_76, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
 						createBaseVNode("div", _hoisted_77, [createBaseVNode("button", {
@@ -14958,8 +14961,8 @@
 						}, toDisplayString(confirming.value === "all" ? "确认清空全部缓存" : "清空全部缓存"), 1)])
 					]),
 					unref(lan) ? (openBlock(), createElementBlock("div", _hoisted_78, [
-						_cache[79] || (_cache[79] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "局域网服务器"), createBaseVNode("small", null, "在家里的局域网内时，卡片、目录、缩略图、视频封面先从服务器取，搜索用服务器的全盘索引，减少向 115 的请求；不在局域网时和以前一样")], -1)),
-						createBaseVNode("div", _hoisted_79, [_cache[75] || (_cache[75] = createBaseVNode("span", null, "地址", -1)), withDirectives(createBaseVNode("input", {
+						_cache[80] || (_cache[80] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "局域网服务器"), createBaseVNode("small", null, "在家里的局域网内时，卡片、目录、缩略图、视频封面先从服务器取，搜索用服务器的全盘索引，减少向 115 的请求；不在局域网时和以前一样")], -1)),
+						createBaseVNode("div", _hoisted_79, [_cache[76] || (_cache[76] = createBaseVNode("span", null, "地址", -1)), withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => unref(settings).serverUrl = $event),
 							class: "inp g115-wide",
 							type: "url",
@@ -14971,7 +14974,7 @@
 							void 0,
 							{ lazy: true }
 						]])]),
-						createBaseVNode("div", _hoisted_81, [_cache[76] || (_cache[76] = createBaseVNode("span", null, "访问令牌", -1)), withDirectives(createBaseVNode("input", {
+						createBaseVNode("div", _hoisted_81, [_cache[77] || (_cache[77] = createBaseVNode("span", null, "访问令牌", -1)), withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => unref(settings).serverToken = $event),
 							class: "inp g115-wide",
 							type: "password",
@@ -14984,12 +14987,12 @@
 							void 0,
 							{ lazy: true }
 						]])]),
-						createBaseVNode("label", _hoisted_82, [_cache[77] || (_cache[77] = createBaseVNode("span", null, [createTextVNode("强制使用该地址"), createBaseVNode("small", null, "（不是局域网地址也用，经中转测试时）")], -1)), withDirectives(createBaseVNode("input", {
+						createBaseVNode("label", _hoisted_82, [_cache[78] || (_cache[78] = createBaseVNode("span", null, [createTextVNode("强制使用该地址"), createBaseVNode("small", null, "（不是局域网地址也用，经中转测试时）")], -1)), withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => unref(settings).serverForce = $event),
 							type: "checkbox"
 						}, null, 512), [[vModelCheckbox, unref(settings).serverForce]])]),
 						createBaseVNode("div", _hoisted_83, [
-							_cache[78] || (_cache[78] = createBaseVNode("span", null, "状态", -1)),
+							_cache[79] || (_cache[79] = createBaseVNode("span", null, "状态", -1)),
 							createBaseVNode("span", _hoisted_84, toDisplayString(lanText.value), 1),
 							createBaseVNode("button", {
 								class: "btn",
@@ -14999,7 +15002,7 @@
 						])
 					])) : createCommentVNode("", true),
 					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_86, [
-						createBaseVNode("span", _hoisted_87, [_cache[80] || (_cache[80] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
+						createBaseVNode("span", _hoisted_87, [_cache[81] || (_cache[81] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
 						!risks.value.length ? (openBlock(), createElementBlock("small", _hoisted_88, "还没有记录")) : (openBlock(), createElementBlock("ol", _hoisted_89, [(openBlock(true), createElementBlock(Fragment, null, renderList(risks.value, (r) => {
 							return openBlock(), createElementBlock("li", { key: r.at }, [
 								createBaseVNode("b", null, toDisplayString(new Date(r.at).toLocaleString()), 1),
@@ -33553,10 +33556,12 @@
 			return true;
 		}
 		unavailable() {
+			const first = this.state.status !== "unavailable";
 			Object.assign(this.state, {
 				status: "unavailable",
 				error: ""
 			});
+			if (first) this.deps.onUnavailable?.(this.state.name);
 		}
 		use(store) {
 			this.frames.attach(store);
@@ -35482,7 +35487,8 @@
 			...browserHandleStore,
 			pickDirectory: platform.pickDirectory,
 			maxBytes: () => settings.folderCacheGB * GB,
-			enabled: () => platform.localCache && settings.cacheLocation === "folder"
+			enabled: () => platform.localCache && settings.cacheLocation === "folder",
+			onUnavailable: (name) => notifyLater(`读不出本地缓存文件夹「${name}」（可能已被删除或移动），已改用浏览器内缓存`)
 		});
 		folderCache.init();
 		folderCache.requestPersist();
@@ -35769,6 +35775,16 @@
 		const viewer = { onClose: () => {} };
 		let savedOverflow = "";
 		let toastTimer;
+		let pendingNotice = "";
+		const notifyLater = (text) => {
+			if (ui.open) toast(text, 6e3);
+			else pendingNotice = text;
+		};
+		watch(() => ui.open, (open) => {
+			if (!open || !pendingNotice) return;
+			toast(pendingNotice, 6e3);
+			pendingNotice = "";
+		});
 		const router = new Router(win.history, {
 			onFolder: (cid) => void browser.openFolder(cid),
 			onCloseViewer: () => viewer.onClose(),
@@ -35820,10 +35836,10 @@
 			};
 			router.openViewer();
 		}
-		function toast(text) {
+		function toast(text, ms = 2400) {
 			ui.toast = text;
 			clearTimeout(toastTimer);
-			toastTimer = setTimeout(() => ui.toast = "", 2400);
+			toastTimer = setTimeout(() => ui.toast = "", ms);
 		}
 		return {
 			platform,
