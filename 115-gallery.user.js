@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.3
+// @version      0.5.4
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -13,6 +13,7 @@
 // @connect      aps.115.com
 // @connect      thumb.115.com
 // @connect      115cdn.net
+// @connect      192.168.5.111
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
@@ -5267,6 +5268,7 @@
 		max: 24,
 		def: 14
 	};
+	var DEFAULT_SERVER = "http://192.168.5.111:8115";
 	var DEFAULTS = {
 		thumbnailSize: "M",
 		showFilename: true,
@@ -5286,7 +5288,10 @@
 		treeFont: DRAWER_FONT.def,
 		railWidth: DRAWER_WIDTH.def,
 		railFont: DRAWER_FONT.def,
-		rememberPosition: false
+		rememberPosition: false,
+		serverUrl: DEFAULT_SERVER,
+		serverToken: "",
+		serverForce: false
 	};
 	var KEY$3 = "g115.settings";
 	var BOOLEANS = [
@@ -5296,7 +5301,8 @@
 		"viewerStrip",
 		"playlistPinned",
 		"cloudSync",
-		"rememberPosition"
+		"rememberPosition",
+		"serverForce"
 	];
 	var SIZES$1 = [
 		"XS",
@@ -5328,6 +5334,8 @@
 		}
 		const cover = parseCover(data.cover);
 		if (cover) result.cover = cover;
+		if (typeof data.serverUrl === "string") result.serverUrl = data.serverUrl.trim().replace(/\/+$/, "").slice(0, 200);
+		if (typeof data.serverToken === "string") result.serverToken = data.serverToken.trim().slice(0, 200);
 		if (typeof data.frameCacheMB === "number" && Number.isFinite(data.frameCacheMB)) result.frameCacheMB = Math.min(5e3, Math.max(50, Math.round(data.frameCacheMB)));
 		if (typeof data.seekSeconds === "number" && Number.isFinite(data.seekSeconds)) result.seekSeconds = Math.min(600, Math.max(1, Math.round(data.seekSeconds)));
 		if (typeof data.folderCacheGB === "number" && Number.isFinite(data.folderCacheGB)) result.folderCacheGB = Math.min(1e3, Math.max(1, Math.round(data.folderCacheGB)));
@@ -5389,6 +5397,269 @@
 			cover
 		};
 	}
+	var PROBE_TIMEOUT = 1e3;
+	var API_TIMEOUT = 5e3;
+	var WRITEBACK_MS = 5e3;
+	var WRITEBACK_MAX = 50;
+	var WRITEBACK_BYTES = 6291456;
+	function isLanUrl(url) {
+		let host;
+		try {
+			host = new URL(url).hostname;
+		} catch {
+			return false;
+		}
+		if (host === "localhost" || host.endsWith(".local")) return true;
+		const m = /^(\d+)\.(\d+)\.\d+\.\d+$/.exec(host);
+		if (!m) return false;
+		const [a, b] = [Number(m[1]), Number(m[2])];
+		return a === 10 || a === 127 || a === 192 && b === 168 || a === 172 && b >= 16 && b <= 31;
+	}
+	var header = (raw, name) => new RegExp(`^${name}:\\s*([^\\r\\n]*)`, "im").exec(raw)?.[1]?.trim() ?? "";
+	var LanServer = class {
+		deps;
+		state = reactive({
+			status: "off",
+			detail: "",
+			uid: ""
+		});
+		queue = [];
+		timer;
+		probing;
+		cfg = {
+			url: "",
+			token: "",
+			force: false
+		};
+		constructor(deps) {
+			this.deps = deps;
+		}
+		probe() {
+			const cfg = this.deps.config();
+			if (cfg.url === this.cfg.url && cfg.token === this.cfg.token && cfg.force === this.cfg.force && (this.state.status === "on" || this.probing)) return this.probing ?? Promise.resolve();
+			this.cfg = { ...cfg };
+			this.stop();
+			this.probing = this.run(cfg).finally(() => this.probing = void 0);
+			return this.probing;
+		}
+		async run(cfg) {
+			const set = (status, detail = "", uid = "") => void Object.assign(this.state, {
+				status,
+				detail,
+				uid
+			});
+			if (!cfg.url || !cfg.token) return set("off", "没有填写服务器地址和访问令牌");
+			if (!cfg.force && !isLanUrl(cfg.url)) return set("failed", "不是局域网地址（需要时打开「强制使用该地址」）");
+			set("probing");
+			try {
+				const health = await this.deps.request({
+					method: "GET",
+					url: `${cfg.url}/api/health`,
+					timeout: PROBE_TIMEOUT
+				});
+				if (health.status !== 200 || !JSON.parse(health.text ?? "{}").ok) return set("failed", "服务器没有响应");
+				const st = await this.call("GET", "/api/115/status");
+				if (!st.bound || !st.uid) return set("failed", "服务器还没有绑定 115 账号");
+				set("on", "", String(st.uid));
+				this.timer = setInterval(() => this.flush(), WRITEBACK_MS);
+			} catch (e) {
+				set("failed", e instanceof Error ? e.message : String(e));
+			}
+		}
+		stop() {
+			clearInterval(this.timer);
+			this.timer = void 0;
+			this.queue = [];
+			Object.assign(this.state, {
+				status: "off",
+				detail: "",
+				uid: ""
+			});
+		}
+		usable() {
+			return this.state.status === "on" && !!this.state.uid && this.state.uid === this.deps.uid();
+		}
+		link() {
+			return this.usable() ? this.serverLink : void 0;
+		}
+		serverLink = {
+			folders: async (cids) => (await this.call("POST", "/api/cache/folders", { cids })).items,
+			firstPage: async (url) => (await this.call("GET", `/api/cache/dir?url=${encodeURIComponent(url)}`)).hit ?? void 0,
+			writeback: (items) => {
+				this.queue.push(...items);
+				if (this.queue.length >= WRITEBACK_MAX) this.flush();
+			},
+			heartbeat: async (h) => void await this.call("POST", "/api/heartbeat", h),
+			search: async (url) => {
+				const p = new URL(url).searchParams;
+				const q = new URLSearchParams({
+					q: p.get("search_value") ?? "",
+					cid: p.get("cid") ?? "0",
+					offset: p.get("offset") ?? "0",
+					limit: p.get("limit") ?? "120"
+				});
+				if (p.get("type")) q.set("type", p.get("type"));
+				const r = await this.call("GET", `/api/search?${q}`);
+				return {
+					body: r,
+					fullAt: r.index.fullAt,
+					entries: r.index.entries
+				};
+			}
+		};
+		async thumb(url, signal) {
+			if (!this.usable()) return void 0;
+			let path;
+			try {
+				path = new URL(url).pathname;
+			} catch {
+				return;
+			}
+			const m = /\/([0-9A-Fa-f]{40})_(\d+)$/.exec(path);
+			if (!m || ![
+				"480",
+				"800",
+				"1440"
+			].includes(m[2])) return void 0;
+			try {
+				const r = await this.deps.request({
+					method: "GET",
+					url: `${this.cfg.url}/api/thumb/${m[1].toUpperCase()}/${m[2]}`,
+					headers: {
+						...this.auth(),
+						"X-G115-Src": url
+					},
+					timeout: 2e4,
+					binary: true,
+					signal
+				});
+				return r.status === 200 && r.bytes ? {
+					bytes: r.bytes,
+					type: header(r.headers, "content-type")
+				} : void 0;
+			} catch {
+				return;
+			}
+		}
+		async frame(sha1, second, pc, raw, priority, signal) {
+			if (!this.usable()) return void 0;
+			const q = new URLSearchParams({ pc });
+			if (raw) q.set("raw", "1");
+			try {
+				const r = await this.deps.request({
+					method: "GET",
+					url: `${this.cfg.url}/api/frame/${sha1}/${second}?${q}`,
+					timeout: 6e4,
+					binary: true,
+					signal,
+					headers: {
+						...this.auth(),
+						...priority >= 50 ? { "X-G115-Priority": String(priority) } : {}
+					}
+				});
+				if (r.status === 200 && r.bytes) return {
+					ok: true,
+					bytes: r.bytes,
+					type: header(r.headers, "content-type") || "image/webp",
+					w: Number(header(r.headers, "x-g115-w")) || 0,
+					h: Number(header(r.headers, "x-g115-h")) || 0
+				};
+				const body = r.bytes ? JSON.parse(new TextDecoder().decode(r.bytes)) : {};
+				return {
+					ok: false,
+					kind: body.g115 ?? `http${r.status}`,
+					error: body.error ?? `HTTP ${r.status}`
+				};
+			} catch {
+				return;
+			}
+		}
+		report(e) {
+			if (this.usable()) this.call("POST", "/api/risk", e).catch(() => {});
+		}
+		flush() {
+			if (!this.queue.length || !this.usable()) return;
+			const batch = [];
+			let bytes = 0;
+			while (this.queue.length && batch.length < WRITEBACK_MAX) {
+				const size = JSON.stringify(this.queue[0].body).length;
+				if (batch.length && bytes + size > WRITEBACK_BYTES) break;
+				bytes += size;
+				batch.push(this.queue.shift());
+			}
+			this.call("POST", "/api/cache/writeback", { items: batch }).catch(() => {});
+		}
+		auth() {
+			return { "X-G115-Token": this.cfg.token };
+		}
+		async call(method, path, body) {
+			const r = await this.deps.request({
+				method,
+				url: `${this.cfg.url}${path}`,
+				timeout: API_TIMEOUT,
+				headers: {
+					...this.auth(),
+					"X-G115": "1",
+					...body !== void 0 ? { "Content-Type": "application/json" } : {}
+				},
+				body: body !== void 0 ? JSON.stringify(body) : void 0
+			});
+			if (r.status === 401) throw new Error("访问令牌不对或已删除");
+			const json = JSON.parse(r.text ?? "{}");
+			if (r.status !== 200 || json.state === false) throw new Error(json.error ?? `HTTP ${r.status}`);
+			return json;
+		}
+	};
+	var gmRequest = (o) => {
+		if (typeof GM_xmlhttpRequest !== "function") return fetch(o.url, {
+			method: o.method,
+			headers: o.headers,
+			body: o.body,
+			signal: o.signal ?? AbortSignal.timeout(o.timeout)
+		}).then(async (res) => {
+			const headers = [...res.headers].map(([k, v]) => `${k}: ${v}`).join("\r\n");
+			return o.binary ? {
+				status: res.status,
+				headers,
+				bytes: await res.arrayBuffer()
+			} : {
+				status: res.status,
+				headers,
+				text: await res.text()
+			};
+		});
+		return new Promise((resolve, reject) => {
+			if (o.signal?.aborted) return reject(new DOMException("aborted", "AbortError"));
+			const req = GM_xmlhttpRequest({
+				method: o.method,
+				url: o.url,
+				headers: o.headers,
+				data: o.body,
+				timeout: o.timeout,
+				anonymous: true,
+				responseType: o.binary ? "arraybuffer" : void 0,
+				onload: (r) => {
+					o.signal?.removeEventListener("abort", onAbort);
+					resolve(o.binary ? {
+						status: r.status,
+						headers: r.responseHeaders,
+						bytes: r.response
+					} : {
+						status: r.status,
+						headers: r.responseHeaders,
+						text: r.responseText
+					});
+				},
+				onerror: () => reject(new Error("连不上服务器")),
+				ontimeout: () => reject(new Error("服务器响应超时"))
+			});
+			const onAbort = () => {
+				req.abort();
+				reject(new DOMException("aborted", "AbortError"));
+			};
+			o.signal?.addEventListener("abort", onAbort, { once: true });
+		});
+	};
 	function userscriptPlatform(win, pageWin) {
 		const picker = pageWin.showDirectoryPicker ?? win.showDirectoryPicker;
 		return {
@@ -5410,7 +5681,8 @@
 			masterCache: true,
 			cloudSync: true,
 			localCache: true,
-			riskText: "115 要求完成人机验证，所有请求已暂停。请在 115 页面（或打开任意视频）完成验证后点「继续」。"
+			riskText: "115 要求完成人机验证，所有请求已暂停。请在 115 页面（或打开任意视频）完成验证后点「继续」。",
+			lanRequest: gmRequest
 		};
 	}
 	var VIDEO_EXT = new Set([
@@ -5944,6 +6216,7 @@
 		}
 		return out;
 	}
+	var SERVER_WAIT = 1500;
 	var CACHE_TTL = 5184e6;
 	var MEM_MAX = 50;
 	var PAGE_REFRESH_GAP = 6e4;
@@ -5991,6 +6264,7 @@
 			risk: false,
 			capped: false,
 			notice: "",
+			localIndex: null,
 			confirmed: false
 		});
 		seq = 0;
@@ -6047,6 +6321,14 @@
 					}
 					return;
 				}
+				if (!s.query.keyword && this.deps.server?.()) {
+					if (await this.showServerPage(seq)) {
+						this.verified = new Set([0]);
+						await this.revalidate(seq, key);
+						return;
+					}
+					if (seq !== this.seq) return;
+				}
 			}
 			s.page = markRaw(emptyPage());
 			s.capped = false;
@@ -6061,6 +6343,40 @@
 			} finally {
 				if (seq === this.seq) s.loading = false;
 			}
+		}
+		async showServerPage(seq) {
+			const server = this.deps.server?.();
+			if (!server) return false;
+			const s = this.state;
+			const cid = s.cid;
+			const q = {
+				cid,
+				offset: 0,
+				limit: this.pageSize,
+				sort: s.query.sort,
+				order: s.query.order,
+				type: s.query.type
+			};
+			const hit = await Promise.race([server.firstPage(listUrl(q)).catch(() => void 0), sleep(SERVER_WAIT).then(() => void 0)]);
+			if (!hit || seq !== this.seq) return false;
+			let page;
+			try {
+				page = await listPage(async () => hit.body, q);
+			} catch {
+				return false;
+			}
+			if (page.uid && s.uid && page.uid !== s.uid) return false;
+			const crumbs = page.path ? toCrumbs$1(page.path, cid) : this.crumbsOf.get(cid) ?? [ROOT$2, {
+				id: cid,
+				name: cid
+			}];
+			Object.assign(s, {
+				page: markRaw(toLoaded(page, 0)),
+				crumbs,
+				capped: false,
+				loading: false
+			});
+			return true;
 		}
 		async revalidate(seq, key) {
 			try {
@@ -6278,15 +6594,21 @@
 		}
 		openFolder(cid) {
 			this.state.query.keyword = "";
+			delete this.state.query.remote;
+			this.state.localIndex = null;
 			return this.open(cid);
 		}
 		setQuery(patch) {
 			Object.assign(this.state.query, patch);
+			if ("keyword" in patch && !("remote" in patch)) delete this.state.query.remote;
+			if (!this.state.query.keyword) this.state.localIndex = null;
 			return this.open(this.state.cid);
 		}
 		openClean(cid) {
 			this.state.query.keyword = "";
 			this.state.query.type = void 0;
+			delete this.state.query.remote;
+			this.state.localIndex = null;
 			return this.open(cid);
 		}
 		async invalidateDir(cid) {
@@ -6485,14 +6807,43 @@
 				limit: query.keyword || offset === 0 ? this.pageSize : this.morePageSize,
 				type: query.type
 			};
-			return this.deps.scheduler.add((signal) => query.keyword ? searchPage(this.deps.fetchJson, {
-				...base,
-				keyword: query.keyword
-			}, signal) : listPage(this.deps.fetchJson, {
+			const server = this.deps.server?.();
+			if (query.keyword) {
+				const sq = {
+					...base,
+					keyword: query.keyword
+				};
+				return this.deps.scheduler.add(async (signal) => {
+					if (server && !query.remote) {
+						const local = await server.search(searchUrl(sq)).catch(() => void 0);
+						if (local) {
+							this.state.localIndex = {
+								fullAt: local.fullAt,
+								entries: local.entries
+							};
+							return searchPage(async () => local.body, sq, signal);
+						}
+					}
+					this.state.localIndex = null;
+					return searchPage(this.deps.fetchJson, sq, signal);
+				}, { lane: LANE$9 });
+			}
+			const lq = {
 				...base,
 				sort: query.sort,
 				order: query.order
-			}, signal), { lane: LANE$9 });
+			};
+			const writeback = server?.writeback;
+			return this.deps.scheduler.add(async (signal) => {
+				if (!writeback) return listPage(this.deps.fetchJson, lq, signal);
+				let got;
+				const page = await listPage(async (url, sig) => (got = {
+					url,
+					body: await this.deps.fetchJson(url, sig)
+				}).body, lq, signal);
+				if (got) writeback([got]);
+				return page;
+			}, { lane: LANE$9 });
 		}
 		async fetchFolders(cid) {
 			const { sort, order } = this.state.query;
@@ -13072,6 +13423,7 @@
 		now;
 		state;
 		recent = [];
+		onRecord;
 		constructor(kv, now = Date.now) {
 			this.kv = kv;
 			this.now = now;
@@ -13106,13 +13458,15 @@
 			const t = this.now();
 			const counts = {};
 			for (const [at, c] of this.recent) if (t - at < WINDOW) counts[c] = (counts[c] ?? 0) + 1;
-			this.state.items = [{
+			const record = {
 				at: t,
 				cat,
 				detail,
 				counts
-			}, ...this.state.items].slice(0, 50);
+			};
+			this.state.items = [record, ...this.state.items].slice(0, 50);
 			this.save();
+			this.onRecord?.(record);
 		}
 		save() {
 			try {
@@ -13713,7 +14067,7 @@
 	var _hoisted_30$2 = { class: "g115-coll-name" };
 	var _hoisted_31$2 = { class: "g115-coll-btns" };
 	var _hoisted_32$2 = ["disabled"];
-	var _hoisted_33$1 = { class: "g115-coll-row" };
+	var _hoisted_33$2 = { class: "g115-coll-row" };
 	var _hoisted_34$1 = { class: "g115-coll-main" };
 	var _hoisted_35$1 = { class: "g115-coll-name" };
 	var _hoisted_36$1 = {
@@ -13965,7 +14319,7 @@
 						onClick: _cache[4] || (_cache[4] = ($event) => unref(ctrl).settings.cloudSync = !unref(ctrl).settings.cloudSync)
 					}, toDisplayString(unref(ctrl).settings.cloudSync ? "关闭" : "开启"), 1)])])], 64)) : createCommentVNode("", true),
 					_cache[13] || (_cache[13] = createBaseVNode("div", { class: "g115-coll-head g115-coll-sec" }, [createBaseVNode("b", null, "待复制清单"), createBaseVNode("small", null, "在不同目录挑出图片、视频、文件夹，最后一起复制；刷新后保留，上限 1000 条")], -1)),
-					createBaseVNode("div", _hoisted_33$1, [createBaseVNode("div", _hoisted_34$1, [createBaseVNode("b", _hoisted_35$1, toDisplayString(queuePending()) + " 项待处理", 1)]), confirmQueueClear.value ? (openBlock(), createElementBlock("div", _hoisted_36$1, [
+					createBaseVNode("div", _hoisted_33$2, [createBaseVNode("div", _hoisted_34$1, [createBaseVNode("b", _hoisted_35$1, toDisplayString(queuePending()) + " 项待处理", 1)]), confirmQueueClear.value ? (openBlock(), createElementBlock("div", _hoisted_36$1, [
 						_cache[9] || (_cache[9] = createBaseVNode("small", null, "只清空清单，不删除源文件", -1)),
 						createBaseVNode("button", {
 							class: "btn danger",
@@ -14039,7 +14393,7 @@
 	var _hoisted_30$1 = { class: "lab" };
 	var _hoisted_31$1 = { class: "g115-cover-ctl" };
 	var _hoisted_32$1 = ["max"];
-	var _hoisted_33 = {
+	var _hoisted_33$1 = {
 		key: 0,
 		class: "row"
 	};
@@ -14139,13 +14493,24 @@
 		key: 2,
 		class: "row g115-stack"
 	};
-	var _hoisted_79 = { class: "lab" };
-	var _hoisted_80 = { key: 0 };
-	var _hoisted_81 = {
+	var _hoisted_79 = { class: "g115-kv" };
+	var _hoisted_80 = ["placeholder"];
+	var _hoisted_81 = { class: "g115-kv" };
+	var _hoisted_82 = { class: "g115-kv" };
+	var _hoisted_83 = { class: "g115-kv" };
+	var _hoisted_84 = { class: "g115-kv-val" };
+	var _hoisted_85 = ["disabled"];
+	var _hoisted_86 = {
+		key: 3,
+		class: "row g115-stack"
+	};
+	var _hoisted_87 = { class: "lab" };
+	var _hoisted_88 = { key: 0 };
+	var _hoisted_89 = {
 		key: 1,
 		class: "g115-risk-list"
 	};
-	var _hoisted_82 = {
+	var _hoisted_90 = {
 		key: 2,
 		class: "g115-cache-btns"
 	};
@@ -14270,6 +14635,14 @@
 				}
 				loadCacheStats();
 			}
+			const lan = ctrl.lan;
+			const lanText = computed(() => {
+				const st = lan?.state;
+				if (!st) return "";
+				if (st.status === "on") return lan.usable() ? "已连接" : "已连接，但服务器绑定的 115 账号和网页登录的不同，不使用";
+				if (st.status === "probing") return "连接中…";
+				return st.status === "off" ? "未启用（填写地址和令牌后自动连接）" : `没有连上：${st.detail}`;
+			});
 			const risks = computed(() => ctrl.riskLog.state.items);
 			const countsText = (c) => Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join("，");
 			const fc = ctrl.folderCache.state;
@@ -14289,30 +14662,30 @@
 						onClick: ($event) => unref(ui).settingsTab = t.id
 					}, toDisplayString(t.label), 11, _hoisted_3$11);
 				}), 64))]), platformTab.value ? (openBlock(), createElementBlock("div", _hoisted_4$10, [(openBlock(), createBlock(resolveDynamicComponent(platformTab.value.component)))])) : unref(ui).settingsTab === "view" ? (openBlock(), createElementBlock("div", _hoisted_5$9, [
-					createBaseVNode("div", _hoisted_6$7, [_cache[32] || (_cache[32] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_7$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
+					createBaseVNode("div", _hoisted_6$7, [_cache[36] || (_cache[36] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "卡片尺寸"), createBaseVNode("small", null, "与顶栏 XS–L 相同")], -1)), createBaseVNode("div", _hoisted_7$6, [(openBlock(), createElementBlock(Fragment, null, renderList(sizes, (sz) => {
 						return createBaseVNode("button", {
 							key: sz,
 							class: normalizeClass({ active: unref(settings).thumbnailSize === sz }),
 							onClick: ($event) => unref(settings).thumbnailSize = sz
 						}, toDisplayString(sz), 11, _hoisted_8$6);
 					}), 64))])]),
-					createBaseVNode("label", _hoisted_9$6, [_cache[33] || (_cache[33] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_9$6, [_cache[37] || (_cache[37] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示文件名")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => unref(settings).showFilename = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showFilename]])]),
-					createBaseVNode("label", _hoisted_10$5, [_cache[34] || (_cache[34] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_10$5, [_cache[38] || (_cache[38] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "显示类型标签")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => unref(settings).showTags = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).showTags]])]),
-					createBaseVNode("label", _hoisted_11$3, [_cache[35] || (_cache[35] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_11$3, [_cache[39] || (_cache[39] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "移动端优化"), createBaseVNode("small", null, "窄屏自动减少列数")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => unref(settings).mobileOptimize = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).mobileOptimize]])]),
-					createBaseVNode("label", _hoisted_12$2, [_cache[36] || (_cache[36] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
+					createBaseVNode("label", _hoisted_12$2, [_cache[40] || (_cache[40] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "大图底部缩略图条"), createBaseVNode("small", null, "查看大图、浏览视频帧时显示前后几张，点击切换")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => unref(settings).viewerStrip = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).viewerStrip]])]),
-					createBaseVNode("div", _hoisted_13$2, [createBaseVNode("span", _hoisted_14$2, [_cache[37] || (_cache[37] = createBaseVNode("b", null, "记住阅读位置", -1)), createBaseVNode("small", null, "开启后下次打开同一目录回到上次看到的位置；关闭时只在本次打开期间返回上级保留位置" + toDisplayString(savedPositions.value ? `（已记住 ${savedPositions.value} 个目录）` : ""), 1)]), createBaseVNode("span", _hoisted_15$1, [savedPositions.value ? (openBlock(), createElementBlock("button", {
+					createBaseVNode("div", _hoisted_13$2, [createBaseVNode("span", _hoisted_14$2, [_cache[41] || (_cache[41] = createBaseVNode("b", null, "记住阅读位置", -1)), createBaseVNode("small", null, "开启后下次打开同一目录回到上次看到的位置；关闭时只在本次打开期间返回上级保留位置" + toDisplayString(savedPositions.value ? `（已记住 ${savedPositions.value} 个目录）` : ""), 1)]), createBaseVNode("span", _hoisted_15$1, [savedPositions.value ? (openBlock(), createElementBlock("button", {
 						key: 0,
 						class: "btn",
 						onClick: clearPositions
@@ -14321,15 +14694,15 @@
 						type: "checkbox",
 						"aria-label": "记住阅读位置"
 					}, null, 512), [[vModelCheckbox, unref(settings).rememberPosition]])])]),
-					_cache[45] || (_cache[45] = createBaseVNode("h4", { class: "g115-set-sub" }, "两侧抽屉", -1)),
-					createBaseVNode("div", _hoisted_16$1, [_cache[38] || (_cache[38] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "弹出方式"), createBaseVNode("small", null, "收藏、合集、待复制、目录按钮统一；悬停时点一下按钮可钉住不收起。触屏总是点击")], -1)), createBaseVNode("div", _hoisted_17$1, [createBaseVNode("button", {
+					_cache[49] || (_cache[49] = createBaseVNode("h4", { class: "g115-set-sub" }, "两侧抽屉", -1)),
+					createBaseVNode("div", _hoisted_16$1, [_cache[42] || (_cache[42] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "弹出方式"), createBaseVNode("small", null, "收藏、合集、待复制、目录按钮统一；悬停时点一下按钮可钉住不收起。触屏总是点击")], -1)), createBaseVNode("div", _hoisted_17$1, [createBaseVNode("button", {
 						class: normalizeClass({ active: unref(settings).drawerTrigger === "hover" }),
 						onClick: _cache[5] || (_cache[5] = ($event) => unref(settings).drawerTrigger = "hover")
 					}, "鼠标悬停", 2), createBaseVNode("button", {
 						class: normalizeClass({ active: unref(settings).drawerTrigger === "click" }),
 						onClick: _cache[6] || (_cache[6] = ($event) => unref(settings).drawerTrigger = "click")
 					}, "点击", 2)])]),
-					createBaseVNode("div", _hoisted_18$1, [createBaseVNode("span", _hoisted_19$1, [_cache[39] || (_cache[39] = createBaseVNode("b", null, "左侧抽屉（收藏 / 合集）", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_20$1, [
+					createBaseVNode("div", _hoisted_18$1, [createBaseVNode("span", _hoisted_19$1, [_cache[43] || (_cache[43] = createBaseVNode("b", null, "左侧抽屉（收藏 / 合集）", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_20$1, [
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => unref(settings).railWidth = $event),
 							class: "inp",
@@ -14347,7 +14720,7 @@
 								number: true
 							}
 						]]),
-						_cache[40] || (_cache[40] = createBaseVNode("span", null, "px", -1)),
+						_cache[44] || (_cache[44] = createBaseVNode("span", null, "px", -1)),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => unref(settings).railFont = $event),
 							class: "inp",
@@ -14365,9 +14738,9 @@
 								number: true
 							}
 						]]),
-						_cache[41] || (_cache[41] = createBaseVNode("span", null, "字号", -1))
+						_cache[45] || (_cache[45] = createBaseVNode("span", null, "字号", -1))
 					])]),
-					createBaseVNode("div", _hoisted_23$1, [createBaseVNode("span", _hoisted_24$1, [_cache[42] || (_cache[42] = createBaseVNode("b", null, "右侧目录树", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_25$1, [
+					createBaseVNode("div", _hoisted_23$1, [createBaseVNode("span", _hoisted_24$1, [_cache[46] || (_cache[46] = createBaseVNode("b", null, "右侧目录树", -1)), createBaseVNode("small", null, "宽度 " + toDisplayString(unref(DRAWER_WIDTH).min) + "–" + toDisplayString(unref(DRAWER_WIDTH).max) + "，也可拖动抽屉边缘；字号 " + toDisplayString(unref(DRAWER_FONT).min) + "–" + toDisplayString(unref(DRAWER_FONT).max), 1)]), createBaseVNode("span", _hoisted_25$1, [
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => unref(settings).treeWidth = $event),
 							class: "inp",
@@ -14385,7 +14758,7 @@
 								number: true
 							}
 						]]),
-						_cache[43] || (_cache[43] = createBaseVNode("span", null, "px", -1)),
+						_cache[47] || (_cache[47] = createBaseVNode("span", null, "px", -1)),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => unref(settings).treeFont = $event),
 							class: "inp",
@@ -14403,19 +14776,19 @@
 								number: true
 							}
 						]]),
-						_cache[44] || (_cache[44] = createBaseVNode("span", null, "字号", -1))
+						_cache[48] || (_cache[48] = createBaseVNode("span", null, "字号", -1))
 					])]),
 					createBaseVNode("div", { class: "g115-cache-btns" }, [createBaseVNode("button", {
 						class: "btn",
 						onClick: resetDrawers
 					}, "恢复默认大小")])
 				])) : unref(ui).settingsTab === "video" ? (openBlock(), createElementBlock("div", _hoisted_28$1, [
-					createBaseVNode("div", _hoisted_29$1, [createBaseVNode("span", _hoisted_30$1, [_cache[46] || (_cache[46] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_31$1, [
+					createBaseVNode("div", _hoisted_29$1, [createBaseVNode("span", _hoisted_30$1, [_cache[50] || (_cache[50] = createBaseVNode("b", null, "视频封面位置", -1)), createBaseVNode("small", null, toDisplayString(unref(settings).cover.mode === "percent" ? "取视频时长的百分比处，可跳过片头" : "取固定秒数；视频更短时取一半处"), 1)]), createBaseVNode("span", _hoisted_31$1, [
 						withDirectives(createBaseVNode("select", {
 							"onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => unref(settings).cover.mode = $event),
 							"aria-label": "封面取帧方式",
 							onChange: _cache[12] || (_cache[12] = ($event) => unref(settings).cover.value = unref(settings).cover.mode === "percent" ? 25 : 30)
-						}, [..._cache[47] || (_cache[47] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
+						}, [..._cache[51] || (_cache[51] = [createBaseVNode("option", { value: "percent" }, "百分比", -1), createBaseVNode("option", { value: "seconds" }, "固定秒数", -1)])], 544), [[vModelSelect, unref(settings).cover.mode]]),
 						withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => unref(settings).cover.value = $event),
 							class: "inp",
@@ -14434,15 +14807,15 @@
 						]]),
 						createBaseVNode("span", null, toDisplayString(unref(settings).cover.mode === "percent" ? "%" : "秒"), 1)
 					])]),
-					rawPlayback ? (openBlock(), createElementBlock("div", _hoisted_33, [..._cache[48] || (_cache[48] = [createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "视频播放器"), createBaseVNode("small", null, "自带播放器：已转码的经服务器转发，未转码的直连原文件；浏览器播不了时可以提交转码或用外部播放器（播放器右上角 ↗）")], -1)])])) : (openBlock(), createElementBlock("div", _hoisted_34, [createBaseVNode("span", _hoisted_35, [_cache[49] || (_cache[49] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_36, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_37, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_38, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("select", {
+					rawPlayback ? (openBlock(), createElementBlock("div", _hoisted_33$1, [..._cache[52] || (_cache[52] = [createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "视频播放器"), createBaseVNode("small", null, "自带播放器：已转码的经服务器转发，未转码的直连原文件；浏览器播不了时可以提交转码或用外部播放器（播放器右上角 ↗）")], -1)])])) : (openBlock(), createElementBlock("div", _hoisted_34, [createBaseVNode("span", _hoisted_35, [_cache[53] || (_cache[53] = createBaseVNode("b", null, "视频播放器", -1)), unref(settings).player === "lite" ? (openBlock(), createElementBlock("small", _hoisted_36, "自带播放器起播最快；未转码的视频改用 " + toDisplayString(unref(ui).master ? "115Master" : "官方播放页"), 1)) : unref(settings).player === "master" ? (openBlock(), createElementBlock("small", _hoisted_37, toDisplayString(unref(ui).master ? "内嵌 115Master 播放页（支持字幕、未转码视频）" : "未检测到 115Master，将新开官方播放页"), 1)) : (openBlock(), createElementBlock("small", _hoisted_38, "新开标签页打开 115 官方播放页"))]), createBaseVNode("span", _hoisted_39, [withDirectives(createBaseVNode("select", {
 						"onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => unref(settings).player = $event),
 						"aria-label": "视频播放器"
-					}, [..._cache[50] || (_cache[50] = [
+					}, [..._cache[54] || (_cache[54] = [
 						createBaseVNode("option", { value: "lite" }, "自带播放器", -1),
 						createBaseVNode("option", { value: "master" }, "115Master", -1),
 						createBaseVNode("option", { value: "official" }, "官方播放页", -1)
 					])], 512), [[vModelSelect, unref(settings).player]])])])),
-					createBaseVNode("div", _hoisted_40, [_cache[52] || (_cache[52] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_41, [withDirectives(createBaseVNode("input", {
+					createBaseVNode("div", _hoisted_40, [_cache[56] || (_cache[56] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "滚轮快进 / 后退"), createBaseVNode("small", null, "播放时画面上滚轮、← → 键每次跳过的秒数")], -1)), createBaseVNode("span", _hoisted_41, [withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => unref(settings).seekSeconds = $event),
 						class: "inp",
 						type: "number",
@@ -14458,17 +14831,17 @@
 							lazy: true,
 							number: true
 						}
-					]]), _cache[51] || (_cache[51] = createBaseVNode("span", null, "秒", -1))])]),
-					createBaseVNode("label", _hoisted_42, [_cache[53] || (_cache[53] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
+					]]), _cache[55] || (_cache[55] = createBaseVNode("span", null, "秒", -1))])]),
+					createBaseVNode("label", _hoisted_42, [_cache[57] || (_cache[57] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "播放列表固定显示"), createBaseVNode("small", null, "自带播放器右侧的本目录视频列表不随鼠标离开收起")], -1)), withDirectives(createBaseVNode("input", {
 						"onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => unref(settings).playlistPinned = $event),
 						type: "checkbox"
 					}, null, 512), [[vModelCheckbox, unref(settings).playlistPinned]])])
 				])) : unref(ui).settingsTab === "collections" ? (openBlock(), createElementBlock("div", _hoisted_43, [createVNode(CollectionSettings_default)])) : (openBlock(), createElementBlock("div", _hoisted_44, [
 					!unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_45, [
-						_cache[57] || (_cache[57] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存（服务器）"), createBaseVNode("small", null, "缩略图和视频帧图存在服务器上，所有设备共用；超出上限后按最久未看的先删")], -1)),
-						createBaseVNode("div", _hoisted_46, [_cache[54] || (_cache[54] = createBaseVNode("span", null, "已用", -1)), serverStats.value ? (openBlock(), createElementBlock("span", _hoisted_47, toDisplayString(unref(formatSize)(serverStats.value.bytes)) + " / " + toDisplayString(unref(formatSize)(serverStats.value.maxBytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_48, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
+						_cache[61] || (_cache[61] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存（服务器）"), createBaseVNode("small", null, "缩略图和视频帧图存在服务器上，所有设备共用；超出上限后按最久未看的先删")], -1)),
+						createBaseVNode("div", _hoisted_46, [_cache[58] || (_cache[58] = createBaseVNode("span", null, "已用", -1)), serverStats.value ? (openBlock(), createElementBlock("span", _hoisted_47, toDisplayString(unref(formatSize)(serverStats.value.bytes)) + " / " + toDisplayString(unref(formatSize)(serverStats.value.maxBytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_48, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
 						serverStats.value ? (openBlock(), createElementBlock("small", _hoisted_49, "缩略图 " + toDisplayString(serverStats.value.kinds.thumb.count) + " 张 · " + toDisplayString(unref(formatSize)(serverStats.value.kinds.thumb.bytes)) + "；帧图 " + toDisplayString(serverStats.value.kinds.frame.count) + " 张 · " + toDisplayString(unref(formatSize)(serverStats.value.kinds.frame.bytes)), 1)) : createCommentVNode("", true),
-						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_50, [_cache[56] || (_cache[56] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_51, [withDirectives(createBaseVNode("input", {
+						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_50, [_cache[60] || (_cache[60] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_51, [withDirectives(createBaseVNode("input", {
 							"onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => serverLimitGB.value = $event),
 							class: "inp",
 							type: "number",
@@ -14485,7 +14858,7 @@
 								lazy: true,
 								number: true
 							}
-						]]), _cache[55] || (_cache[55] = createTextVNode("GB", -1))])])) : createCommentVNode("", true),
+						]]), _cache[59] || (_cache[59] = createTextVNode("GB", -1))])])) : createCommentVNode("", true),
 						unref(ctrl).platform.serverCache ? (openBlock(), createElementBlock("div", _hoisted_52, [createBaseVNode("button", {
 							class: "btn",
 							onClick: _cache[18] || (_cache[18] = ($event) => clearServer("thumb"))
@@ -14495,36 +14868,36 @@
 						}, toDisplayString(confirming.value === "srv-frame" ? "确认清空（所有设备）" : "清空帧图"), 1)])) : createCommentVNode("", true)
 					])) : createCommentVNode("", true),
 					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_53, [
-						_cache[69] || (_cache[69] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
+						_cache[73] || (_cache[73] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "图片缓存"), createBaseVNode("small", null, "缩略图和视频帧图存在哪里；超出上限后按最久未看的先删")], -1)),
 						createBaseVNode("div", _hoisted_54, [createBaseVNode("label", null, [createBaseVNode("input", {
 							type: "radio",
 							name: "g115-loc",
 							checked: unref(settings).cacheLocation === "browser",
 							onChange: _cache[20] || (_cache[20] = ($event) => chooseLocation("browser"))
-						}, null, 40, _hoisted_55), _cache[58] || (_cache[58] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
+						}, null, 40, _hoisted_55), _cache[62] || (_cache[62] = createTextVNode("浏览器内", -1))]), createBaseVNode("label", { class: normalizeClass({ off: !unref(fc).supported }) }, [createBaseVNode("input", {
 							type: "radio",
 							name: "g115-loc",
 							disabled: !unref(fc).supported,
 							checked: unref(settings).cacheLocation === "folder",
 							onChange: _cache[21] || (_cache[21] = ($event) => chooseLocation("folder"))
-						}, null, 40, _hoisted_56), _cache[59] || (_cache[59] = createTextVNode("本地文件夹", -1))], 2)]),
+						}, null, 40, _hoisted_56), _cache[63] || (_cache[63] = createTextVNode("本地文件夹", -1))], 2)]),
 						unref(settings).cacheLocation === "folder" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-							createBaseVNode("div", _hoisted_57, [_cache[60] || (_cache[60] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_58, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
+							createBaseVNode("div", _hoisted_57, [_cache[64] || (_cache[64] = createBaseVNode("span", null, "文件夹", -1)), createBaseVNode("span", _hoisted_58, [createBaseVNode("em", null, toDisplayString(unref(fc).name ? `「${unref(fc).name}」` : "未选择"), 1), createBaseVNode("button", {
 								class: "btn",
 								onClick: _cache[22] || (_cache[22] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
 							}, toDisplayString(unref(fc).name ? "更换" : "选择"), 1)])]),
-							unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_59, [_cache[61] || (_cache[61] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
+							unref(fc).status === "needs-permission" ? (openBlock(), createElementBlock("div", _hoisted_59, [_cache[65] || (_cache[65] = createBaseVNode("span", null, "需要重新授权，授权前暂存在浏览器内", -1)), createBaseVNode("button", {
 								class: "btn primary",
 								onClick: _cache[23] || (_cache[23] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
 							}, "授权")])) : createCommentVNode("", true),
-							unref(fc).status === "unavailable" ? (openBlock(), createElementBlock("div", _hoisted_60, [_cache[62] || (_cache[62] = createBaseVNode("span", null, "文件夹不可用（可能已被删除或移动），暂存在浏览器内", -1)), createBaseVNode("span", _hoisted_61, [createBaseVNode("button", {
+							unref(fc).status === "unavailable" ? (openBlock(), createElementBlock("div", _hoisted_60, [_cache[66] || (_cache[66] = createBaseVNode("span", null, "文件夹不可用（可能已被删除或移动），暂存在浏览器内", -1)), createBaseVNode("span", _hoisted_61, [createBaseVNode("button", {
 								class: "btn primary",
 								onClick: _cache[24] || (_cache[24] = ($event) => unref(ctrl).folderCache.restore().then(loadCacheStats))
 							}, "重试"), createBaseVNode("button", {
 								class: "btn",
 								onClick: _cache[25] || (_cache[25] = ($event) => unref(ctrl).folderCache.pick().then(loadCacheStats))
 							}, "重新选择")])])) : createCommentVNode("", true),
-							createBaseVNode("div", _hoisted_62, [_cache[64] || (_cache[64] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_63, [withDirectives(createBaseVNode("input", {
+							createBaseVNode("div", _hoisted_62, [_cache[68] || (_cache[68] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_63, [withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => unref(settings).folderCacheGB = $event),
 								class: "inp",
 								type: "number",
@@ -14540,11 +14913,11 @@
 									lazy: true,
 									number: true
 								}
-							]]), _cache[63] || (_cache[63] = createTextVNode("GB", -1))])]),
-							_cache[65] || (_cache[65] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
+							]]), _cache[67] || (_cache[67] = createTextVNode("GB", -1))])]),
+							_cache[69] || (_cache[69] = createBaseVNode("small", null, "同一台电脑的其他浏览器选同一个文件夹即可共用", -1)),
 							unref(fc).migrated ? (openBlock(), createElementBlock("small", _hoisted_64, "已把 " + toDisplayString(unref(fc).migrated) + " 张浏览器内的图片复制到文件夹", 1)) : createCommentVNode("", true)
 						], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-							createBaseVNode("div", _hoisted_65, [_cache[67] || (_cache[67] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_66, [withDirectives(createBaseVNode("input", {
+							createBaseVNode("div", _hoisted_65, [_cache[71] || (_cache[71] = createBaseVNode("span", null, "上限", -1)), createBaseVNode("span", _hoisted_66, [withDirectives(createBaseVNode("input", {
 								"onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => unref(settings).frameCacheMB = $event),
 								class: "inp",
 								type: "number",
@@ -14560,12 +14933,12 @@
 									lazy: true,
 									number: true
 								}
-							]]), _cache[66] || (_cache[66] = createTextVNode("MB", -1))])]),
+							]]), _cache[70] || (_cache[70] = createTextVNode("MB", -1))])]),
 							createBaseVNode("small", null, "换浏览器不共享" + toDisplayString(unref(fc).persisted ? "；已开启持久存储，磁盘紧张时浏览器不会自动清理" : ""), 1),
 							!unref(fc).supported ? (openBlock(), createElementBlock("small", _hoisted_67, "当前浏览器不支持本地文件夹（需要 Edge / Chrome）")) : createCommentVNode("", true)
 						], 64)),
 						unref(fc).error ? (openBlock(), createElementBlock("small", _hoisted_68, toDisplayString(unref(fc).error), 1)) : createCommentVNode("", true),
-						createBaseVNode("div", _hoisted_69, [_cache[68] || (_cache[68] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_70, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_71, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
+						createBaseVNode("div", _hoisted_69, [_cache[72] || (_cache[72] = createBaseVNode("span", null, "已用", -1)), cacheStats.value ? (openBlock(), createElementBlock("span", _hoisted_70, toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes + cacheStats.value.media.frames.bytes)), 1)) : (openBlock(), createElementBlock("span", _hoisted_71, toDisplayString(statsFailed.value ? "读取失败" : "读取中…"), 1))]),
 						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_72, "缩略图 " + toDisplayString(cacheStats.value.media.thumbs.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.thumbs.bytes)) + "；帧图 " + toDisplayString(cacheStats.value.media.frames.count) + " 张 · " + toDisplayString(unref(formatSize)(cacheStats.value.media.frames.bytes)), 1)) : createCommentVNode("", true),
 						createBaseVNode("div", _hoisted_73, [createBaseVNode("button", {
 							class: "btn",
@@ -14576,7 +14949,7 @@
 						}, toDisplayString(confirming.value === "frames" ? "确认清空帧图" : "清空帧图"), 1)])
 					])) : createCommentVNode("", true),
 					createBaseVNode("div", _hoisted_74, [
-						_cache[70] || (_cache[70] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
+						_cache[74] || (_cache[74] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "其他缓存"), createBaseVNode("small", null, "目录列表 60 天内再打开直接显示；图片宽高用于排版。合集配置不在缓存里，清空不受影响")], -1)),
 						cacheStats.value ? (openBlock(), createElementBlock("small", _hoisted_75, "目录 " + toDisplayString(cacheStats.value.lists) + " 个；宽高 " + toDisplayString(cacheStats.value.dims) + " 条", 1)) : createCommentVNode("", true),
 						storageText.value ? (openBlock(), createElementBlock("small", _hoisted_76, "浏览器存储（本站全部）：" + toDisplayString(storageText.value), 1)) : createCommentVNode("", true),
 						createBaseVNode("div", _hoisted_77, [createBaseVNode("button", {
@@ -14584,9 +14957,50 @@
 							onClick: _cache[30] || (_cache[30] = ($event) => clearCache("all"))
 						}, toDisplayString(confirming.value === "all" ? "确认清空全部缓存" : "清空全部缓存"), 1)])
 					]),
-					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_78, [
-						createBaseVNode("span", _hoisted_79, [_cache[71] || (_cache[71] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
-						!risks.value.length ? (openBlock(), createElementBlock("small", _hoisted_80, "还没有记录")) : (openBlock(), createElementBlock("ol", _hoisted_81, [(openBlock(true), createElementBlock(Fragment, null, renderList(risks.value, (r) => {
+					unref(lan) ? (openBlock(), createElementBlock("div", _hoisted_78, [
+						_cache[79] || (_cache[79] = createBaseVNode("span", { class: "lab" }, [createBaseVNode("b", null, "局域网服务器"), createBaseVNode("small", null, "在家里的局域网内时，卡片、目录、缩略图、视频封面先从服务器取，搜索用服务器的全盘索引，减少向 115 的请求；不在局域网时和以前一样")], -1)),
+						createBaseVNode("div", _hoisted_79, [_cache[75] || (_cache[75] = createBaseVNode("span", null, "地址", -1)), withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => unref(settings).serverUrl = $event),
+							class: "inp g115-wide",
+							type: "url",
+							placeholder: unref(DEFAULT_SERVER),
+							"aria-label": "服务器地址"
+						}, null, 8, _hoisted_80), [[
+							vModelText,
+							unref(settings).serverUrl,
+							void 0,
+							{ lazy: true }
+						]])]),
+						createBaseVNode("div", _hoisted_81, [_cache[76] || (_cache[76] = createBaseVNode("span", null, "访问令牌", -1)), withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => unref(settings).serverToken = $event),
+							class: "inp g115-wide",
+							type: "password",
+							autocomplete: "off",
+							placeholder: "在服务版「通知与令牌」里生成",
+							"aria-label": "访问令牌"
+						}, null, 512), [[
+							vModelText,
+							unref(settings).serverToken,
+							void 0,
+							{ lazy: true }
+						]])]),
+						createBaseVNode("label", _hoisted_82, [_cache[77] || (_cache[77] = createBaseVNode("span", null, [createTextVNode("强制使用该地址"), createBaseVNode("small", null, "（不是局域网地址也用，经中转测试时）")], -1)), withDirectives(createBaseVNode("input", {
+							"onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => unref(settings).serverForce = $event),
+							type: "checkbox"
+						}, null, 512), [[vModelCheckbox, unref(settings).serverForce]])]),
+						createBaseVNode("div", _hoisted_83, [
+							_cache[78] || (_cache[78] = createBaseVNode("span", null, "状态", -1)),
+							createBaseVNode("span", _hoisted_84, toDisplayString(lanText.value), 1),
+							createBaseVNode("button", {
+								class: "btn",
+								disabled: unref(lan).state.status === "probing",
+								onClick: _cache[34] || (_cache[34] = ($event) => unref(lan).probe())
+							}, "重新连接", 8, _hoisted_85)
+						])
+					])) : createCommentVNode("", true),
+					unref(localCache) ? (openBlock(), createElementBlock("div", _hoisted_86, [
+						createBaseVNode("span", _hoisted_87, [_cache[80] || (_cache[80] = createBaseVNode("b", null, "风控记录", -1)), createBaseVNode("small", null, "本机最近 " + toDisplayString(unref(50)) + " 次遇到 115 人机验证（911）时，是哪个请求触发的，以及之前 1 分钟各接口的请求数", 1)]),
+						!risks.value.length ? (openBlock(), createElementBlock("small", _hoisted_88, "还没有记录")) : (openBlock(), createElementBlock("ol", _hoisted_89, [(openBlock(true), createElementBlock(Fragment, null, renderList(risks.value, (r) => {
 							return openBlock(), createElementBlock("li", { key: r.at }, [
 								createBaseVNode("b", null, toDisplayString(new Date(r.at).toLocaleString()), 1),
 								createTextVNode(" · " + toDisplayString(r.cat), 1),
@@ -14594,9 +15008,9 @@
 								createBaseVNode("small", null, "1 分钟内：" + toDisplayString(countsText(r.counts)), 1)
 							]);
 						}), 128))])),
-						risks.value.length ? (openBlock(), createElementBlock("div", _hoisted_82, [createBaseVNode("button", {
+						risks.value.length ? (openBlock(), createElementBlock("div", _hoisted_90, [createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[31] || (_cache[31] = ($event) => unref(ctrl).riskLog.clear())
+							onClick: _cache[35] || (_cache[35] = ($event) => unref(ctrl).riskLog.clear())
 						}, "清空记录")])) : createCommentVNode("", true)
 					])) : createCommentVNode("", true)
 				]))]);
@@ -30990,7 +31404,7 @@
 		setup(__props) {
 			const props = __props;
 			const ctrl = inject("g115ctrl");
-			const rawCovers = !!ctrl.platform.untranscodedCovers;
+			const rawCovers = !!ctrl.platform.untranscodedCovers || !!ctrl.lan?.usable();
 			const noCover = () => props.item.transcoded === false && !rawCovers;
 			const box = ref(null);
 			const visible = ref(false);
@@ -31133,13 +31547,13 @@
 							})
 						}, null, 2);
 					}), 128))])) : createCommentVNode("", true),
-					rawCovers && __props.item.transcoded === false && status.value === "ready" ? (openBlock(), createElementBlock("span", _hoisted_4$2, toDisplayString(tcText.value || "未转码"), 1)) : createCommentVNode("", true),
+					unref(rawCovers) && __props.item.transcoded === false && status.value === "ready" ? (openBlock(), createElementBlock("span", _hoisted_4$2, toDisplayString(tcText.value || "未转码"), 1)) : createCommentVNode("", true),
 					status.value === "untranscoded" || status.value === "unsupported" || status.value === "failed" ? (openBlock(), createElementBlock("span", _hoisted_5$2, [status.value === "untranscoded" ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createBaseVNode("span", null, toDisplayString(tcText.value || "未转码，无封面"), 1), canSubmit.value && __props.item.pickCode && __props.item.sha1 ? (openBlock(), createElementBlock("button", {
 						key: 0,
 						class: "g115-cover-retry",
 						title: "提交 115 转码（VIP 加速）",
 						onClick: submit
-					}, "提交转码")) : createCommentVNode("", true)], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode(toDisplayString(status.value === "unsupported" ? rawCovers ? "无法生成封面" : "浏览器不支持该编码" : "封面获取失败"), 1)], 64)), status.value === "failed" ? (openBlock(), createElementBlock("button", {
+					}, "提交转码")) : createCommentVNode("", true)], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode(toDisplayString(status.value === "unsupported" ? unref(rawCovers) ? "无法生成封面" : "浏览器不支持该编码" : "封面获取失败"), 1)], 64)), status.value === "failed" ? (openBlock(), createElementBlock("button", {
 						key: 2,
 						class: "g115-cover-retry",
 						onClick: retry
@@ -31545,17 +31959,18 @@
 	var _hoisted_6 = { class: "actions" };
 	var _hoisted_7 = {
 		key: 2,
+		class: "g115-search-src",
+		role: "status"
+	};
+	var _hoisted_8 = {
+		key: 3,
 		class: "folder-section"
 	};
-	var _hoisted_8 = { class: "sec-title" };
-	var _hoisted_9 = { class: "folders" };
-	var _hoisted_10 = {
-		key: 3,
-		class: "sec-title"
-	};
+	var _hoisted_9 = { class: "sec-title" };
+	var _hoisted_10 = { class: "folders" };
 	var _hoisted_11 = {
 		key: 4,
-		class: "loading-tip"
+		class: "sec-title"
 	};
 	var _hoisted_12 = {
 		key: 5,
@@ -31566,40 +31981,44 @@
 		class: "loading-tip"
 	};
 	var _hoisted_14 = {
+		key: 7,
+		class: "loading-tip"
+	};
+	var _hoisted_15 = {
 		key: 4,
 		class: "g115-selbar",
 		role: "toolbar",
 		"aria-label": "多选"
 	};
-	var _hoisted_15 = { class: "g115-selbar-count" };
-	var _hoisted_16 = ["disabled"];
+	var _hoisted_16 = { class: "g115-selbar-count" };
 	var _hoisted_17 = ["disabled"];
 	var _hoisted_18 = ["disabled"];
-	var _hoisted_19 = {
+	var _hoisted_19 = ["disabled"];
+	var _hoisted_20 = {
 		class: "dlg",
 		role: "alertdialog",
 		"aria-modal": "true",
 		"aria-label": "确认删除"
 	};
-	var _hoisted_20 = { class: "g115-del-sum" };
-	var _hoisted_21 = {
+	var _hoisted_21 = { class: "g115-del-sum" };
+	var _hoisted_22 = {
 		key: 0,
 		class: "g115-del-warn"
 	};
-	var _hoisted_22 = { class: "g115-del-list" };
-	var _hoisted_23 = ["title"];
-	var _hoisted_24 = {
+	var _hoisted_23 = { class: "g115-del-list" };
+	var _hoisted_24 = ["title"];
+	var _hoisted_25 = {
 		key: 0,
 		class: "more"
 	};
-	var _hoisted_25 = { class: "dlg-actions" };
-	var _hoisted_26 = ["disabled"];
+	var _hoisted_26 = { class: "dlg-actions" };
 	var _hoisted_27 = ["disabled"];
-	var _hoisted_28 = ["aria-label"];
-	var _hoisted_29 = { class: "g115-detail" };
-	var _hoisted_30 = { class: "dlg-actions" };
-	var _hoisted_31 = { class: "toaster" };
-	var _hoisted_32 = ["innerHTML"];
+	var _hoisted_28 = ["disabled"];
+	var _hoisted_29 = ["aria-label"];
+	var _hoisted_30 = { class: "g115-detail" };
+	var _hoisted_31 = { class: "dlg-actions" };
+	var _hoisted_32 = { class: "toaster" };
+	var _hoisted_33 = ["innerHTML"];
 	var App_default = defineComponent({
 		__name: "App",
 		props: { ctrl: {} },
@@ -31619,6 +32038,14 @@
 				return settings.mobileOptimize ? responsiveColumns(base, viewportWidth.value) : base;
 			});
 			const empty = computed(() => !s.loading && !s.error && !s.risk && !s.page.folders.length && !s.page.media.length);
+			const hasServer = computed(() => !!props.ctrl.platform.server?.());
+			const indexText = computed(() => {
+				const idx = s.localIndex;
+				if (!idx) return "";
+				if (!idx.fullAt) return `全盘预加载第一轮还没跑完，已收录 ${idx.entries} 项，可能搜不全`;
+				const d = new Date(idx.fullAt);
+				return `更新于 ${d.getMonth() + 1}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}，之后新增的可能搜不到`;
+			});
 			function checkLoadMore() {
 				const el = scrollEl.value;
 				if (!el || !ui.open) return;
@@ -32023,7 +32450,14 @@
 							class: "btn",
 							onClick: _cache[6] || (_cache[6] = ($event) => unref(browser).refresh())
 						}, "重试")])])) : createCommentVNode("", true),
-						unref(s).page.folders.length ? (openBlock(), createElementBlock("div", _hoisted_7, [createBaseVNode("div", _hoisted_8, "📁 文件夹 · " + toDisplayString(unref(s).page.folders.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1), createBaseVNode("div", _hoisted_9, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(s).page.folders, (f) => {
+						unref(s).query.keyword && (unref(s).localIndex || hasServer.value && unref(s).query.remote) ? (openBlock(), createElementBlock("div", _hoisted_7, [unref(s).localIndex ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createBaseVNode("span", null, "本地索引 · " + toDisplayString(indexText.value), 1), createBaseVNode("button", {
+							class: "btn",
+							onClick: _cache[7] || (_cache[7] = ($event) => unref(browser).setQuery({ remote: true }))
+						}, "用 115 搜索")], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [_cache[27] || (_cache[27] = createBaseVNode("span", null, "115 搜索", -1)), createBaseVNode("button", {
+							class: "btn",
+							onClick: _cache[8] || (_cache[8] = ($event) => unref(browser).setQuery({ remote: false }))
+						}, "用本地索引")], 64))])) : createCommentVNode("", true),
+						unref(s).page.folders.length ? (openBlock(), createElementBlock("div", _hoisted_8, [createBaseVNode("div", _hoisted_9, "📁 文件夹 · " + toDisplayString(unref(s).page.folders.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1), createBaseVNode("div", _hoisted_10, [(openBlock(true), createElementBlock(Fragment, null, renderList(unref(s).page.folders, (f) => {
 							return openBlock(), createBlock(FolderCard_default, {
 								key: `${unref(s).uid}|${f.id}`,
 								folder: f,
@@ -32033,7 +32467,7 @@
 								onPick: pick
 							}, null, 8, ["folder", "onOpen"]);
 						}), 128))])])) : createCommentVNode("", true),
-						unref(s).page.media.length ? (openBlock(), createElementBlock("div", _hoisted_10, "🖼 媒体 · " + toDisplayString(unref(s).page.media.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1)) : createCommentVNode("", true),
+						unref(s).page.media.length ? (openBlock(), createElementBlock("div", _hoisted_11, "🖼 媒体 · " + toDisplayString(unref(s).page.media.length) + toDisplayString(unref(s).page.hasMore ? "+" : ""), 1)) : createCommentVNode("", true),
 						(openBlock(), createBlock(Masonry_default, {
 							key: unref(s).uid,
 							items: unref(s).page.media,
@@ -32043,7 +32477,7 @@
 							"show-filename": unref(settings).showFilename,
 							"show-tags": unref(settings).showTags,
 							onOpen: openItem,
-							onThumbSize: _cache[7] || (_cache[7] = (v) => unref(ui).thumbSize = v),
+							onThumbSize: _cache[9] || (_cache[9] = (v) => unref(ui).thumbSize = v),
 							onMenu: openMenu,
 							onStar: toggleStar,
 							onPick: pick
@@ -32055,7 +32489,7 @@
 							"show-filename",
 							"show-tags"
 						])),
-						unref(s).loading || unref(s).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_11, [..._cache[25] || (_cache[25] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(s).capped ? (openBlock(), createElementBlock("div", _hoisted_12, "已到 115 搜索的 10000 条上限，请缩小搜索范围")) : empty.value ? (openBlock(), createElementBlock("div", _hoisted_13, toDisplayString(unref(s).query.keyword || unref(s).query.type ? "没有匹配的媒体" : "此目录为空"), 1)) : createCommentVNode("", true)
+						unref(s).loading || unref(s).loadingMore ? (openBlock(), createElementBlock("div", _hoisted_12, [..._cache[28] || (_cache[28] = [createBaseVNode("span", { class: "spinner" }, null, -1)])])) : unref(s).capped ? (openBlock(), createElementBlock("div", _hoisted_13, "已到 115 搜索的 10000 条上限，请缩小搜索范围")) : empty.value ? (openBlock(), createElementBlock("div", _hoisted_14, toDisplayString(unref(s).query.keyword || unref(s).query.type ? "没有匹配的媒体" : "此目录为空"), 1)) : createCommentVNode("", true)
 					])], 544)) : createCommentVNode("", true),
 					(openBlock(), createBlock(LeftRail_default, {
 						ref_key: "railRef",
@@ -32066,7 +32500,7 @@
 						onUnstar: toggleStar,
 						onOpenCollection: __props.ctrl.openCollection,
 						onView: openDrawerImage,
-						onPlay: _cache[8] || (_cache[8] = (i, l) => __props.ctrl.play(i, l))
+						onPlay: _cache[10] || (_cache[10] = (i, l) => __props.ctrl.play(i, l))
 					}, null, 8, ["onEnter", "onOpenCollection"])),
 					(openBlock(), createBlock(DirDrawer_default, {
 						ref_key: "dirRef",
@@ -32086,9 +32520,9 @@
 						mode: unref(ui).player.kind === "raw" ? "raw" : "hls",
 						"has-prev": playerHasPrev.value,
 						"has-next": playerHasNext.value,
-						onClose: _cache[9] || (_cache[9] = ($event) => __props.ctrl.closePlayer()),
-						onPrev: _cache[10] || (_cache[10] = ($event) => __props.ctrl.playStep(-1)),
-						onNext: _cache[11] || (_cache[11] = ($event) => __props.ctrl.playStep(1)),
+						onClose: _cache[11] || (_cache[11] = ($event) => __props.ctrl.closePlayer()),
+						onPrev: _cache[12] || (_cache[12] = ($event) => __props.ctrl.playStep(-1)),
+						onNext: _cache[13] || (_cache[13] = ($event) => __props.ctrl.playStep(1)),
 						onFallback: __props.ctrl.playFallback
 					}, null, 8, [
 						"item",
@@ -32100,13 +32534,13 @@
 						key: unref(ui).player.url,
 						url: unref(ui).player.url,
 						title: unref(ui).player.title,
-						onClose: _cache[12] || (_cache[12] = ($event) => __props.ctrl.closePlayer())
+						onClose: _cache[14] || (_cache[14] = ($event) => __props.ctrl.closePlayer())
 					}, null, 8, ["url", "title"])) : createCommentVNode("", true),
-					unref(sel).active ? (openBlock(), createElementBlock("div", _hoisted_14, [
-						createBaseVNode("span", _hoisted_15, [
-							_cache[26] || (_cache[26] = createTextVNode("已选 ", -1)),
+					unref(sel).active ? (openBlock(), createElementBlock("div", _hoisted_15, [
+						createBaseVNode("span", _hoisted_16, [
+							_cache[29] || (_cache[29] = createTextVNode("已选 ", -1)),
 							createBaseVNode("b", null, toDisplayString(unref(sel).ids.size), 1),
-							_cache[27] || (_cache[27] = createTextVNode(" 项", -1))
+							_cache[30] || (_cache[30] = createTextVNode(" 项", -1))
 						]),
 						createBaseVNode("button", {
 							class: "btn",
@@ -32115,59 +32549,59 @@
 						createBaseVNode("button", {
 							class: "btn",
 							disabled: !unref(sel).ids.size,
-							onClick: _cache[13] || (_cache[13] = ($event) => copyTo(pickedItems()))
-						}, "复制到…（" + toDisplayString(unref(sel).ids.size) + "）", 9, _hoisted_16),
+							onClick: _cache[15] || (_cache[15] = ($event) => copyTo(pickedItems()))
+						}, "复制到…（" + toDisplayString(unref(sel).ids.size) + "）", 9, _hoisted_17),
 						createBaseVNode("button", {
 							class: "btn",
 							disabled: !unref(sel).ids.size,
-							onClick: _cache[14] || (_cache[14] = ($event) => enqueue(pickedItems()))
-						}, "加入待复制清单", 8, _hoisted_17),
+							onClick: _cache[16] || (_cache[16] = ($event) => enqueue(pickedItems()))
+						}, "加入待复制清单", 8, _hoisted_18),
 						pickedTranscodable.value ? (openBlock(), createElementBlock("button", {
 							key: 0,
 							class: "btn",
-							onClick: _cache[15] || (_cache[15] = ($event) => submitTranscode(pickedItems()))
+							onClick: _cache[17] || (_cache[17] = ($event) => submitTranscode(pickedItems()))
 						}, "批量转码（" + toDisplayString(pickedTranscodable.value) + "）", 1)) : createCommentVNode("", true),
 						createBaseVNode("button", {
 							class: "btn danger",
 							disabled: !unref(sel).ids.size,
-							onClick: _cache[16] || (_cache[16] = ($event) => askDelete(pickedItems()))
-						}, "删除", 8, _hoisted_18),
+							onClick: _cache[18] || (_cache[18] = ($event) => askDelete(pickedItems()))
+						}, "删除", 8, _hoisted_19),
 						createBaseVNode("button", {
 							class: "btn",
-							onClick: _cache[17] || (_cache[17] = ($event) => unref(selection).stop())
+							onClick: _cache[19] || (_cache[19] = ($event) => unref(selection).stop())
 						}, "退出多选"),
-						_cache[28] || (_cache[28] = createBaseVNode("small", { class: "g115-selbar-tip" }, "Shift+点击 选一整段 · Esc 退出", -1))
+						_cache[31] || (_cache[31] = createBaseVNode("small", { class: "g115-selbar-tip" }, "Shift+点击 选一整段 · Esc 退出", -1))
 					])) : createCommentVNode("", true),
 					confirmDel.value ? (openBlock(), createElementBlock("div", {
 						key: 5,
 						class: "modal-overlay",
-						onClick: _cache[19] || (_cache[19] = withModifiers(($event) => !confirmDel.value.busy && (confirmDel.value = null), ["self"]))
-					}, [createBaseVNode("div", _hoisted_19, [
+						onClick: _cache[21] || (_cache[21] = withModifiers(($event) => !confirmDel.value.busy && (confirmDel.value = null), ["self"]))
+					}, [createBaseVNode("div", _hoisted_20, [
 						createBaseVNode("h3", null, "删除 " + toDisplayString(confirmDel.value.items.length) + " 项？", 1),
-						createBaseVNode("p", _hoisted_20, [
+						createBaseVNode("p", _hoisted_21, [
 							delSummary.value.files ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(toDisplayString(delSummary.value.files) + " 个文件", 1)], 64)) : createCommentVNode("", true),
 							delSummary.value.files && delSummary.value.folders ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [createTextVNode("、")], 64)) : createCommentVNode("", true),
 							delSummary.value.folders ? (openBlock(), createElementBlock(Fragment, { key: 2 }, [createTextVNode(toDisplayString(delSummary.value.folders) + " 个文件夹", 1)], 64)) : createCommentVNode("", true),
-							_cache[29] || (_cache[29] = createTextVNode(" 会移到 115 回收站，可以恢复。 ", -1))
+							_cache[32] || (_cache[32] = createTextVNode(" 会移到 115 回收站，可以恢复。 ", -1))
 						]),
-						delSummary.value.folders ? (openBlock(), createElementBlock("p", _hoisted_21, " 文件夹里的内容会一起删除" + toDisplayString(delSummary.value.inner ? `（已知至少 ${delSummary.value.inner} 项）` : "") + "。 ", 1)) : createCommentVNode("", true),
-						createBaseVNode("ul", _hoisted_22, [(openBlock(true), createElementBlock(Fragment, null, renderList(delSummary.value.names, (n) => {
+						delSummary.value.folders ? (openBlock(), createElementBlock("p", _hoisted_22, " 文件夹里的内容会一起删除" + toDisplayString(delSummary.value.inner ? `（已知至少 ${delSummary.value.inner} 项）` : "") + "。 ", 1)) : createCommentVNode("", true),
+						createBaseVNode("ul", _hoisted_23, [(openBlock(true), createElementBlock(Fragment, null, renderList(delSummary.value.names, (n) => {
 							return openBlock(), createElementBlock("li", {
 								key: n,
 								title: n
-							}, toDisplayString(n), 9, _hoisted_23);
-						}), 128)), confirmDel.value.items.length > delSummary.value.names.length ? (openBlock(), createElementBlock("li", _hoisted_24, "…等 " + toDisplayString(confirmDel.value.items.length) + " 项", 1)) : createCommentVNode("", true)]),
-						createBaseVNode("div", _hoisted_25, [createBaseVNode("button", {
+							}, toDisplayString(n), 9, _hoisted_24);
+						}), 128)), confirmDel.value.items.length > delSummary.value.names.length ? (openBlock(), createElementBlock("li", _hoisted_25, "…等 " + toDisplayString(confirmDel.value.items.length) + " 项", 1)) : createCommentVNode("", true)]),
+						createBaseVNode("div", _hoisted_26, [createBaseVNode("button", {
 							class: "btn",
 							disabled: confirmDel.value.busy,
-							onClick: _cache[18] || (_cache[18] = ($event) => confirmDel.value = null)
-						}, "取消", 8, _hoisted_26), createBaseVNode("button", {
+							onClick: _cache[20] || (_cache[20] = ($event) => confirmDel.value = null)
+						}, "取消", 8, _hoisted_27), createBaseVNode("button", {
 							ref_key: "delBtn",
 							ref: delBtn,
 							class: "btn danger",
 							disabled: confirmDel.value.busy,
 							onClick: doDelete
-						}, toDisplayString(confirmDel.value.busy ? "删除中…" : "删除"), 9, _hoisted_27)])
+						}, toDisplayString(confirmDel.value.busy ? "删除中…" : "删除"), 9, _hoisted_28)])
 					])])) : createCommentVNode("", true),
 					unref(cui).picker ? (openBlock(), createBlock(DirPickerDialog_default, { key: 6 })) : createCommentVNode("", true),
 					unref(cui).bind ? (openBlock(), createBlock(BindDialog_default, { key: 7 })) : createCommentVNode("", true),
@@ -32178,7 +32612,7 @@
 						x: menu.value.x,
 						y: menu.value.y,
 						items: menu.value.items,
-						onClose: _cache[20] || (_cache[20] = ($event) => menu.value = null)
+						onClose: _cache[22] || (_cache[22] = ($event) => menu.value = null)
 					}, null, 8, [
 						"x",
 						"y",
@@ -32187,7 +32621,7 @@
 					detail.value ? (openBlock(), createElementBlock("div", {
 						key: 10,
 						class: "modal-overlay",
-						onClick: _cache[22] || (_cache[22] = withModifiers(($event) => detail.value = null, ["self"]))
+						onClick: _cache[24] || (_cache[24] = withModifiers(($event) => detail.value = null, ["self"]))
 					}, [createBaseVNode("div", {
 						class: "dlg",
 						role: "dialog",
@@ -32195,29 +32629,29 @@
 						"aria-label": detail.value.title
 					}, [
 						createBaseVNode("h3", null, toDisplayString(detail.value.title), 1),
-						createBaseVNode("dl", _hoisted_29, [(openBlock(true), createElementBlock(Fragment, null, renderList(detail.value.lines, ([k, v]) => {
+						createBaseVNode("dl", _hoisted_30, [(openBlock(true), createElementBlock(Fragment, null, renderList(detail.value.lines, ([k, v]) => {
 							return openBlock(), createElementBlock(Fragment, { key: k }, [createBaseVNode("dt", null, toDisplayString(k), 1), createBaseVNode("dd", null, toDisplayString(v), 1)], 64);
 						}), 128))]),
-						createBaseVNode("div", _hoisted_30, [createBaseVNode("button", {
+						createBaseVNode("div", _hoisted_31, [createBaseVNode("button", {
 							class: "btn primary",
-							onClick: _cache[21] || (_cache[21] = ($event) => detail.value = null)
+							onClick: _cache[23] || (_cache[23] = ($event) => detail.value = null)
 						}, "关闭")])
-					], 8, _hoisted_28)])) : createCommentVNode("", true),
-					createBaseVNode("div", _hoisted_31, [unref(ui).toast ? (openBlock(), createElementBlock("div", {
+					], 8, _hoisted_29)])) : createCommentVNode("", true),
+					createBaseVNode("div", _hoisted_32, [unref(ui).toast ? (openBlock(), createElementBlock("div", {
 						key: 0,
 						class: "toast",
-						onClick: _cache[23] || (_cache[23] = ($event) => unref(ui).toast = "")
+						onClick: _cache[25] || (_cache[25] = ($event) => unref(ui).toast = "")
 					}, toDisplayString(unref(ui).toast), 1)) : createCommentVNode("", true)])
 				], 512), [[vShow, unref(ui).open]]), !__props.ctrl.platform.standalone ? withDirectives((openBlock(), createElementBlock("button", {
 					key: 0,
 					class: "g115-launcher",
 					title: "打开瀑布流阅览器",
 					"aria-label": "打开瀑布流阅览器",
-					onClick: _cache[24] || (_cache[24] = ($event) => __props.ctrl.open())
+					onClick: _cache[26] || (_cache[26] = ($event) => __props.ctrl.open())
 				}, [createBaseVNode("span", {
 					class: "g115-launcher-icon",
 					innerHTML: unref(brandSvg)(28)
-				}, null, 8, _hoisted_32)], 512)), [[vShow, !unref(ui).open]]) : createCommentVNode("", true)], 64);
+				}, null, 8, _hoisted_33)], 512)), [[vShow, !unref(ui).open]]) : createCommentVNode("", true)], 64);
 			};
 		}
 	});
@@ -34242,6 +34676,8 @@
 	var PREVIEW_COUNT = 4;
 	var PREVIEW_FETCH = 24;
 	var previewable = (i) => i.kind === "image" && !!i.thumb || i.kind === "video" && i.transcoded === true;
+	var BATCH_MS = 20;
+	var BATCH_MAX = 200;
 	var FolderInfoService = class {
 		deps;
 		uid = "";
@@ -34250,6 +34686,8 @@
 		clearedAt = -Infinity;
 		staleAt = new Map();
 		cancelled = new Set();
+		asking = new Map();
+		askTimer;
 		constructor(deps) {
 			this.deps = deps;
 		}
@@ -34299,10 +34737,69 @@
 				}
 			}
 			if (hit && this.now() - hit.at < 5184e6) {
-				if (!this.fresh(hit, cid, te)) this.fetch(cid, te).then((card) => onUpdate?.(card), () => {});
+				if (!this.fresh(hit, cid, te)) this.refresh(cid, te).then((card) => onUpdate?.(card), () => {});
 				return hit.card;
 			}
+			const remote = await this.fromServer(cid);
+			this.assertGeneration(generation);
+			if (this.cancelled.delete(cid)) throw new CancelledError();
+			if (remote) {
+				this.cache.set(cid, remote);
+				if (this.fresh(remote, cid, te)) {
+					this.save(cid, remote);
+					return remote.card;
+				}
+				this.fetch(cid, te).then((card) => onUpdate?.(card), () => {});
+				return remote.card;
+			}
 			return this.fetch(cid, te);
+		}
+		async refresh(cid, te) {
+			const generation = this.generation;
+			const remote = await this.fromServer(cid);
+			this.assertGeneration(generation);
+			if (remote && this.fresh(remote, cid, te)) {
+				this.cache.set(cid, remote);
+				this.save(cid, remote);
+				return remote.card;
+			}
+			return this.fetch(cid, te);
+		}
+		async fromServer(cid) {
+			if (!this.deps.server?.()) return void 0;
+			const r = await new Promise((resolve) => {
+				const list = this.asking.get(cid);
+				if (list) list.push(resolve);
+				else this.asking.set(cid, [resolve]);
+				if (this.asking.size >= BATCH_MAX) this.ask();
+				else this.askTimer ??= setTimeout(() => this.ask(), BATCH_MS);
+			});
+			if (!r) return void 0;
+			const hit = {
+				card: {
+					count: r.count,
+					hasVideo: !!r.hasVideo,
+					preview: r.preview
+				},
+				at: this.now() - r.age
+			};
+			if (r.te !== null) hit.te = r.te;
+			if (r.source !== "live" || r.hasVideo === null) hit.legacy = true;
+			return hit;
+		}
+		ask() {
+			clearTimeout(this.askTimer);
+			this.askTimer = void 0;
+			const batch = [...this.asking].slice(0, BATCH_MAX);
+			for (const [cid] of batch) this.asking.delete(cid);
+			if (this.asking.size) this.askTimer = setTimeout(() => this.ask(), 0);
+			const server = this.deps.server?.();
+			const done = (rows) => {
+				const byCid = new Map(rows.map((r) => [r.cid, r]));
+				for (const [cid, waiters] of batch) for (const w of waiters) w(byCid.get(cid));
+			};
+			if (!server) return done([]);
+			server.folders(batch.map(([cid]) => cid)).then(done, () => done([]));
 		}
 		async details(cid) {
 			try {
@@ -34321,8 +34818,22 @@
 		}
 		async fetch(cid, te) {
 			const generation = this.generation;
+			const writeback = this.deps.server?.()?.writeback;
+			const got = [];
+			const fetchJson = writeback ? async (url, signal) => {
+				const body = await this.deps.fetchJson(url, signal);
+				got.push(te === void 0 ? {
+					url,
+					body
+				} : {
+					url,
+					body,
+					te
+				});
+				return body;
+			} : this.deps.fetchJson;
 			try {
-				const page = await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
+				const page = await this.deps.scheduler.add((signal) => listPage(fetchJson, {
 					cid,
 					offset: 0,
 					limit: PREVIEW_FETCH,
@@ -34334,7 +34845,7 @@
 				this.assertGeneration(generation);
 				let hasVideo = page.items.some((i) => i.kind === "video");
 				if (!hasVideo && page.total > page.items.length) {
-					const videos = await this.deps.scheduler.add((signal) => listPage(this.deps.fetchJson, {
+					const videos = await this.deps.scheduler.add((signal) => listPage(fetchJson, {
 						cid,
 						offset: 0,
 						limit: 1,
@@ -34347,6 +34858,7 @@
 					this.assertGeneration(generation);
 					hasVideo = videos.total > 0;
 				}
+				if (writeback && got.length) writeback(got);
 				const card = {
 					count: page.total,
 					hasVideo,
@@ -34607,6 +35119,27 @@
 			]);
 		}
 	};
+	function lanExtract(lan, local) {
+		return async (pickCode, second, signal, video, priority = 0) => {
+			const sha1 = video?.sha1?.toUpperCase();
+			if (sha1) {
+				const r = await lan.frame(sha1, second, pickCode, video?.transcoded === false, priority, signal);
+				if (r?.ok) return {
+					bytes: r.bytes,
+					type: r.type,
+					w: r.w,
+					h: r.h
+				};
+				if (r) {
+					if (r.kind === "risk") throw new RiskControlError();
+					if (r.kind === "untranscoded" || r.kind === "limit") throw new NotTranscodedError();
+					if (r.kind === "unsupported" && video?.transcoded === false) throw new UnsupportedCodecError("服务器无法解码");
+				}
+			}
+			if (video?.transcoded === false) throw new NotTranscodedError();
+			return local(pickCode, second, signal, video, priority);
+		};
+	}
 	var read = (state) => state && typeof state === "object" && "g115" in state ? state.g115 : void 0;
 	var Router = class {
 		history;
@@ -34787,6 +35320,7 @@
 			if (this.anchor && !keep.has(this.anchor)) this.anchor = "";
 		}
 	};
+	var HEARTBEAT_MS = 6e4;
 	function createController(win, platform) {
 		const riskLog = new RiskLog(platform.kv);
 		const fetchJson = riskLog.wrap(platform.fetchJson);
@@ -34847,6 +35381,17 @@
 			deep: true,
 			flush: "sync"
 		});
+		const lan = platform.lanRequest ? new LanServer({
+			request: platform.lanRequest,
+			config: () => ({
+				url: settings.serverUrl,
+				token: settings.serverToken,
+				force: settings.serverForce
+			}),
+			uid: () => browser.state.confirmed ? browser.state.uid : ""
+		}) : void 0;
+		const server = platform.server ?? (lan ? () => lan.link() : void 0);
+		riskLog.onRecord = (e) => lan?.report(e);
 		const LAST_UID = "g115.lastUid";
 		const lists = new ListStore();
 		const MB = 1048576;
@@ -34860,8 +35405,8 @@
 		}) ?? new ThumbService({
 			store: frameCache,
 			scheduler,
-			download: platform.downloadBytes,
 			dims: (sha1) => dims.get(sha1),
+			download: lan ? async (url, signal) => await lan.thumb(url, signal) ?? platform.downloadBytes(url, signal) : platform.downloadBytes,
 			onDims: (sha1, d) => dims.set(sha1, d)
 		});
 		const browser = new Browser({
@@ -34869,6 +35414,7 @@
 			postForm,
 			scheduler,
 			persist: lists,
+			server,
 			warm: (item) => thumbs.warm(item, ui.thumbSize),
 			lastUid: String(safeGet(kv, LAST_UID) ?? ""),
 			staleMark: (uid, cid) => marks.uid === uid ? marks.at.get(cid) ?? 0 : 0,
@@ -34929,7 +35475,7 @@
 		const frames = new FrameService({
 			scheduler,
 			cache: platform.frameStore ?? frameCache,
-			extract: platform.extractFrame ?? createExtractor(),
+			extract: lan ? lanExtract(lan, platform.extractFrame ?? createExtractor()) : platform.extractFrame ?? createExtractor(),
 			fallback: master ? (sha1, sec) => master.get(sha1, sec) : void 0
 		});
 		const folderCache = new FolderCacheService(frameCache, {
@@ -34948,7 +35494,8 @@
 			fetchJson,
 			scheduler,
 			onRisk,
-			persist: folderStore
+			persist: folderStore,
+			server
 		});
 		const caches = new CacheManager({
 			media: frameCache,
@@ -34988,6 +35535,36 @@
 			settingsTab: "view",
 			railRequest: "",
 			thumbSize: 480
+		});
+		let visited = [];
+		watch(() => browser.state.cid, (cid) => visited = [cid, ...visited.filter((c) => c !== cid)].slice(0, 5), { immediate: true });
+		const beat = () => {
+			const link = server?.();
+			if (!link || !ui.open) return;
+			const q = browser.state.query;
+			link.heartbeat({
+				cids: visited,
+				sort: q.sort,
+				order: q.order,
+				thumbSize: ui.thumbSize,
+				cover: { ...settings.cover }
+			}).catch(() => {});
+		};
+		if (lan) {
+			watch(() => lan.state.status === "on" && browser.state.confirmed, (ok) => ok && beat());
+			watch(() => [
+				settings.serverUrl,
+				settings.serverToken,
+				settings.serverForce
+			], () => ui.open && void lan.probe());
+		}
+		let beatTimer;
+		watch(() => ui.open, (open) => {
+			clearInterval(beatTimer);
+			beatTimer = void 0;
+			if (!open) return;
+			beat();
+			beatTimer = setInterval(beat, HEARTBEAT_MS);
 		});
 		const channel = platform.userChannel?.() ?? (typeof BroadcastChannel === "function" ? new BroadcastChannel("g115-user") : void 0);
 		const collectionsChannel = {
@@ -35274,6 +35851,7 @@
 			caches,
 			folderCache,
 			riskLog,
+			lan,
 			settings,
 			ui,
 			router,
@@ -35282,6 +35860,7 @@
 			open() {
 				if (ui.open) return;
 				if (folderCache.state.status === "needs-permission") folderCache.restore();
+				lan?.probe();
 				const cid = platform.initialCid();
 				ui.master = platform.hasMaster();
 				ui.open = true;
@@ -35416,7 +35995,7 @@
 	}
 	var cloudflow_default = ":host{--bg:#f5f5f5;--card:#fff;--line:#e5e7eb;--line-2:#eee;--ink:#333;--ink-2:#666;--ink-3:#999;--blue:#1976d2;--blue-soft:#e3f2fd;--img:#1976d2;--img-soft:#e3f2fd;--vid:#f57c00;--vid-soft:#fff3e0;--gold:gold;--r:8px;--sh:0 2px 8px #0000001a;--sh-h:0 6px 16px #0000002e;--header-h:64px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px)}.g115-root,.g115-root *{box-sizing:border-box;margin:0;padding:0}.g115-root{background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif}a{color:inherit;text-decoration:none}.header{height:calc(var(--header-h) + var(--safe-t));padding-top:var(--safe-t);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);z-index:1200;background:#ffffffeb;position:fixed;top:0;left:0;right:0}.header-inner{height:100%;padding:0 max(24px,var(--safe-l)) 0 max(24px,var(--safe-r));justify-content:space-between;align-items:center;gap:16px;display:flex}.header-left{flex:1;align-items:center;gap:16px;min-width:0;display:flex}.brand{flex-shrink:0;align-items:center;gap:9px;display:flex}.brand .mark{background:var(--blue);color:#fff;border-radius:8px;place-items:center;width:30px;height:30px;font-size:16px;font-weight:700;display:grid}.brand b{font-size:17px;font-weight:700}.brand b span{color:var(--blue)}.breadcrumb{white-space:nowrap;align-items:center;gap:6px;min-width:0;font-size:14px;display:flex;overflow-x:auto}.breadcrumb .sep{color:var(--ink-3);font-size:12px}.breadcrumb a{color:var(--ink-2);border-radius:4px;padding:4px 8px;transition:all .15s}.breadcrumb a:hover{color:var(--blue);background:var(--blue-soft)}.breadcrumb .current{color:var(--ink);padding:4px 8px;font-weight:600}.header-right{flex-shrink:0;align-items:center;gap:8px;display:flex}.hbtn{border:1px solid var(--line);height:38px;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:8px;align-items:center;gap:6px;padding:0 12px;font-size:13px;transition:all .18s;display:flex}.hbtn:hover{color:var(--ink);border-color:#cfd4da}.hbtn.icon{justify-content:center;width:38px;padding:0;font-size:16px}.seg{border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);color:var(--ink-3);font:inherit;cursor:pointer;background:0 0;height:36px;padding:0 12px;font-size:13px;transition:all .18s}.seg button:last-child{border-right:0}.seg button.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.main{padding:calc(var(--header-h) + var(--safe-t) + 18px) 10px 40px;max-width:1840px;margin:0 auto}.sec-title{color:var(--ink-3);align-items:center;gap:8px;margin:0 2px 12px;font-size:13px;display:flex}.folder-section{margin-bottom:22px}.folder-more{margin:14px auto 0;display:block}.folders{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;display:grid}.folder{border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:#fff;transition:all .2s;overflow:hidden}.folder:hover{box-shadow:var(--sh);transform:translateY(-3px)}.fpreview{background:#e9eaec;grid-template-columns:repeat(4,1fr);gap:2px;display:grid;position:relative}.fpreview img{aspect-ratio:1;object-fit:cover;width:100%;display:block}.fpreview-empty{aspect-ratio:4;color:#b9bdc3;background:#f0f1f3;grid-column:1/-1;place-items:center;font-size:22px;display:grid}.thumb-box{aspect-ratio:1;background:#f0f0f0;width:100%;line-height:0;display:block;position:relative;overflow:hidden}.thumb-box img{object-fit:cover;opacity:0;width:100%;height:100%;transition:opacity .25s;position:absolute;inset:0}.thumb-box.ready img{opacity:1}.thumb-box .thumb-skel{width:100%;height:100%;position:absolute;inset:0}.thumb-skel{background:linear-gradient(90deg,#ececec 25%,#f5f5f5 37%,#ececec 63%) 0 0/400% 100%;animation:1.3s infinite skel}@keyframes skel{0%{background-position:100% 0}to{background-position:-100% 0}}.sprite-strip{background:#000;line-height:0;display:none;position:absolute;inset:0;overflow:hidden}.sprite-strip.on{display:block}.sprite-strip img{max-width:none;height:100%;position:absolute;top:0;left:0}.fpreview .more{color:#fff;background:#0009;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.finfo{justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;display:flex}.finfo .fn{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden}.finfo .fc{color:var(--ink-3);flex-shrink:0;font-size:11px}.gallery-columns{align-items:flex-start;gap:15px;display:flex}.gallery-column{flex-direction:column;flex:1;gap:15px;display:flex}.masonry{width:100%;position:relative}.masonry>.item{position:absolute;top:0;left:0}.spinner{border:3px solid var(--line);border-top-color:var(--blue);border-radius:50%;width:40px;height:40px;animation:.8s linear infinite spin;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}.item{border-radius:var(--r);box-shadow:var(--sh);cursor:pointer;background:#fff;transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}.item:hover{box-shadow:var(--sh-h);transform:translateY(-5px)}.item .thumb{line-height:0;display:block;position:relative}.item .info{padding:12px}.item .filename{color:var(--ink);word-break:break-all;font-size:13px;line-height:1.4}.item .type{border-radius:4px;margin-top:8px;padding:3px 8px;font-size:11px;font-weight:500;display:inline-block}.type.image{background:var(--img-soft);color:var(--img)}.type.video{background:var(--vid-soft);color:var(--vid)}.dur{color:#fff;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600;position:absolute;bottom:8px;right:8px}.video-overlay{background:#0009;border-radius:50%;justify-content:center;align-items:center;width:60px;height:60px;transition:all .25s;display:flex;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.video-overlay:after{content:\"▶\";color:#fff;margin-left:4px;font-size:24px}.item:hover .video-overlay{background:var(--blue)}.edge-toggle{color:#fff;cursor:pointer;z-index:201;writing-mode:vertical-rl;letter-spacing:2px;border:none;padding:15px 9px;font-size:14px;font-weight:600;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:calc(50% - 30px);box-shadow:0 2px 12px #0003}.edge-toggle.fav{background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:0 8px 8px 0;left:0}.edge-toggle.tree{background:linear-gradient(135deg,#4facfe,#00c6fb);border-radius:8px 0 0 8px;right:0}.drawer{z-index:200;background:#fff;width:340px;height:100vh;padding:20px;transition:all .3s cubic-bezier(.4,0,.2,1);position:fixed;top:0;overflow:auto}.drawer.left{left:-360px;box-shadow:2px 0 16px #0000001f}.drawer.right{right:-360px;box-shadow:-2px 0 16px #0000001f}.fav-group.open .edge-toggle.fav{left:340px}.fav-group.open .drawer.left{left:0}.tree-group.open .edge-toggle.tree{right:340px}.tree-group.open .drawer.right{right:0}.drawer h3{margin-bottom:16px;font-size:16px}.fav-item{cursor:pointer;background:#f8f9fa;border-radius:8px;margin-bottom:10px;padding:11px;transition:all .18s}.fav-item:hover{background:#eef0f2}.fav-head{align-items:center;gap:10px;display:flex}.fav-head .fic{color:#e0a800;background:#fff7d6;border-radius:7px;flex-shrink:0;place-items:center;width:30px;height:30px;display:grid}.fav-head .fmeta{flex:1;overflow:hidden}.fav-head .fn{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.fav-head .fp{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.fav-head .rm{color:#fff;cursor:pointer;opacity:0;background:#f44336;border:0;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px;transition:all .18s}.fav-item:hover .rm{opacity:1}.fav-thumbs{grid-template-columns:repeat(4,1fr);gap:4px;margin-top:9px;display:grid}.fav-thumbs .ft{aspect-ratio:1;background:#e9eaec;border-radius:5px;position:relative;overflow:hidden}.fav-thumbs .ft .thumb-box{position:absolute;inset:0}.fav-thumbs .ft.vid:after{content:\"▶\";color:#fff;z-index:2;background:#0000004d;place-items:center;font-size:13px;display:grid;position:absolute;inset:0}.tnode{cursor:pointer;color:var(--ink-2);white-space:nowrap;text-overflow:ellipsis;border-radius:6px;padding:7px 9px;font-size:14px;overflow:hidden}.tnode:hover{color:var(--ink);background:#f0f2f5}.tnode.cur{color:var(--blue);font-weight:600}.l2{padding-left:20px}.l3{padding-left:38px}.modal{z-index:1700;background:#000000f2;display:none;position:fixed;inset:0}.modal.show{justify-content:center;align-items:center;display:flex}.modal .close{color:#f1f1f1;cursor:pointer;z-index:1301;font-size:38px;font-weight:700;line-height:1;position:fixed;top:18px;right:34px}.modal .close:hover{color:#ff5252}.player{width:94vw;max-width:1600px;max-height:90vh;position:relative}.ptitle-top{z-index:6;color:#fff;text-shadow:0 1px 4px #000000e6;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;font-size:14px;position:absolute;top:10px;left:14px;right:60px;overflow:hidden}.hud{z-index:6;color:#fff;pointer-events:none;background:#0000009e;border-radius:10px;padding:10px 18px;font-size:20px;font-weight:600;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.stage{aspect-ratio:16/9;background:#000;border-radius:10px;width:100%;max-height:90vh;position:relative;overflow:hidden}.stage img{object-fit:contain;opacity:.9;width:100%;height:100%}.stage .big{place-items:center;display:grid;position:absolute;inset:0}.stage .big span{color:#111;cursor:pointer;background:#ffffffeb;border-radius:50%;place-items:center;width:76px;height:76px;font-size:28px;display:grid}.pbar{color:#fff;background:linear-gradient(#0000,#000c);padding:14px 16px;position:absolute;bottom:0;left:0;right:0}.pscrub{background:#ffffff4d;border-radius:3px;height:4px;margin-bottom:10px;position:relative}.pscrub i{background:var(--blue);border-radius:3px;width:35%;position:absolute;top:0;bottom:0;left:0}.pctl{align-items:center;gap:14px;font-size:14px;display:flex}.pctl .r{gap:14px;margin-left:auto;display:flex}.pctl span{cursor:pointer;opacity:.92}.ptitle{color:#eee;text-align:center;margin-top:12px;font-size:14px}.modal .imgview{object-fit:contain;touch-action:none;border-radius:8px;max-width:94vw;max-height:90vh}.set-wrap{grid-template-columns:220px 1fr;align-items:start;gap:26px;max-width:1100px;margin:0 auto;display:grid}@media (width<=820px){.set-wrap{grid-template-columns:1fr}.set-nav{display:none}}.set-nav{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;position:sticky;top:84px}.set-nav a{color:var(--ink-2);cursor:pointer;border-radius:8px;padding:9px 12px;font-size:14px;transition:all .15s;display:block}.set-nav a:hover{color:var(--ink);background:#f5f7f9}.set-nav a.active{background:var(--blue-soft);color:var(--blue);font-weight:600}.set-title{margin-bottom:4px;font-size:26px;font-weight:700}.set-sub{color:var(--ink-3);margin-bottom:22px;font-size:14px}.panel{border:1px solid var(--line);background:#fff;border-radius:12px;margin-bottom:18px;padding:22px}.panel h3{align-items:center;gap:9px;margin-bottom:4px;font-size:17px;font-weight:600;display:flex}.panel .desc{color:var(--ink-3);margin-bottom:18px;font-size:13px}.row{border-bottom:1px solid var(--line-2);justify-content:space-between;align-items:center;gap:16px;padding:13px 0;display:flex}.row:last-child{border:0}.row .lab b{font-size:14px;font-weight:500;display:block}.row .lab small{color:var(--ink-3);font-size:12px}.valctl{align-items:center;gap:14px;display:flex}.val{color:var(--blue);white-space:nowrap;font-size:14px;font-weight:600}.toggle{cursor:pointer;background:#d4d7dc;border-radius:999px;flex-shrink:0;width:46px;height:26px;transition:all .25s;position:relative}.toggle.on{background:var(--blue)}.toggle i{background:#fff;border-radius:50%;width:22px;height:22px;transition:all .25s;position:absolute;top:2px;left:2px;box-shadow:0 1px 3px #0000004d}.toggle.on i{left:22px}.slider{background:#e3e6ea;border-radius:4px;width:150px;height:6px;position:relative}.slider i{background:var(--blue);border-radius:4px;position:absolute;top:0;bottom:0;left:0}.slider i:after{content:\"\";border:1px solid var(--line);background:#fff;border-radius:50%;width:16px;height:16px;position:absolute;top:50%;right:-7px;transform:translateY(-50%);box-shadow:0 1px 4px #00000059}.inp{border:1px solid var(--line);font:inherit;width:240px;color:var(--ink);border-radius:8px;outline:none;padding:9px 12px;font-size:13px}.inp:focus{border-color:var(--blue)}.btn{border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;background:#fff;border-radius:8px;padding:9px 16px;font-size:13px;transition:all .18s}.btn:hover{border-color:#c4c9cf}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:#e53935;border-color:#f3c0bb}.actions{flex-wrap:wrap;gap:10px;margin-top:16px;display:flex}.progbar{background:#e3e6ea;border-radius:6px;height:10px;margin:6px 0 4px;overflow:hidden}.progbar i{background:linear-gradient(90deg,var(--blue),#42a5f5);background-size:200% 100%;border-radius:6px;width:64%;height:100%;animation:2.4s linear infinite flow;display:block}@keyframes flow{to{background-position:200% 0}}.progtext{color:var(--ink-3);margin:6px 0 2px;font-size:12px}.stat-grid{grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;display:grid}.stat{border:1px solid var(--line);background:#f8f9fa;border-radius:10px;padding:15px}.stat b{font-size:25px;font-weight:700;display:block}.stat.ok b{color:#2e9e5b}.stat.pend b{color:#f57c00}.stat.fail b{color:#e53935}.stat.skip b{color:var(--ink-3)}.stat small{color:var(--ink-3);font-size:12px}@media (width<=420px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat small{white-space:nowrap}}.usage{margin:8px 0 16px}.usage .ut{color:var(--ink-2);justify-content:space-between;margin-bottom:6px;font-size:13px;display:flex}.usage .ub{background:#e3e6ea;border-radius:5px;height:9px;overflow:hidden}.usage .ub i{border-radius:5px;height:100%;display:block}.back{color:var(--ink-2);cursor:pointer;align-items:center;gap:6px;margin-bottom:14px;font-size:14px;display:inline-flex}.loading-tip{text-align:center;color:var(--ink-3);padding:60px 20px;font-size:14px}.back:hover{color:var(--blue)}.cache-dot{z-index:3;pointer-events:none;background:#2ecc71;border-radius:50%;width:9px;height:9px;position:absolute;bottom:7px;left:7px;box-shadow:0 0 0 2px #ffffffd9,0 0 6px #2ecc7199}.fav-cur{border:1px solid var(--line);color:var(--ink-2);cursor:pointer;white-space:nowrap;background:#fff;border-radius:16px;margin-left:10px;padding:5px 12px;font-size:12px;transition:all .2s}.fav-cur:hover{border-color:var(--gold);color:var(--gold)}.fav-cur.on{background:var(--gold,#f0a500);color:#fff;border-color:var(--gold,#f0a500)}.sprite-hover{z-index:500;pointer-events:none;background:#000;border:2px solid #fff;border-radius:8px;position:fixed;overflow:hidden;box-shadow:0 10px 36px #00000073}.sprite-hover img{width:auto;max-width:96vw;height:140px;display:block}.ctx-menu{z-index:600;border:1px solid var(--line);-webkit-user-select:none;user-select:none;background:#fff;border-radius:10px;min-width:176px;padding:6px;font-size:13px;position:fixed;box-shadow:0 12px 34px #00000038}.ctx-item{cursor:pointer;color:var(--ink);white-space:nowrap;border-radius:7px;padding:8px 12px}.ctx-item:hover{background:var(--blue-soft,#e3f2fd)}.ctx-item.danger{color:#e53935}.ctx-item.danger:hover{background:#fdecea}.ctx-sep{background:var(--line-2,#eee);height:1px;margin:5px 8px}.modal-overlay{z-index:550;background:#00000073;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}.move-dialog{background:#fff;border-radius:14px;flex-direction:column;width:440px;max-width:92vw;max-height:80vh;padding:22px;display:flex;box-shadow:0 20px 60px #0000004d}.move-dialog h3{margin-bottom:12px;font-size:17px}.move-crumbs{color:var(--ink-2);flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px;display:flex}.move-crumbs a{color:var(--blue);cursor:pointer}.move-crumbs .sep{color:var(--ink-3);margin:0 6px}.move-list{border:1px solid var(--line);border-radius:9px;flex:1;min-height:140px;max-height:46vh;overflow:auto}.move-row{cursor:pointer;border-bottom:1px solid var(--line-2,#f0f0f0);padding:10px 14px}.move-row:hover{background:var(--blue-soft,#e3f2fd)}.move-empty{text-align:center;color:var(--ink-3);padding:24px;font-size:13px}.move-actions{justify-content:flex-end;gap:10px;margin-top:16px;display:flex}.dlg{background:#fff;border-radius:14px;width:380px;max-width:92vw;padding:22px;box-shadow:0 20px 60px #0000004d}.dlg h3{word-break:break-all;margin-bottom:12px;font-size:17px}.dlg-msg{color:var(--ink-2);white-space:pre-line;word-break:break-all;font-size:14px;line-height:1.6}.dlg-input{width:100%;margin-top:2px}.dlg-actions{justify-content:flex-end;gap:10px;margin-top:18px;display:flex}.toaster{left:50%;bottom:max(32px,calc(20px + var(--safe-b)));z-index:400;pointer-events:none;flex-direction:column;align-items:center;gap:8px;display:flex;position:fixed;transform:translate(-50%)}.toast{pointer-events:auto;color:#fff;cursor:pointer;background:#212121ed;border-radius:9px;max-width:90vw;padding:11px 22px;font-size:14px;font-weight:500;animation:.22s toast-in;box-shadow:0 8px 24px #00000047}.toast.err{background:#c0392b}@keyframes toast-in{0%{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media (hover:none){.item:hover,.folder:hover{box-shadow:var(--sh);transform:none}.item:active{transform:scale(.98)}.fav-head .rm{opacity:1}.fav-item:active{background:#eef0f2}.hbtn:active,.btn:active,.seg button:active,.fav-cur:active,.ctx-item:active,.move-row:active,.tnode:active,.breadcrumb a:active,.set-nav a:active{filter:brightness(.94)}}@media (width<=768px){.header-inner{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r));gap:8px}.header-left{gap:8px}.brand b{display:none}.brand .mark{width:34px;height:34px;font-size:17px}.header-right{gap:6px}.header-right .seg{display:none}.hbtn.icon{width:44px;height:44px;font-size:19px}.fav-cur{border-radius:10px;flex-shrink:0;place-items:center;width:40px;height:40px;margin-left:2px;padding:0;font-size:19px;display:grid}.fav-cur .lbl{display:none}.breadcrumb{gap:4px;font-size:13px}.breadcrumb a,.breadcrumb .current{padding:6px}.main{padding-left:max(12px,var(--safe-l));padding-right:max(12px,var(--safe-r))}.folders{grid-template-columns:repeat(2,1fr);gap:10px}.gallery-columns,.gallery-column{gap:10px}}.drawer-mask{z-index:199;opacity:0;visibility:hidden;background:#0000006b;transition:opacity .25s,visibility .25s;position:fixed;inset:0}@media (hover:none){.fav-group.open .drawer-mask,.tree-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.drawer{width:min(86vw,320px);padding:18px;padding-bottom:max(18px,var(--safe-b))}.fav-group.open .edge-toggle.fav{left:min(86vw,320px)}.tree-group.open .edge-toggle.tree{right:min(86vw,320px)}.edge-toggle{padding:18px 11px;font-size:15px}.modal .close{top:calc(8px + var(--safe-t));right:calc(10px + var(--safe-r));background:#00000073;border-radius:50%;place-items:center;width:44px;height:44px;font-size:30px;display:grid}.player{width:100vw;max-width:100vw}.ptitle-top{top:calc(10px + var(--safe-t));left:14px;right:64px}.hud{padding:9px 16px;font-size:18px}.ctx-menu{min-width:200px;padding:6px}.ctx-item{padding:12px 14px}.ctx-sep{margin:5px 10px}.move-dialog{width:94vw;padding:18px;padding-bottom:max(18px,var(--safe-b))}.move-row{padding:13px 14px}}.prog-block{margin-top:16px}.prog-head{align-items:center;gap:12px;display:flex}.prog-title{white-space:nowrap;font-weight:600}.prog-pct{text-align:right;color:#2e9e5b;min-width:44px}.progress-track{background:#eef0f2;border-radius:4px;flex:1;height:8px;overflow:hidden}.progress-fill{background:linear-gradient(90deg,#4caf7d,#2e9e5b);border-radius:4px;height:100%;transition:width .4s}.log-modal{color:#d7dae0;background:#1b1e24;border-radius:12px;flex-direction:column;width:min(860px,92vw);max-height:80vh;display:flex;overflow:hidden}.log-head{border-bottom:1px solid #2c313a;align-items:center;gap:12px;padding:12px 16px;display:flex}.log-head b{margin-right:auto;font-size:15px}.log-filter{color:#9aa3af;cursor:pointer;align-items:center;gap:5px;font-size:13px;display:flex}.log-body{padding:10px 14px;font:12px/1.7 ui-monospace,Consolas,monospace;overflow:auto}.log-line{white-space:pre-wrap;word-break:break-all;gap:10px;padding:1px 0;display:flex}.log-line.log-err{background:#e539351f}.log-ts{color:#6b7482;flex-shrink:0}.log-lv{color:#9aa3af;flex-shrink:0;width:60px}.log-lv.lv-error,.log-lv.lv-critical{color:#ff6b66;font-weight:700}.log-lv.lv-warning{color:#f5a623}.log-empty{color:#6b7482;text-align:center;padding:20px}button,input,select{font-family:inherit}button:disabled{cursor:not-allowed;opacity:.55}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.brand,.back,.text-button{color:inherit;font:inherit;text-align:left;background:0 0;border:0}.text-button{cursor:pointer}.toggle{border:0}.icon-button{border:1px solid var(--line);width:36px;height:36px;color:var(--ink);cursor:pointer;background:#fff;border-radius:6px;flex:0 0 36px;justify-content:center;align-items:center;padding:0;display:inline-flex}.icon-button.active{background:var(--blue-soft);color:var(--blue)}.icon-button.danger{color:#c62828}.media-toolbar{border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px;padding-bottom:12px;display:flex}.media-search{border:1px solid var(--line);background:#fff;border-radius:6px;flex:1;align-items:center;min-width:180px;max-width:380px;display:flex}.media-search input{background:0 0;border:0;width:100%;min-width:0;padding:9px 10px;font-size:13px}.media-search .icon-button{border:0}.media-toolbar select{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:0;max-width:100%;height:36px;padding:0 8px;font-size:13px}.selection-tools{flex-wrap:wrap;align-items:center;gap:12px;width:100%;padding-top:4px;font-size:13px;display:flex}.selection-tools label{cursor:pointer;align-items:center;gap:6px;display:flex}.selection-tools input{width:17px;height:17px}.operation-feedback,.sync-error{color:#8b3029;overflow-wrap:anywhere;border-bottom:1px solid #ebc6c2;margin:0 0 16px;padding:14px 0;font-size:13px}.operation-feedback ul{max-height:160px;margin:8px 0 0;padding-left:18px;overflow:auto}.operation-feedback li{margin-top:4px}.operation-feedback .actions{margin-top:10px}.item.selected{outline:2px solid var(--blue);outline-offset:1px}.card-open{z-index:1;cursor:pointer;background:0 0;border:0;width:100%;height:100%;position:absolute;inset:0}.card-open:focus-visible{outline-offset:-3px}.media-select{z-index:5;cursor:pointer;width:20px;height:20px;accent-color:var(--blue);position:absolute;top:10px;left:10px}.pinned-mark{z-index:2;color:#bf7200;pointer-events:none;background:#fff;border-radius:4px;padding:4px;position:absolute;top:8px;right:8px}.thumb-status{color:var(--ink-2);z-index:2;pointer-events:none;text-align:center;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.thumb-status.unavailable{background:#eceff1}.thumb-status .icon-button{pointer-events:auto;flex-basis:32px;width:32px;height:32px}.drawer{z-index:1400;height:100dvh;padding-top:max(20px,var(--safe-t))}.drawer[aria-hidden=true]{visibility:hidden}.drawer-mask{z-index:1399}.edge-toggle{z-index:1401;letter-spacing:0}.drawer-close{position:absolute;top:10px;right:12px}.drawer h3{padding-right:36px}.fav-head .fmeta .fn,.fav-head .fmeta .fp{display:block}.fav-item:focus-within .rm{opacity:1}.tnode{text-align:left;background:0 0;border:0;width:100%;display:block}.ctx-menu{z-index:1600;overscroll-behavior:contain;border-radius:8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}.ctx-item{width:100%;font:inherit;text-align:left;white-space:normal;overflow-wrap:anywhere;background:0 0;border:0;display:block}.modal-overlay{z-index:1500;padding:8px}.move-dialog,.dlg{border-radius:8px;max-height:calc(100dvh - 16px);overflow:auto}.move-list{flex-shrink:1;min-height:80px}.move-row{border:0;border-bottom:1px solid var(--line);text-align:left;background:#fff;width:100%;font-size:14px;display:block}.move-crumbs .text-button{color:var(--blue)}.move-actions,.dlg-actions{flex-wrap:wrap;flex-shrink:0}.toaster{z-index:2000}.log-head{flex-wrap:wrap}.log-modal{border-radius:8px;max-height:calc(100dvh - 24px)}.image-viewer{padding:64px 16px 20px;overflow:hidden}.image-toolbar{z-index:4;color:#fff;background:#000000bf;align-items:center;gap:8px;padding:10px 16px;display:flex;position:absolute;top:0;left:0;right:0}.image-title{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;font-size:14px;overflow:hidden}.image-toolbar .icon-button,.image-nav{color:#fff;background:#222;border-color:#555}.image-toolbar output{text-align:center;font-variant-numeric:tabular-nums;width:44px;font-size:12px}.image-viewer .imgview{transform-origin:50%;border-radius:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px)}.image-loading{z-index:1;position:absolute}.image-error,.viewer-status{color:#fff}.image-error{z-index:3;align-items:center;gap:12px;display:flex}.image-error .btn{align-items:center;gap:6px;display:inline-flex}.image-nav{z-index:3;position:absolute;top:50%}.image-nav.previous{left:12px}.image-nav.next{right:12px}.viewer-status .close{background:#222;border:0;font-size:20px}.viewer-status .close svg{width:22px}@media (width<=600px){.media-search{flex-basis:100%;max-width:none}.media-toolbar{gap:6px}.media-toolbar select{flex:1;padding:0 5px;font-size:12px}.icon-button{flex-basis:40px;width:40px;height:40px}.media-toolbar select{height:40px}.image-toolbar{gap:4px;padding:8px}.image-title{pointer-events:none;text-align:center;position:absolute;top:58px;left:12px;right:12px}.image-toolbar{justify-content:flex-end}.image-viewer{padding-top:84px}.image-viewer .imgview{max-height:calc(100dvh - 130px)}.image-nav.previous{left:6px}.image-nav.next{right:6px}}@media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}";
 	var gallery_default = ".g115-root{z-index:2147483000;background:var(--bg);position:fixed;inset:0;overflow:hidden}.g115-root .header{position:absolute}.g115-scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;position:absolute;inset:0;overflow:auto}.g115-root .main{min-height:100%}.g115-root .folder{color:inherit;display:block}.masonry>.g115-cell{will-change:transform;position:absolute;top:0;left:0}.masonry>.g115-cell>.item{position:relative}.g115-scroll.g115-scrolling .item,.g115-scroll.g115-scrolling .folder{pointer-events:none}.g115-icon{display:block}.g115-video-box{aspect-ratio:16/9;background:linear-gradient(135deg,#2b2f36,#16181c)}.g115-badge{color:#ffd27a;background:#000000b3;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:8px;left:8px}.g115-launcher{z-index:2147482999;background:var(--blue);color:#fff;width:48px;height:48px;box-shadow:var(--sh-h);cursor:pointer;border:0;border-radius:50%;place-items:center;transition:transform .18s;display:grid;position:fixed;bottom:96px;right:24px}.g115-launcher:hover{transform:scale(1.08)}.g115-settings{top:calc(var(--header-h) + 8px);z-index:1300;border:1px solid var(--line);background:#fff;border-radius:12px;width:320px;max-width:calc(100vw - 32px);padding:6px 18px;position:absolute;right:24px;box-shadow:0 12px 34px #00000038}.g115-settings .row{cursor:pointer}.g115-settings .row:last-child{cursor:default}.g115-settings input[type=checkbox]{width:18px;height:18px;accent-color:var(--blue)}.pswp__g115-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000c;flex:1;align-self:center;min-width:0;padding:0 16px;font-size:14px;overflow:hidden}.pswp__button.pswp__g115-original{color:#fff;width:auto;padding:0 14px;font-size:13px;font-weight:600}.pswp__button.pswp__g115-original[disabled]{opacity:.4;cursor:default}.g115-video-box img{object-fit:cover}.g115-skel-dark{background:linear-gradient(90deg,#24272d 25%,#2f333a 37%,#24272d 63%) 0 0/400% 100%;animation:1.3s infinite skel}.g115-cover-note{color:#c9ced6;text-align:center;z-index:2;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:8px;font-size:12px;line-height:1.4;display:flex;position:absolute;inset:0}.g115-cover-tag{z-index:2;color:#e6e9ee;pointer-events:none;background:#0009;border-radius:4px;padding:2px 6px;font-size:11px;line-height:1.3;position:absolute;bottom:6px;left:6px}.g115-cover-retry{pointer-events:auto;z-index:3;color:#fff;cursor:pointer;background:#222;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px;position:relative}.fpreview{position:relative}.g115-video-badge{color:#fff;background:#f57c00eb;border-radius:5px;padding:2px 7px;font-size:11px;position:absolute;bottom:6px;right:6px}.g115-cover-ctl{flex-shrink:0;align-items:center;gap:6px;display:flex}.g115-cover-ctl select{border:1px solid var(--line);background:#fff;border-radius:6px;height:32px;padding:0 6px;font-size:13px}.g115-cover-ctl .inp{width:72px;padding:6px 8px}.g115-root .card-open{pointer-events:none}.g115-star{z-index:4;color:#fff;cursor:pointer;opacity:0;background:#00000073;border:0;border-radius:50%;width:28px;height:28px;font-size:15px;line-height:28px;transition:opacity .15s;position:absolute;top:8px;right:8px}.item:hover .g115-star,.g115-star.on,.g115-star:focus-visible{opacity:1}.g115-star.on{color:var(--gold);background:#0000008c}@media (hover:none){.g115-star{opacity:1}}.g115-hover-bar{z-index:3;pointer-events:none;gap:3px;display:flex;position:absolute;bottom:4px;left:6px;right:6px}.g115-hover-bar i{background:#ffffff59;border-radius:2px;flex:1;height:3px}.g115-hover-bar i.ok{background:#fff9}.g115-hover-bar i.on{background:var(--blue)}.g115-fthumb{aspect-ratio:1;background:#e9eaec;display:block;position:relative;overflow:hidden}.g115-fthumb img{object-fit:cover;width:100%;height:100%;position:absolute;inset:0}.g115-fthumb.vid:after{content:\"▶\";color:#fff;text-shadow:0 0 3px #000;font-size:9px;position:absolute;bottom:2px;right:3px}.g115-video-badge{inset:6px auto auto 6px}.g115-drawer-empty{color:var(--ink-3);padding:20px 4px;font-size:13px}.g115-root .drawer .tnode{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.g115-detail{grid-template-columns:auto 1fr;gap:6px 14px;margin:4px 0 0;font-size:13px;display:grid}.g115-detail dt{color:var(--ink-3)}.g115-detail dd{word-break:break-all;color:var(--ink);margin:0}.g115-settings{max-height:calc(100dvh - var(--header-h) - 24px);overflow:auto}.g115-cache-row{flex-wrap:wrap}.g115-cache-row .lab small{display:block}.g115-cache-btns{flex-wrap:wrap;gap:8px;display:flex}.g115-settings{width:400px}.g115-err{color:#c62828}.g115-player{z-index:1800;background:#000;position:absolute;inset:0}.g115-player-frame{background:#000;border:0;width:100%;height:100%;position:absolute;inset:0}.g115-player-spin{margin:-20px 0 0 -20px;position:absolute;top:50%;left:50%}.g115-player-hud{z-index:2}.g115-player-close{z-index:3;color:#fff;cursor:pointer;opacity:.75;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;display:grid;position:absolute;top:10px;right:14px}.g115-player-close:hover{opacity:1;background:#c82828d9}.folder{position:relative}.folder:hover .g115-star,.folder .g115-star.on{opacity:1}.fav-cur{flex-shrink:0}.g115-tree{flex-direction:column;gap:1px;max-height:calc(100dvh - 90px);margin:0 -6px;padding:0 6px;display:flex;overflow:auto}.g115-tree-row{align-items:center;min-width:0;display:flex}.g115-tree-twisty{width:22px;height:30px;color:var(--ink-3);cursor:pointer;background:0 0;border:0;border-radius:4px;flex-shrink:0;place-items:center;font-size:12px;display:grid}.g115-tree-twisty:hover:not(:disabled){color:var(--ink);background:#f0f2f5}.g115-tree-twisty.leaf{cursor:default}.g115-tree-row .tnode{flex:1;min-width:0;padding-left:4px}.g115-tree-star{color:var(--gold,#f0a500)}.g115-tree-spin{border:2px solid #ccd;border-top-color:var(--blue);border-radius:50%;width:10px;height:10px;animation:.7s linear infinite g115spin}@keyframes g115spin{to{transform:rotate(360deg)}}.g115-root .drawer.left{overflow:auto}.g115-fav-img{aspect-ratio:16/9;background:#e9eaec;border-radius:6px;margin-top:9px;position:relative;overflow:hidden}.g115-fav-img img{object-fit:cover;width:100%;height:100%;display:block}.g115-fav-img .g115-fthumb{aspect-ratio:auto;position:absolute;inset:0}.g115-lite-video{background:#000;outline:none;width:100%;height:100%;position:absolute;inset:0}.g115-lite-bar{z-index:3;opacity:0;pointer-events:none;align-items:center;gap:8px;transition:opacity .2s;display:flex;position:absolute;top:10px;left:14px;right:70px}.g115-lite:hover .g115-lite-bar,.g115-lite-bar:focus-within{opacity:1}.g115-lite-bar>*{pointer-events:auto}.g115-lite-title{color:#fff;white-space:nowrap;text-overflow:ellipsis;text-shadow:0 1px 4px #000000e6;min-width:0;font-size:14px;overflow:hidden}.g115-lite-nav{color:#fff;cursor:pointer;background:#0000008c;border:0;border-radius:50%;flex-shrink:0;width:40px;height:40px;font-size:24px;line-height:1}.g115-lite-nav:hover:not(:disabled){background:#ffffff40}.g115-lite-nav:disabled{opacity:.3;cursor:default}.g115-lite-error{z-index:3;color:#fff;text-align:center;background:#141414eb;border-radius:10px;max-width:min(90vw,460px);padding:18px 22px;font-size:14px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.g115-lite-error .actions{flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px;display:flex}@media (hover:none){.g115-lite-bar{opacity:1}}.g115-root .g115-notice{color:var(--ink-3);margin:-4px 2px 10px;font-size:12px}.g115-root .g115-fade-enter-active,.g115-root .g115-fade-leave-active{transition:opacity .4s}.g115-root .g115-fade-enter-from,.g115-root .g115-fade-leave-to{opacity:0}.g115-settings .row.g115-stack{cursor:default;flex-direction:column;align-items:stretch;gap:8px}.g115-settings .g115-stack>small{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-seg{gap:18px;font-size:13px;display:flex}.g115-seg label{cursor:pointer;align-items:center;gap:6px;display:inline-flex}.g115-seg label.off{opacity:.5;cursor:not-allowed}.g115-seg input{accent-color:var(--blue);margin:0}.g115-kv{color:var(--ink-2);justify-content:space-between;align-items:center;gap:10px;font-size:13px;display:flex}.g115-kv-val{align-items:center;gap:6px;min-width:0;display:inline-flex}.g115-kv-val em{color:var(--ink);text-overflow:ellipsis;white-space:nowrap;max-width:180px;font-style:normal;overflow:hidden}.g115-kv .inp{width:84px;padding:6px 8px}.g115-kv .btn{padding:4px 12px;font-size:12px}.g115-warn{color:#b45309}.g115-settings{overflow-x:hidden}.g115-root .item .filename{white-space:nowrap;text-overflow:ellipsis;word-break:normal;overflow:hidden}.g115-root .item .thumb{container-type:inline-size}.g115-root .video-overlay{width:clamp(22px,22cqw,60px);height:clamp(22px,22cqw,60px)}.g115-root .video-overlay:after{margin-left:clamp(1px,1.5cqw,4px);font-size:clamp(9px,8.8cqw,24px)}.g115-root .item .dur{padding:1px clamp(3px,2.6cqw,7px);font-size:clamp(9px,4.6cqw,11px);bottom:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}.g115-root .item .g115-star{width:clamp(20px,12cqw,28px);height:clamp(20px,12cqw,28px);font-size:clamp(11px,6.5cqw,15px);line-height:clamp(20px,12cqw,28px);top:clamp(3px,3cqw,8px);right:clamp(3px,3cqw,8px)}@container (width<=110px){.g115-root .video-overlay{width:18px;height:18px;top:auto;bottom:4px;left:4px;transform:none}.g115-root .video-overlay:after{margin-left:2px;font-size:9px}}.g115-launcher-icon,.g115-root .brand .mark{place-items:center;line-height:0;display:grid}.pswp__g115-strip{z-index:20;opacity:0;pointer-events:none;justify-content:center;gap:6px;padding:0 12px;transition:opacity .25s;display:flex;position:absolute;bottom:10px;left:0;right:0;overflow:hidden}.pswp--ui-visible .pswp__g115-strip{opacity:1;pointer-events:auto}.pswp__g115-strip-item{cursor:pointer;opacity:.55;background:#222;border:2px solid #0000;border-radius:6px;flex:none;width:60px;height:60px;padding:0;transition:opacity .15s,border-color .15s;overflow:hidden}.pswp__g115-strip-item:hover{opacity:.9}.pswp__g115-strip-item.on{opacity:1;border-color:#fff}.pswp__g115-strip-item img{object-fit:cover;width:100%;height:100%;display:block}@media (width<=600px){.pswp__g115-strip-item{width:44px;height:44px}}.g115-pl{z-index:4;pointer-events:none;position:absolute;top:0;bottom:0;right:0}.g115-pl>*{pointer-events:auto}.g115-pl-edge{width:24px;position:absolute;top:0;bottom:0;right:0}.g115-pl-toggle{color:#fff;cursor:pointer;opacity:0;background:#0000008c;border:0;border-radius:50%;place-items:center;width:40px;height:40px;transition:opacity .2s,right .25s;display:grid;position:absolute;top:50%;right:10px;transform:translateY(-50%)}.g115-lite:hover .g115-pl-toggle,.g115-pl-toggle:focus-visible{opacity:.85}.g115-pl.open .g115-pl-toggle{opacity:0;pointer-events:none}@media (hover:none){.g115-pl-toggle{opacity:.85}}.g115-pl-panel{color:#eee;background:#121214f0;flex-direction:column;width:300px;max-width:86vw;transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;position:absolute;top:0;bottom:0;right:0;transform:translate(100%)}.g115-pl.open .g115-pl-panel{transform:none}.g115-pl-head{justify-content:space-between;align-items:center;gap:8px;margin-top:52px;padding:14px 14px 10px 16px;font-size:14px;display:flex}.g115-pl-pin{color:#ccc;cursor:pointer;background:0 0;border:1px solid #555;border-radius:6px;padding:3px 10px;font-size:12px}.g115-pl-pin.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-pl-list{overscroll-behavior:contain;flex-direction:column;flex:1;gap:6px;padding:0 10px 14px;display:flex;overflow:auto}.g115-pl-item{color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:8px;align-items:center;gap:10px;min-width:0;padding:5px;display:flex}.g115-pl-item:hover{background:#ffffff14}.g115-pl-item.on{background:#1976d259}.g115-pl-cover{aspect-ratio:16/9;background:#2a2c31;border-radius:5px;flex:0 0 112px;position:relative;overflow:hidden}.g115-pl-cover .g115-fthumb{aspect-ratio:auto;background:#2a2c31;position:absolute;inset:0}.g115-pl-cover .g115-fthumb.vid:after{display:none}.g115-pl-note{color:#999;place-items:center;font-size:11px;display:grid;position:absolute;inset:0}.g115-pl-dur{color:#fff;background:#000000b3;border-radius:3px;padding:0 4px;font-size:10px;position:absolute;bottom:3px;right:3px}.g115-pl-name{-webkit-line-clamp:2;word-break:break-all;-webkit-box-orient:vertical;flex:1;min-width:0;font-size:12px;line-height:1.4;display:-webkit-box;overflow:hidden}.g115-pl-more{place-items:center;padding:10px;display:grid}.g115-pl-more .spinner{width:24px;height:24px}.g115-lite.g115-pinned .g115-lite-video{width:auto;right:300px}.g115-lite.g115-pinned .g115-player-close{right:314px}@media (width<=600px){.g115-lite.g115-pinned .g115-lite-video{width:100%;right:0}}.g115-root .hbtn.g115-select-btn{font-size:13px}.g115-root .hbtn.g115-select-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-check{z-index:5;color:#0000;text-align:center;pointer-events:none;background:#00000059;border:2px solid #fff;border-radius:50%;width:24px;height:24px;font-size:14px;font-weight:700;line-height:20px;position:absolute;top:8px;left:8px;box-shadow:0 1px 4px #0006}.g115-check.on{background:var(--blue);color:#fff}.g115-root .item.g115-picked .thumb,.g115-root .folder.g115-picked .fpreview{outline:3px solid var(--blue);outline-offset:-3px}.g115-root .item.g115-picked,.g115-root .folder.g115-picked{box-shadow:0 0 0 2px var(--blue)}.g115-selbar{z-index:1350;border:1px solid var(--line);background:#fff;border-radius:12px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:10px 14px;display:flex;position:absolute;bottom:20px;left:50%;transform:translate(-50%);box-shadow:0 10px 30px #00000038}.g115-selbar-count{color:var(--ink-2);font-size:14px}.g115-selbar-count b{color:var(--blue)}.g115-selbar-tip{color:var(--ink-3);font-size:12px}.g115-selbar .btn{padding:6px 14px}.g115-selbar .btn:disabled{opacity:.45;cursor:default}.g115-root .btn.danger:not(:disabled):hover{color:#fff;background:#e53935;border-color:#e53935}.g115-del-sum{color:var(--ink-2);margin:6px 0 0;font-size:14px}.g115-del-warn{color:#b45309;margin:8px 0 0;font-size:13px}.g115-del-list{background:#f6f7f9;border-radius:8px;max-height:200px;margin:12px 0 0;padding:8px 10px;font-size:13px;list-style:none;overflow:auto}.g115-del-list li{white-space:nowrap;text-overflow:ellipsis;line-height:1.7;overflow:hidden}.g115-del-list li.more{color:var(--ink-3)}@media (width<=600px){.g115-selbar-tip{display:none}}.fpreview:has(.g115-check) .g115-video-badge{top:38px}.g115-ext{z-index:5;color:#e6e9ee;background:#1e2126;border:1px solid #3a3f47;border-radius:10px;flex-direction:column;gap:10px;width:min(460px,100% - 32px);padding:14px 16px;display:flex;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 8px 30px #00000080}.g115-ext-head{justify-content:space-between;align-items:center;display:flex}.g115-ext-btns{flex-wrap:wrap;gap:8px;display:flex}.g115-ext-btns a.btn{text-decoration:none}.g115-ext-url{box-sizing:border-box;width:100%;font-size:12px}.g115-ext small{color:#aab0b8;line-height:1.5}.g115-lite-error small{color:#aab0b8;margin-top:8px;display:block}";
-	var collections_default = ".g115-rail{z-index:1401;max-height:calc(100dvh - var(--header-h) - 32px);flex-direction:column;gap:6px;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%)}.g115-rail-group.open .g115-rail{left:340px}.g115-rail-btn{color:#fff;cursor:pointer;writing-mode:vertical-rl;font:inherit;letter-spacing:1px;border:0;border-radius:0 8px 8px 0;flex-shrink:0;padding:12px 9px;font-size:14px;font-weight:600;transition:filter .15s,padding .15s;box-shadow:0 2px 12px #0003}.g115-rail-btn.fav{background:linear-gradient(135deg,#f093fb,#f5576c);padding:15px 9px}.g115-rail-btn.coll{background:linear-gradient(135deg,#43cea2,#2f80b5)}.g115-rail-btn:hover,.g115-rail-btn.on{filter:brightness(1.08);padding-left:12px}.g115-rail-btn.cur{box-shadow:inset 3px 0 #fffffff2,0 2px 12px #0003}.g115-rail-btn.bad{background:linear-gradient(135deg,#9e9e9e,#6d6d6d)}.g115-rail-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.g115-rail-colls{overscroll-behavior:contain;scrollbar-width:none;flex-direction:column;gap:6px;min-height:0;padding-right:6px;display:flex;overflow-y:auto}.g115-rail-colls::-webkit-scrollbar{display:none}.g115-rail-name{text-overflow:ellipsis;white-space:nowrap;max-height:7.5em;display:inline-block;overflow:hidden}.g115-rail-warn{margin-top:4px;font-size:12px;display:inline-block}.g115-rail-group.open .drawer.left{left:0}@media (hover:none){.g115-rail-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.g115-rail-group.open .g115-rail{left:min(86vw,320px)}.g115-rail-btn{padding:14px 10px}.g115-rail-name{max-height:6em}}.g115-crumb-cur{cursor:pointer;font:inherit;color:inherit;background:0 0;border:0;border-radius:6px;margin:-2px -4px;padding:2px 4px}.g115-crumb-cur:hover,.g115-crumb-cur:focus-visible{background:#f0f2f5}.g115-settings{width:460px;padding:0 18px 6px}.g115-tabs{z-index:1;border-bottom:1px solid var(--line);background:#fff;flex-wrap:wrap;gap:2px;margin:0 -18px;padding:8px 12px 0;display:flex;position:sticky;top:0}.g115-tab{font:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-bottom:2px solid #0000;flex-shrink:0;margin-bottom:-1px;padding:8px 10px;font-size:13px}.g115-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}.g115-settings .seg button{padding:4px 10px}.g115-settings .row{flex-wrap:wrap;row-gap:8px}.g115-settings .row:not(.g115-stack)>.lab{flex:180px;min-width:0}.g115-settings .row:not(.g115-stack)>:not(.lab){margin-left:auto}.g115-risk-list{max-height:220px;color:var(--ink-2);margin:0;padding:0 0 0 18px;font-size:12px;line-height:1.5;overflow:auto}.g115-risk-list li{word-break:break-all;margin:0 0 6px}.g115-risk-list b{color:var(--ink);font-weight:600}.g115-risk-list small{color:var(--ink-3);display:block}.g115-coll-set{padding:12px 0}.g115-coll-head b{font-size:14px;font-weight:600;display:block}.g115-coll-head small,.g115-coll-tip{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-coll-warn{color:#8a4b00;background:#fff4e5;border-radius:8px;margin:8px 0;padding:8px 10px;font-size:12px}.g115-coll-list{flex-direction:column;gap:6px;margin:10px 0;display:flex}.g115-coll-row{border:1px solid var(--line-2);background:#fff;border-radius:8px;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;transition:box-shadow .2s,border-color .2s;display:flex}.g115-coll-row.flash{border-color:var(--blue);box-shadow:0 0 0 3px #1976d226}.g115-coll-row.dragging{opacity:.55}.g115-coll-row.drop-before{box-shadow:inset 0 3px 0 var(--blue)}.g115-coll-row.drop-after{box-shadow:inset 0 -3px 0 var(--blue)}.g115-coll-grip{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;color:var(--ink-3);padding:0 4px;font-size:18px}.g115-coll-main{flex-direction:column;flex:1;min-width:120px;display:flex}.g115-coll-name{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.g115-coll-path{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.g115-coll-btns,.g115-coll-confirm{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.g115-coll-btns .btn,.g115-coll-confirm .btn{padding:4px 10px;font-size:12px}.g115-coll-confirm small{color:var(--ink-2);flex-basis:100%;font-size:12px}.g115-coll-rename.inp{width:100%;padding:4px 8px}.g115-coll-add{margin:4px 0 6px}.g115-picker{flex-direction:column;width:480px;max-height:min(680px,100dvh - 16px);display:flex;position:relative}.g115-picker h3{padding-right:36px}.g115-pick-crumbs{flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;font-size:13px;display:flex}.g115-pick-crumbs .sep{color:var(--ink-3)}.g115-pick-crumbs .text-button{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:2px;font-size:13px}.g115-pick-list{border:1px solid var(--line-2);overscroll-behavior:contain;border-radius:8px;flex:1;min-height:200px;max-height:50vh;padding:4px;overflow:auto}.g115-pick-row{cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink);background:0 0;border:0;border-radius:6px;align-items:center;gap:8px;padding:8px 10px;font-size:14px;display:flex}.g115-pick-row:hover,.g115-pick-row:focus-visible{background:#f2f4f7}.g115-pick-name{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.g115-pick-badge{color:#a15c00;background:#fff4e0;border-radius:4px;flex-shrink:0;padding:1px 6px;font-size:11px}.g115-pick-go{color:var(--ink-3)}.g115-pick-new{flex-wrap:wrap;align-items:center;gap:6px;padding:6px;display:flex}.g115-pick-new .inp{flex:1;width:auto;min-width:140px;padding:6px 8px}.g115-pick-new small{flex-basis:100%}.g115-pick-more{color:var(--ink-3);justify-content:space-between;align-items:center;gap:8px;padding:10px 4px;font-size:12px;display:flex}.g115-pick-foot{flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;display:flex}.g115-pick-reason{color:var(--ink-3);text-align:right;flex:1;font-size:12px}.g115-pick-foot>.btn.primary{margin-left:auto}.g115-pick-reason+.btn.primary{margin-left:0}.g115-bind{width:420px}.g115-bind-field{color:var(--ink-2);flex-direction:column;gap:6px;font-size:13px;display:flex}.g115-bind-path{color:var(--ink);word-break:break-all;margin:10px 0 0;font-size:13px}.g115-bind-note{color:var(--ink-3);margin:8px 0 0;font-size:12px}.g115-fav-tools{flex-direction:column;gap:8px;margin:-6px 0 12px;display:flex}.g115-fav-search{align-items:center;display:flex;position:relative}.g115-fav-search .inp{width:100%;padding:7px 34px 7px 10px}.g115-fav-search .icon-button{position:absolute;right:2px}.g115-fav-kinds{gap:4px;display:flex}.g115-fav-kinds button{border:1px solid var(--line);font:inherit;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:14px;flex:1;padding:4px 0;font-size:12px}.g115-fav-kinds button.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-coll-meta{align-items:center;gap:10px;margin:-8px 0 12px;display:flex}.g115-coll-meta .g115-coll-path{flex:1;min-width:0}.g115-coll-meta .btn{flex-shrink:0;padding:5px 12px;font-size:12px}.g115-coll-gone{color:#8a1c1c;background:#fff4f4;border-radius:8px;flex-direction:column;gap:10px;padding:12px;font-size:13px;display:flex}.g115-coll-gone p{margin:0}.g115-coll-count{color:var(--ink-3);margin:-4px 0 10px;font-size:12px;display:block}.g115-rail-btn.queue{background:linear-gradient(135deg,#f7b733,#fc4a1a)}.g115-rail-count{writing-mode:horizontal-tb;text-align:center;background:#ffffff47;border-radius:9px;min-width:18px;margin-top:6px;padding:2px 0;font-size:12px;display:inline-block}.g115-coll-sec{border-top:1px solid var(--line-2);margin-top:18px;padding-top:12px}.g115-pick-quick{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-pick-quick-lab{color:var(--ink-3);font-size:12px}.g115-pick-chip{border:1px solid var(--line);max-width:150px;font:inherit;cursor:pointer;white-space:nowrap;text-overflow:ellipsis;color:var(--ink);background:#fff;border-radius:14px;padding:3px 10px;font-size:12px;overflow:hidden}.g115-pick-chip.coll{color:#14735a;background:#ecfaf5;border-color:#43cea2}.g115-pick-chip:hover,.g115-pick-chip:focus-visible{filter:brightness(.96)}.g115-copy-dlg{width:460px}.g115-copy-dlg .g115-bind-path small{color:var(--ink-3);margin-left:6px}.g115-copy-sum{color:var(--ink);margin:12px 0 0;font-size:14px;line-height:1.6}.g115-copy-more{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:6px 0 0;font-size:13px}.g115-copy-dlg .dlg-actions{flex-wrap:wrap}.g115-inline-spin{vertical-align:-2px;border-width:2px;width:14px;height:14px;margin-right:6px;display:inline-block}.g115-tasks{right:16px;bottom:max(16px,var(--safe-b));z-index:1450;border:1px solid var(--line);background:#fff;border-radius:12px;flex-direction:column;width:360px;max-width:calc(100vw - 32px);max-height:min(60vh,520px);display:flex;position:absolute;overflow:hidden;box-shadow:0 12px 34px #00000038}.g115-tasks-head{cursor:pointer;font:inherit;color:var(--ink);background:#f6f7f9;border:0;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;font-size:13px;display:flex}.g115-tasks-head span{color:var(--ink-3);font-size:12px}.g115-tasks-err{padding:6px 14px 0;display:block}.g115-tasks-list{overscroll-behavior:contain;padding:4px 10px 10px;overflow:auto}.g115-task{border-bottom:1px solid var(--line-2);padding:10px 4px}.g115-task:last-child{border-bottom:0}.g115-task-title{white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:600;overflow:hidden}.g115-task-bar{background:#eceff1;border-radius:2px;height:4px;margin:7px 0;overflow:hidden}.g115-task-bar i{background:var(--blue);height:100%;transition:width .3s;display:block}.g115-task.done .g115-task-bar i{background:#2e7d32}.g115-task.attention .g115-task-bar i,.g115-task.stopped .g115-task-bar i{background:#e65100}.g115-task-msg{color:var(--ink-2);font-size:12px;line-height:1.5}.g115-task-chips{flex-wrap:wrap;gap:4px;margin-top:6px;display:flex}.g115-task-chips span{color:var(--ink-2);background:#f1f3f5;border-radius:4px;padding:1px 6px;font-size:11px}.g115-task-chips .r-ok{color:#2e7d32;background:#e8f5e9}.g115-task-chips .r-missing,.g115-task-chips .r-failed{color:#c62828;background:#fdecea}.g115-task-chips .r-checking,.g115-task-chips .r-unknown{color:#a15c00;background:#fff4e5}.g115-task-btns{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.g115-task-btns .btn{padding:3px 10px;font-size:12px}.g115-task-detail{max-height:160px;margin-top:8px}.g115-tasks.collapsed{max-height:none}.g115-selbar~.g115-tasks{bottom:76px}.g115-queue-tools,.g115-queue-go{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-queue-tools .btn,.g115-queue-go .btn{padding:4px 10px;font-size:12px}.g115-queue-all{color:var(--ink-2);cursor:pointer;align-items:center;gap:4px;margin-right:auto;font-size:12px;display:inline-flex}.g115-queue-row{cursor:pointer;background:#f8f9fa;border-radius:8px;align-items:center;gap:8px;margin-bottom:6px;padding:6px;display:flex}.g115-queue-row:hover{background:#eef0f2}.g115-queue-row.on{background:#e3f2fd}.g115-queue-row.done{cursor:default;opacity:.8}.g115-queue-row input{accent-color:var(--blue);margin:0}.g115-queue-thumb{width:44px;height:44px;color:var(--ink-3);background:#e9eaec;border-radius:6px;flex-shrink:0;place-items:center;font-size:18px;display:grid;overflow:hidden}.g115-queue-thumb img{object-fit:cover;width:100%;height:100%}.g115-queue-meta{flex-direction:column;flex:1;min-width:0;display:flex}.g115-queue-meta .fn{white-space:nowrap;text-overflow:ellipsis;font-size:13px;overflow:hidden}.g115-queue-meta small{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:11px;overflow:hidden}.g115-queue-meta em{color:#b45309;font-style:normal}.g115-queue-row .rm{color:var(--ink-2);cursor:pointer;border:0;border:1px solid var(--line);background:#fff;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px}.g115-queue-done-head{justify-content:space-between;align-items:center;margin:16px 0 8px;font-size:13px;display:flex}.g115-queue-done-head .btn{padding:3px 10px;font-size:12px}.g115-rail-group .drawer.left{left:-340px}@media (width<=768px){.g115-rail-group .drawer.left{left:calc(-1*min(86vw,320px))}}";
+	var collections_default = ".g115-rail{z-index:1401;max-height:calc(100dvh - var(--header-h) - 32px);flex-direction:column;gap:6px;transition:left .3s cubic-bezier(.4,0,.2,1);display:flex;position:fixed;top:50%;left:0;transform:translateY(-50%)}.g115-rail-group.open .g115-rail{left:340px}.g115-rail-btn{color:#fff;cursor:pointer;writing-mode:vertical-rl;font:inherit;letter-spacing:1px;border:0;border-radius:0 8px 8px 0;flex-shrink:0;padding:12px 9px;font-size:14px;font-weight:600;transition:filter .15s,padding .15s;box-shadow:0 2px 12px #0003}.g115-rail-btn.fav{background:linear-gradient(135deg,#f093fb,#f5576c);padding:15px 9px}.g115-rail-btn.coll{background:linear-gradient(135deg,#43cea2,#2f80b5)}.g115-rail-btn:hover,.g115-rail-btn.on{filter:brightness(1.08);padding-left:12px}.g115-rail-btn.cur{box-shadow:inset 3px 0 #fffffff2,0 2px 12px #0003}.g115-rail-btn.bad{background:linear-gradient(135deg,#9e9e9e,#6d6d6d)}.g115-rail-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}.g115-rail-colls{overscroll-behavior:contain;scrollbar-width:none;flex-direction:column;gap:6px;min-height:0;padding-right:6px;display:flex;overflow-y:auto}.g115-rail-colls::-webkit-scrollbar{display:none}.g115-rail-name{text-overflow:ellipsis;white-space:nowrap;max-height:7.5em;display:inline-block;overflow:hidden}.g115-rail-warn{margin-top:4px;font-size:12px;display:inline-block}.g115-rail-group.open .drawer.left{left:0}@media (hover:none){.g115-rail-group.open .drawer-mask{opacity:1;visibility:visible}}@media (width<=768px){.g115-rail-group.open .g115-rail{left:min(86vw,320px)}.g115-rail-btn{padding:14px 10px}.g115-rail-name{max-height:6em}}.g115-crumb-cur{cursor:pointer;font:inherit;color:inherit;background:0 0;border:0;border-radius:6px;margin:-2px -4px;padding:2px 4px}.g115-crumb-cur:hover,.g115-crumb-cur:focus-visible{background:#f0f2f5}.g115-settings{width:460px;padding:0 18px 6px}.g115-tabs{z-index:1;border-bottom:1px solid var(--line);background:#fff;flex-wrap:wrap;gap:2px;margin:0 -18px;padding:8px 12px 0;display:flex;position:sticky;top:0}.g115-tab{font:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-bottom:2px solid #0000;flex-shrink:0;margin-bottom:-1px;padding:8px 10px;font-size:13px}.g115-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}.g115-settings .seg button{padding:4px 10px}.g115-settings .row{flex-wrap:wrap;row-gap:8px}.g115-settings .row:not(.g115-stack)>.lab{flex:180px;min-width:0}.g115-settings .row:not(.g115-stack)>:not(.lab){margin-left:auto}.g115-risk-list{max-height:220px;color:var(--ink-2);margin:0;padding:0 0 0 18px;font-size:12px;line-height:1.5;overflow:auto}.g115-risk-list li{word-break:break-all;margin:0 0 6px}.g115-risk-list b{color:var(--ink);font-weight:600}.g115-risk-list small{color:var(--ink-3);display:block}.g115-coll-set{padding:12px 0}.g115-coll-head b{font-size:14px;font-weight:600;display:block}.g115-coll-head small,.g115-coll-tip{color:var(--ink-3);font-size:12px;line-height:1.5;display:block}.g115-coll-warn{color:#8a4b00;background:#fff4e5;border-radius:8px;margin:8px 0;padding:8px 10px;font-size:12px}.g115-coll-list{flex-direction:column;gap:6px;margin:10px 0;display:flex}.g115-coll-row{border:1px solid var(--line-2);background:#fff;border-radius:8px;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;transition:box-shadow .2s,border-color .2s;display:flex}.g115-coll-row.flash{border-color:var(--blue);box-shadow:0 0 0 3px #1976d226}.g115-coll-row.dragging{opacity:.55}.g115-coll-row.drop-before{box-shadow:inset 0 3px 0 var(--blue)}.g115-coll-row.drop-after{box-shadow:inset 0 -3px 0 var(--blue)}.g115-coll-grip{cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;color:var(--ink-3);padding:0 4px;font-size:18px}.g115-coll-main{flex-direction:column;flex:1;min-width:120px;display:flex}.g115-coll-name{white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:500;overflow:hidden}.g115-coll-path{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:12px;overflow:hidden}.g115-coll-btns,.g115-coll-confirm{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.g115-coll-btns .btn,.g115-coll-confirm .btn{padding:4px 10px;font-size:12px}.g115-coll-confirm small{color:var(--ink-2);flex-basis:100%;font-size:12px}.g115-coll-rename.inp{width:100%;padding:4px 8px}.g115-coll-add{margin:4px 0 6px}.g115-picker{flex-direction:column;width:480px;max-height:min(680px,100dvh - 16px);display:flex;position:relative}.g115-picker h3{padding-right:36px}.g115-pick-crumbs{flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:8px;font-size:13px;display:flex}.g115-pick-crumbs .sep{color:var(--ink-3)}.g115-pick-crumbs .text-button{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:2px;font-size:13px}.g115-pick-list{border:1px solid var(--line-2);overscroll-behavior:contain;border-radius:8px;flex:1;min-height:200px;max-height:50vh;padding:4px;overflow:auto}.g115-pick-row{cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink);background:0 0;border:0;border-radius:6px;align-items:center;gap:8px;padding:8px 10px;font-size:14px;display:flex}.g115-pick-row:hover,.g115-pick-row:focus-visible{background:#f2f4f7}.g115-pick-name{white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0;overflow:hidden}.g115-pick-badge{color:#a15c00;background:#fff4e0;border-radius:4px;flex-shrink:0;padding:1px 6px;font-size:11px}.g115-pick-go{color:var(--ink-3)}.g115-pick-new{flex-wrap:wrap;align-items:center;gap:6px;padding:6px;display:flex}.g115-pick-new .inp{flex:1;width:auto;min-width:140px;padding:6px 8px}.g115-pick-new small{flex-basis:100%}.g115-pick-more{color:var(--ink-3);justify-content:space-between;align-items:center;gap:8px;padding:10px 4px;font-size:12px;display:flex}.g115-pick-foot{flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;display:flex}.g115-pick-reason{color:var(--ink-3);text-align:right;flex:1;font-size:12px}.g115-pick-foot>.btn.primary{margin-left:auto}.g115-pick-reason+.btn.primary{margin-left:0}.g115-bind{width:420px}.g115-bind-field{color:var(--ink-2);flex-direction:column;gap:6px;font-size:13px;display:flex}.g115-bind-path{color:var(--ink);word-break:break-all;margin:10px 0 0;font-size:13px}.g115-bind-note{color:var(--ink-3);margin:8px 0 0;font-size:12px}.g115-fav-tools{flex-direction:column;gap:8px;margin:-6px 0 12px;display:flex}.g115-fav-search{align-items:center;display:flex;position:relative}.g115-fav-search .inp{width:100%;padding:7px 34px 7px 10px}.g115-fav-search .icon-button{position:absolute;right:2px}.g115-fav-kinds{gap:4px;display:flex}.g115-fav-kinds button{border:1px solid var(--line);font:inherit;color:var(--ink-2);cursor:pointer;background:#fff;border-radius:14px;flex:1;padding:4px 0;font-size:12px}.g115-fav-kinds button.on{background:var(--blue);border-color:var(--blue);color:#fff}.g115-coll-meta{align-items:center;gap:10px;margin:-8px 0 12px;display:flex}.g115-coll-meta .g115-coll-path{flex:1;min-width:0}.g115-coll-meta .btn{flex-shrink:0;padding:5px 12px;font-size:12px}.g115-coll-gone{color:#8a1c1c;background:#fff4f4;border-radius:8px;flex-direction:column;gap:10px;padding:12px;font-size:13px;display:flex}.g115-coll-gone p{margin:0}.g115-coll-count{color:var(--ink-3);margin:-4px 0 10px;font-size:12px;display:block}.g115-rail-btn.queue{background:linear-gradient(135deg,#f7b733,#fc4a1a)}.g115-rail-count{writing-mode:horizontal-tb;text-align:center;background:#ffffff47;border-radius:9px;min-width:18px;margin-top:6px;padding:2px 0;font-size:12px;display:inline-block}.g115-coll-sec{border-top:1px solid var(--line-2);margin-top:18px;padding-top:12px}.g115-pick-quick{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-pick-quick-lab{color:var(--ink-3);font-size:12px}.g115-pick-chip{border:1px solid var(--line);max-width:150px;font:inherit;cursor:pointer;white-space:nowrap;text-overflow:ellipsis;color:var(--ink);background:#fff;border-radius:14px;padding:3px 10px;font-size:12px;overflow:hidden}.g115-pick-chip.coll{color:#14735a;background:#ecfaf5;border-color:#43cea2}.g115-pick-chip:hover,.g115-pick-chip:focus-visible{filter:brightness(.96)}.g115-copy-dlg{width:460px}.g115-copy-dlg .g115-bind-path small{color:var(--ink-3);margin-left:6px}.g115-copy-sum{color:var(--ink);margin:12px 0 0;font-size:14px;line-height:1.6}.g115-copy-more{color:var(--blue);cursor:pointer;font:inherit;background:0 0;border:0;padding:6px 0 0;font-size:13px}.g115-copy-dlg .dlg-actions{flex-wrap:wrap}.g115-inline-spin{vertical-align:-2px;border-width:2px;width:14px;height:14px;margin-right:6px;display:inline-block}.g115-tasks{right:16px;bottom:max(16px,var(--safe-b));z-index:1450;border:1px solid var(--line);background:#fff;border-radius:12px;flex-direction:column;width:360px;max-width:calc(100vw - 32px);max-height:min(60vh,520px);display:flex;position:absolute;overflow:hidden;box-shadow:0 12px 34px #00000038}.g115-tasks-head{cursor:pointer;font:inherit;color:var(--ink);background:#f6f7f9;border:0;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;font-size:13px;display:flex}.g115-tasks-head span{color:var(--ink-3);font-size:12px}.g115-tasks-err{padding:6px 14px 0;display:block}.g115-tasks-list{overscroll-behavior:contain;padding:4px 10px 10px;overflow:auto}.g115-task{border-bottom:1px solid var(--line-2);padding:10px 4px}.g115-task:last-child{border-bottom:0}.g115-task-title{white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:600;overflow:hidden}.g115-task-bar{background:#eceff1;border-radius:2px;height:4px;margin:7px 0;overflow:hidden}.g115-task-bar i{background:var(--blue);height:100%;transition:width .3s;display:block}.g115-task.done .g115-task-bar i{background:#2e7d32}.g115-task.attention .g115-task-bar i,.g115-task.stopped .g115-task-bar i{background:#e65100}.g115-task-msg{color:var(--ink-2);font-size:12px;line-height:1.5}.g115-task-chips{flex-wrap:wrap;gap:4px;margin-top:6px;display:flex}.g115-task-chips span{color:var(--ink-2);background:#f1f3f5;border-radius:4px;padding:1px 6px;font-size:11px}.g115-task-chips .r-ok{color:#2e7d32;background:#e8f5e9}.g115-task-chips .r-missing,.g115-task-chips .r-failed{color:#c62828;background:#fdecea}.g115-task-chips .r-checking,.g115-task-chips .r-unknown{color:#a15c00;background:#fff4e5}.g115-task-btns{flex-wrap:wrap;gap:6px;margin-top:8px;display:flex}.g115-task-btns .btn{padding:3px 10px;font-size:12px}.g115-task-detail{max-height:160px;margin-top:8px}.g115-tasks.collapsed{max-height:none}.g115-selbar~.g115-tasks{bottom:76px}.g115-queue-tools,.g115-queue-go{flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 10px;display:flex}.g115-queue-tools .btn,.g115-queue-go .btn{padding:4px 10px;font-size:12px}.g115-queue-all{color:var(--ink-2);cursor:pointer;align-items:center;gap:4px;margin-right:auto;font-size:12px;display:inline-flex}.g115-queue-row{cursor:pointer;background:#f8f9fa;border-radius:8px;align-items:center;gap:8px;margin-bottom:6px;padding:6px;display:flex}.g115-queue-row:hover{background:#eef0f2}.g115-queue-row.on{background:#e3f2fd}.g115-queue-row.done{cursor:default;opacity:.8}.g115-queue-row input{accent-color:var(--blue);margin:0}.g115-queue-thumb{width:44px;height:44px;color:var(--ink-3);background:#e9eaec;border-radius:6px;flex-shrink:0;place-items:center;font-size:18px;display:grid;overflow:hidden}.g115-queue-thumb img{object-fit:cover;width:100%;height:100%}.g115-queue-meta{flex-direction:column;flex:1;min-width:0;display:flex}.g115-queue-meta .fn{white-space:nowrap;text-overflow:ellipsis;font-size:13px;overflow:hidden}.g115-queue-meta small{color:var(--ink-3);white-space:nowrap;text-overflow:ellipsis;font-size:11px;overflow:hidden}.g115-queue-meta em{color:#b45309;font-style:normal}.g115-queue-row .rm{color:var(--ink-2);cursor:pointer;border:0;border:1px solid var(--line);background:#fff;border-radius:4px;flex-shrink:0;padding:3px 7px;font-size:11px}.g115-queue-done-head{justify-content:space-between;align-items:center;margin:16px 0 8px;font-size:13px;display:flex}.g115-queue-done-head .btn{padding:3px 10px;font-size:12px}.g115-rail-group .drawer.left{left:-340px}@media (width<=768px){.g115-rail-group .drawer.left{left:calc(-1*min(86vw,320px))}}.g115-search-src{border:1px solid var(--line);background:var(--blue-soft);color:var(--ink-2);border-radius:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;padding:8px 12px;font-size:13px;display:flex}.g115-search-src .btn{padding:4px 12px;font-size:12px}.g115-settings .g115-kv .inp.g115-wide{flex:1;width:auto;min-width:0}.g115-settings .g115-kv code{word-break:break-all;-webkit-user-select:all;user-select:all;font-size:12px}";
 	var drawers_default = "@media (width>=769px){.g115-rail-group .drawer.left{width:var(--g115-dw,340px);left:calc(-1 * var(--g115-dw,340px))}.g115-rail-group.open .drawer.left{left:0}.g115-rail-group:not(.open) .drawer.left,.tree-group:not(.open) .drawer.right{box-shadow:none}.g115-rail-group.open .g115-rail{left:var(--g115-dw,340px)}.tree-group .drawer.right{width:var(--g115-dw,340px);right:calc(-1 * var(--g115-dw,340px))}.tree-group.open .drawer.right{right:0}.tree-group.open .edge-toggle.tree{right:var(--g115-dw,340px)}.g115-resize{z-index:1402;cursor:ew-resize;touch-action:none;background:0 0;width:8px;transition:background .15s;position:fixed;top:0;bottom:0}.g115-resize:hover,.g115-resize:active{background:#1976d240}.g115-resize.left{left:calc(var(--g115-dw,340px) - 4px)}.g115-resize.right{right:calc(var(--g115-dw,340px) - 4px)}}@media (width<=768px),(hover:none){.g115-resize{display:none}}.g115-rail-group .drawer.left{font-size:var(--g115-fs,14px)}.g115-rail-group .fav-head .fn{font-size:1em}.g115-rail-group .fav-head .fp{font-size:.857em}.g115-rail-group .fav-head .fic{width:2.143em;height:2.143em}.g115-rail-group .fav-head .rm{font-size:.786em}.g115-rail-group .g115-queue-meta .fn{font-size:.929em}.g115-rail-group .g115-queue-meta small{font-size:.786em}.g115-rail-group .g115-queue-thumb{width:3.143em;height:3.143em}.g115-rail-group .drawer h3{font-size:1.143em}.tree-group .g115-tree{font-size:var(--g115-fs,14px)}.tree-group .g115-tree .tnode{padding:.5em .643em .5em .286em;font-size:1em}.tree-group .g115-tree-twisty{width:1.833em;height:2.5em;font-size:.857em}.tree-group .g115-tree-spin{width:.833em;height:.833em}.g115-set-sub{border-top:1px solid var(--line-2);color:var(--ink-2);margin:18px 0 4px;padding-top:12px;font-size:13px;font-weight:600}.g115-settings .row .seg{flex-shrink:0}.g115-settings .seg button{white-space:nowrap}";
 	var photoswipe_default = "/*! PhotoSwipe main CSS by Dmytro Semenov | photoswipe.com */\n.pswp{--pswp-bg:#000;--pswp-placeholder-bg:#222;--pswp-root-z-index:100000;--pswp-preloader-color:#4f4f4f66;--pswp-preloader-color-secondary:#ffffffe6;--pswp-icon-color:#fff;--pswp-icon-color-secondary:#4f4f4f;--pswp-icon-stroke-color:#4f4f4f;--pswp-icon-stroke-width:2px;--pswp-error-text-color:var(--pswp-icon-color);width:100%;height:100%;z-index:var(--pswp-root-z-index);touch-action:none;opacity:.003;contain:layout style size;-webkit-tap-highlight-color:#0000;outline:0;display:none;position:fixed;top:0;left:0}.pswp:focus{outline:0}.pswp *{box-sizing:border-box}.pswp img{max-width:none}.pswp--open{display:block}.pswp,.pswp__bg{will-change:opacity;transform:translateZ(0)}.pswp__bg{opacity:.005;background:var(--pswp-bg)}.pswp,.pswp__scroll-wrap{overflow:hidden}.pswp__scroll-wrap,.pswp__bg,.pswp__container,.pswp__item,.pswp__content,.pswp__img,.pswp__zoom-wrap{width:100%;height:100%;position:absolute;top:0;left:0}.pswp__img,.pswp__zoom-wrap{width:auto;height:auto}.pswp--click-to-zoom.pswp--zoom-allowed .pswp__img{cursor:-webkit-zoom-in;cursor:-moz-zoom-in;cursor:zoom-in}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img{cursor:move;cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.pswp--click-to-zoom.pswp--zoomed-in .pswp__img:active{cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img,.pswp--no-mouse-drag.pswp--zoomed-in .pswp__img:active,.pswp__img{cursor:-webkit-zoom-out;cursor:-moz-zoom-out;cursor:zoom-out}.pswp__container,.pswp__img,.pswp__button,.pswp__counter{-webkit-user-select:none;user-select:none}.pswp__item{z-index:1;overflow:hidden}.pswp__hidden{display:none!important}.pswp__content{pointer-events:none}.pswp__content>*{pointer-events:auto}.pswp__error-msg-container{display:grid}.pswp__error-msg{color:var(--pswp-error-text-color);margin:auto;font-size:1em;line-height:1}.pswp .pswp__hide-on-close{opacity:.005;will-change:opacity;transition:opacity var(--pswp-transition-duration) cubic-bezier(.4, 0, .22, 1);z-index:10;pointer-events:none}.pswp--ui-visible .pswp__hide-on-close{opacity:1;pointer-events:auto}.pswp__button{cursor:pointer;width:50px;height:60px;box-shadow:none;opacity:.85;-webkit-appearance:none;-webkit-touch-callout:none;background:0 0;border:0;margin:0;padding:0;display:block;position:relative;overflow:hidden}.pswp__button:hover,.pswp__button:active,.pswp__button:focus{box-shadow:none;opacity:1;background:0 0;border:0;padding:0;transition:none}.pswp__button:disabled{opacity:.3;cursor:auto}.pswp__icn{fill:var(--pswp-icon-color);color:var(--pswp-icon-color-secondary);pointer-events:none;width:32px;height:32px;position:absolute;top:14px;left:9px;overflow:hidden}.pswp__icn-shadow{stroke:var(--pswp-icon-stroke-color);stroke-width:var(--pswp-icon-stroke-width);fill:none}.pswp__icn:focus{outline:0}div.pswp__img--placeholder,.pswp__img--with-bg{background:var(--pswp-placeholder-bg)}.pswp__top-bar{z-index:10;flex-direction:row;justify-content:flex-end;width:100%;height:60px;display:flex;position:absolute;top:0;left:0;pointer-events:none!important}.pswp__top-bar>*{pointer-events:auto;will-change:opacity}.pswp__button--close{margin-right:6px}.pswp__button--arrow{width:75px;height:100px;margin-top:-50px;position:absolute;top:50%}.pswp__button--arrow:disabled{cursor:default;display:none}.pswp__button--arrow .pswp__icn{background:0 0;border-radius:0;width:60px;height:60px;margin-top:-30px;top:50%}.pswp--one-slide .pswp__button--arrow{display:none}.pswp--touch .pswp__button--arrow{visibility:hidden}.pswp--has_mouse .pswp__button--arrow{visibility:visible}.pswp__button--arrow--prev{left:0;right:auto}.pswp__button--arrow--next{right:0}.pswp__button--arrow--next .pswp__icn{left:auto;right:14px;transform:scaleX(-1)}.pswp__button--zoom{display:none}.pswp--zoom-allowed .pswp__button--zoom{display:block}.pswp--zoomed-in .pswp__zoom-icn-bar-v{display:none}.pswp__preloader{width:50px;height:60px;margin-right:auto;position:relative;overflow:hidden}.pswp__preloader .pswp__icn{opacity:0;transition:opacity .2s linear;animation:.6s linear infinite pswp-clockwise}.pswp__preloader--active .pswp__icn{opacity:.85}@keyframes pswp-clockwise{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.pswp__counter{margin-top:15px;height:30px;color:var(--pswp-icon-color);text-shadow:1px 1px 3px var(--pswp-icon-color-secondary);opacity:.85;margin-inline-start:20px;font-size:14px;line-height:30px}.pswp--one-slide .pswp__counter{display:none}";
 	function createShadowContainer(doc, extraCss = "") {
