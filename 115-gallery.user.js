@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.5
+// @version      0.5.6
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
@@ -7061,6 +7061,7 @@
 		deps;
 		state = reactive({});
 		watching = new Map();
+		since = new Map();
 		timer = null;
 		generation = 0;
 		polling = false;
@@ -7073,15 +7074,23 @@
 		watched() {
 			return [...this.watching.values()];
 		}
-		track(items) {
+		watchedSince() {
+			return Object.fromEntries([...this.watching.keys()].map((id) => [id, this.since.get(id) ?? this.now()]));
+		}
+		track(items, since = {}) {
 			for (const item of items) {
 				if (!this.state[item.id]) this.state[item.id] = { kind: "submitted" };
+				if (since[item.id] && !this.since.has(item.id)) this.since.set(item.id, since[item.id]);
 				this.watch(item);
 			}
+		}
+		now() {
+			return (this.deps.now ?? Date.now)();
 		}
 		reset() {
 			this.generation++;
 			this.watching.clear();
+			this.since.clear();
 			for (const id of Object.keys(this.state)) delete this.state[id];
 		}
 		assertReady(generation) {
@@ -7150,7 +7159,7 @@
 				this.watch(item);
 			} else if (s.kind === "done") {
 				this.state[item.id] = { kind: "done" };
-				this.watching.delete(item.id);
+				this.unwatch(item.id);
 				this.deps.refresh(item);
 			} else {
 				this.state[item.id] = { kind: "submitted" };
@@ -7175,7 +7184,22 @@
 		watch(item) {
 			if (this.watching.size >= POLL_MAX && !this.watching.has(item.id)) return;
 			this.watching.set(item.id, item);
+			if (!this.since.has(item.id)) this.since.set(item.id, this.now());
 			this.schedule();
+		}
+		unwatch(id) {
+			this.watching.delete(id);
+			this.since.delete(id);
+		}
+		dropStale() {
+			const max = this.deps.maxWatchMs;
+			if (!max) return;
+			const t = this.now();
+			for (const id of [...this.watching.keys()]) {
+				if (t - (this.since.get(id) ?? t) < max) continue;
+				this.unwatch(id);
+				this.state[id] = { kind: "stale" };
+			}
 		}
 		schedule() {
 			if (this.timer || !this.watching.size) return;
@@ -7187,6 +7211,7 @@
 		}
 		async poll() {
 			if (this.polling) return;
+			this.dropStale();
 			if (this.deps.active && !this.deps.active() || this.deps.paused?.()) {
 				this.schedule();
 				return;
@@ -7219,6 +7244,7 @@
 			}
 			case "done": return "转码完成";
 			case "submitted": return "已提交转码";
+			case "stale": return "提交很久了还没转好，已停止查询进度";
 			case "error": return `提交失败：${v.message}`;
 		}
 	}
@@ -31508,7 +31534,7 @@
 			});
 			const tc = computed(() => ctrl.transcode.view(props.item.id));
 			const tcText = computed(() => transcodeText(tc.value));
-			const canSubmit = computed(() => !tc.value || tc.value.kind === "error");
+			const canSubmit = computed(() => !tc.value || tc.value.kind === "error" || tc.value.kind === "stale");
 			function submit(e) {
 				e.stopPropagation();
 				ctrl.transcode.submit([props.item]).catch(() => {});
