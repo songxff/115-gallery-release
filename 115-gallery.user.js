@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         115 瀑布流阅览器
 // @namespace    115-gallery
-// @version      0.5.7
+// @version      0.5.8
 // @description  在 115 网页里以瀑布流浏览图片和视频
 // @license      GPL-3.0-or-later
 // @icon         https://115.com/favicon.ico
